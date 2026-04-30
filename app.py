@@ -732,8 +732,21 @@ def _parse_fullinfo_sheet(xl, conn, result, now_str, bias_s):
     """
     import pandas as pd
 
-    ZONE_LABELS = {'contact fields': 'contact', 'team': 'team',
-                   'app': 'app', 'projects': 'project', 'tags': 'tag'}
+    # Zone group markers: only switch zone when row1 at that col has a sub-column name
+    # (prevents "Team" column name from being mistaken for a zone label)
+    ZONE_MARKERS = {'contact fields': 'contact', 'app': 'app',
+                    'projects': 'project', 'tags': 'tag',
+                    'main role': 'project', 'entity': 'app',
+                    'related systems/areas': 'app', 'custom tags': 'tag'}
+    # External-Excel column name → internal name used in cv() calls
+    CONTACT_EXT_MAP = {
+        'Name (EN)': 'Name (Eng)',    'Name (TH)': 'ชื่อ (ไทย)',
+        'Email 1':   'Email (หลัก)',  'Email 2':   'Email (2)',
+        'Direct Report to': 'Direct Report',
+        'Mobile':    'โทรศัพท์',      'Line Name': 'Line ID',
+        'My Notes':  'General Note',  'Nickname':  'ชื่อเล่น',
+        'Notes':     'หมายเหตุสั้น', 'Quick Notes about Team': 'Quick Notes Team',
+    }
     TRUTHY = {'y', 'yes', '1', 'true', 'x', 'v'}
 
     sname = next((s for s in xl.sheet_names if 'Full Info' in s or 'Full_Info' in s), None)
@@ -744,22 +757,31 @@ def _parse_fullinfo_sheet(xl, conn, result, now_str, bias_s):
     if len(df_raw) < 3:
         return
 
-    row0 = [str(v).strip() for v in df_raw.iloc[0]]  # zone labels
-    row1 = [str(v).strip() for v in df_raw.iloc[1]]  # column names
+    row0 = [str(v).strip() for v in df_raw.iloc[0]]
+    row1 = [str(v).strip() for v in df_raw.iloc[1]]
 
-    # Build zone map: col_idx → zone key
+    # Build zone map: switch zone only when row0 matches a zone marker AND row1 has
+    # a sub-column name at the same position (confirms it's a zone group, not a column name)
     zone_map, cur = [], 'contact'
-    for v in row0:
+    for ci, v in enumerate(row0):
         lv = v.lower()
-        if lv in ZONE_LABELS:
-            cur = ZONE_LABELS[lv]
+        r1 = row1[ci] if ci < len(row1) else ''
+        if lv in ZONE_MARKERS and r1:
+            cur = ZONE_MARKERS[lv]
         zone_map.append(cur)
 
-    # Build column lookup: zone → {col_name: col_idx}
+    # Build column lookup: prefer row1 names (app format), fallback to row0 (external Excel)
     zone_cols = {'contact': {}, 'app': {}, 'project': {}, 'tag': {}}
     for ci, (zone, name) in enumerate(zip(zone_map, row1)):
         if zone in zone_cols and name:
             zone_cols[zone][name] = ci
+
+    # If contact zone is empty → external Excel: row0 holds contact field names directly
+    if not zone_cols['contact']:
+        for ci, (zone, raw_name) in enumerate(zip(zone_map, row0)):
+            if zone == 'contact' and raw_name:
+                internal = CONTACT_EXT_MAP.get(raw_name, raw_name)
+                zone_cols['contact'][internal] = ci
 
     # Auto-create new master entities from new column headers
     palette = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#F97316','#14B8A6','#0EA5E9']
@@ -792,7 +814,10 @@ def _parse_fullinfo_sheet(xl, conn, result, now_str, bias_s):
             continue
 
         cid     = vals[id_col] if id_col < len(vals) else ''
-        name_th = vals[zone_cols['contact'].get('ชื่อ (ไทย)', -1)] if zone_cols['contact'].get('ชื่อ (ไทย)') is not None else ''
+        def _cv0(col):
+            ci = zone_cols['contact'].get(col)
+            return vals[ci] if ci is not None and ci < len(vals) else ''
+        name_th = _cv0('ชื่อ (ไทย)') or _cv0('Name (Eng)')  # fallback to EN name
         if not name_th:
             continue
 
