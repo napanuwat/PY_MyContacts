@@ -1,3 +1,4 @@
+# MyContacts v3.5 — Fix Excel import zone mapping: Main Role→contact_roles, Entity→contact_entity, Systems→contact_systems
 # MyContacts v3.4 — Contact photo upload: POST/DELETE /api/contacts/<id>/photo; auto-resize 400×400 via Pillow
 # MyContacts v3.3 — Master data reorder endpoints; sort_order in projects/tags APIs
 # MyContacts v3.1 — B+C Import: full-zone Excel parse, auto-create master data, new-master banner
@@ -734,10 +735,14 @@ def _parse_fullinfo_sheet(xl, conn, result, now_str, bias_s):
 
     # Zone group markers: only switch zone when row1 at that col has a sub-column name
     # (prevents "Team" column name from being mistaken for a zone label)
-    ZONE_MARKERS = {'contact fields': 'contact', 'app': 'app',
-                    'projects': 'project', 'tags': 'tag',
-                    'main role': 'project', 'entity': 'app',
-                    'related systems/areas': 'app', 'custom tags': 'tag'}
+    ZONE_MARKERS = {'contact fields': 'contact',
+                    'projects': 'project',
+                    'main role': 'role',
+                    'entity': 'entity',
+                    'related systems/areas': 'system',
+                    'custom tags': 'tag',
+                    'app': 'system',   # legacy compat
+                    'tags': 'tag'}
     # External-Excel column name → internal name used in cv() calls
     CONTACT_EXT_MAP = {
         'Name (EN)': 'Name (Eng)',    'Name (TH)': 'ชื่อ (ไทย)',
@@ -771,7 +776,7 @@ def _parse_fullinfo_sheet(xl, conn, result, now_str, bias_s):
         zone_map.append(cur)
 
     # Build column lookup: prefer row1 names (app format), fallback to row0 (external Excel)
-    zone_cols = {'contact': {}, 'app': {}, 'project': {}, 'tag': {}}
+    zone_cols = {'contact': {}, 'project': {}, 'role': {}, 'entity': {}, 'system': {}, 'tag': {}}
     for ci, (zone, name) in enumerate(zip(zone_map, row1)):
         if zone in zone_cols and name:
             zone_cols[zone][name] = ci
@@ -785,21 +790,26 @@ def _parse_fullinfo_sheet(xl, conn, result, now_str, bias_s):
 
     # Auto-create new master entities from new column headers
     palette = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#F97316','#14B8A6','#0EA5E9']
-    existing_apps    = {r['name'] for r in conn.execute("SELECT name FROM master_apps").fetchall()}
     existing_projs   = {r['name'] for r in conn.execute("SELECT name FROM master_projects").fetchall()}
+    existing_roles   = {r['name'] for r in conn.execute("SELECT name FROM master_roles").fetchall()}
+    existing_systems = {r['name'] for r in conn.execute("SELECT name FROM master_systems").fetchall()}
     existing_tags    = {r['name'] for r in conn.execute("SELECT name FROM tags").fetchall()}
 
-    new_count = {'apps':0,'projects':0,'tags':0}
-    for name in zone_cols['app']:
-        if name not in existing_apps:
-            c = palette[new_count['apps'] % len(palette)]
-            conn.execute("INSERT OR IGNORE INTO master_apps(name,color) VALUES(?,?)", (name, c))
-            new_count['apps'] += 1
+    new_count = {'projects':0,'roles':0,'systems':0,'tags':0}
     for name in zone_cols['project']:
         if name not in existing_projs:
             c = palette[new_count['projects'] % len(palette)]
             conn.execute("INSERT OR IGNORE INTO master_projects(name,color) VALUES(?,?)", (name, c))
             new_count['projects'] += 1
+    for name in zone_cols['role']:
+        if name not in existing_roles:
+            c = palette[new_count['roles'] % len(palette)]
+            conn.execute("INSERT OR IGNORE INTO master_roles(name,color) VALUES(?,?)", (name, c))
+            new_count['roles'] += 1
+    for name in zone_cols['system']:
+        if name not in existing_systems:
+            conn.execute("INSERT OR IGNORE INTO master_systems(name) VALUES(?)", (name,))
+            new_count['systems'] += 1
     for name in zone_cols['tag']:
         if name not in existing_tags:
             conn.execute("INSERT OR IGNORE INTO tags(name,color) VALUES(?,?)", (name, '#64748B'))
@@ -870,26 +880,38 @@ def _parse_fullinfo_sheet(xl, conn, result, now_str, bias_s):
         def is_assigned(v):
             return v.lower() in TRUTHY or (v and v.lower() not in ('', 'nan', 'none', '0', 'false'))
 
-        # Apps (value = role)
-        conn.execute("DELETE FROM contact_apps WHERE contact_id=?", (cid,))
-        for name, ci in zone_cols['app'].items():
-            if ci < len(vals):
-                role_val = vals[ci].strip()
-                if is_assigned(role_val):
-                    role = role_val if role_val.lower() not in TRUTHY else 'Y'
-                    conn.execute("INSERT OR IGNORE INTO contact_apps(contact_id,app_name,role) VALUES(?,?,?)",
-                                 (cid, name, role))
-
-        # Projects (value = role)
+        # Projects (Y/N flag col)
         conn.execute("DELETE FROM contact_projects WHERE contact_id=?", (cid,))
         for name, ci in zone_cols['project'].items():
+            if ci < len(vals) and is_assigned(vals[ci].strip()):
+                conn.execute("INSERT OR IGNORE INTO contact_projects(contact_id,project_name,role) VALUES(?,?,?)",
+                             (cid, name, 'Member'))
+                result['projects_synced'] += 1
+
+        # Main Role (Y/N)
+        conn.execute("DELETE FROM contact_roles WHERE contact_id=?", (cid,))
+        for name, ci in zone_cols['role'].items():
+            if ci < len(vals) and is_assigned(vals[ci].strip()):
+                conn.execute("INSERT OR IGNORE INTO contact_roles(contact_id,role_name) VALUES(?,?)",
+                             (cid, name))
+
+        # Entity (at most one per contact — first Y wins)
+        conn.execute("DELETE FROM contact_entity WHERE contact_id=?", (cid,))
+        for name, ci in zone_cols['entity'].items():
             if ci < len(vals):
-                role_val = vals[ci].strip()
-                if is_assigned(role_val):
-                    role = role_val if role_val.lower() not in TRUTHY else 'Member'
-                    conn.execute("INSERT INTO contact_projects(contact_id,project_name,role) VALUES(?,?,?)",
-                                 (cid, name, role))
-                    result['projects_synced'] += 1
+                v = vals[ci].strip()
+                if is_assigned(v):
+                    entity_value = v if v.lower() not in TRUTHY else 'Y'
+                    conn.execute("INSERT OR REPLACE INTO contact_entity(contact_id,entity_type,entity_value) VALUES(?,?,?)",
+                                 (cid, name, entity_value))
+                    break  # only one entity type per contact
+
+        # Systems (Y/N)
+        conn.execute("DELETE FROM contact_systems WHERE contact_id=?", (cid,))
+        for name, ci in zone_cols['system'].items():
+            if ci < len(vals) and is_assigned(vals[ci].strip()):
+                conn.execute("INSERT OR IGNORE INTO contact_systems(contact_id,system_name) VALUES(?,?)",
+                             (cid, name))
 
         # Tags
         conn.execute("DELETE FROM contact_tags WHERE contact_id=?", (cid,))
