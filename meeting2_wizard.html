@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<!-- v1.0 | Design 2: Wizard / Stepper — 3 Steps, guided flow -->
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design 2 — Wizard / Stepper</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Sarabun', 'Inter', sans-serif; background: #EEF2FF; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 24px 16px 40px; font-size: 14px; }
+
+/* Top header */
+.page-header { width: 100%; max-width: 900px; display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.back-btn { display: flex; align-items: center; gap: 6px; color: #6366F1; font-weight: 500; cursor: pointer; font-size: 13px; background: none; border: none; font-family: inherit; }
+.page-title { font-size: 20px; font-weight: 700; color: #1E293B; }
+.page-sub { font-size: 13px; color: #64748B; margin-left: auto; }
+
+/* Wizard container */
+.wizard { width: 100%; max-width: 900px; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); overflow: hidden; }
+
+/* Stepper */
+.stepper { background: #F8FAFC; border-bottom: 1px solid #E2E8F0; padding: 20px 32px; display: flex; align-items: center; }
+.step { display: flex; align-items: center; gap: 10px; flex: 1; }
+.step-circle { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+.step-circle.done { background: #10B981; color: #fff; }
+.step-circle.active { background: #6366F1; color: #fff; box-shadow: 0 0 0 4px rgba(99,102,241,0.2); }
+.step-circle.pending { background: #E2E8F0; color: #94A3B8; }
+.step-text { }
+.step-label { font-size: 11px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+.step-name { font-size: 13px; font-weight: 600; }
+.step-name.active { color: #6366F1; }
+.step-name.done { color: #10B981; }
+.step-name.pending { color: #94A3B8; }
+.step-connector { flex: 1; height: 2px; margin: 0 16px; max-width: 80px; }
+.step-connector.done { background: #10B981; }
+.step-connector.pending { background: #E2E8F0; }
+
+/* Step content */
+.step-content { padding: 28px 32px; }
+.step-heading { font-size: 16px; font-weight: 700; color: #1E293B; margin-bottom: 4px; }
+.step-desc { font-size: 13px; color: #64748B; margin-bottom: 20px; }
+
+/* Two column review layout */
+.review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.review-panel { border-radius: 12px; overflow: hidden; border: 2px solid; }
+.review-panel.found-panel { border-color: #BBF7D0; }
+.review-panel.new-panel { border-color: #FDE68A; }
+.review-panel-header { padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
+.review-panel-header.found { background: #F0FDF4; }
+.review-panel-header.new { background: #FFFBEB; }
+.panel-icon { font-size: 18px; }
+.panel-title { font-size: 14px; font-weight: 700; }
+.found-panel .panel-title { color: #065F46; }
+.new-panel .panel-title { color: #92400E; }
+.panel-count { margin-left: auto; font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 20px; }
+.found-panel .panel-count { background: #D1FAE5; color: #065F46; }
+.new-panel .panel-count { background: #FEF3C7; color: #92400E; }
+
+/* Review items */
+.review-item { padding: 12px 16px; border-bottom: 1px solid #F1F5F9; display: flex; align-items: flex-start; gap: 10px; }
+.review-item:last-child { border-bottom: none; }
+.review-checkbox { width: 18px; height: 18px; border: 2px solid #CBD5E1; border-radius: 5px; cursor: pointer; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.review-checkbox.checked { background: #6366F1; border-color: #6366F1; }
+.review-checkbox.checked::after { content: '✓'; color: #fff; font-size: 11px; font-weight: 700; }
+.review-checkbox.new-check { border-color: #FDE68A; }
+.review-checkbox.new-check.checked { background: #F59E0B; border-color: #F59E0B; }
+
+.review-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex-shrink: 0; }
+.av-indigo { background: #EEF2FF; color: #6366F1; }
+.av-green { background: #D1FAE5; color: #059669; }
+.av-amber { background: #FEF3C7; color: #D97706; }
+
+.review-info { flex: 1; min-width: 0; }
+.review-name { font-size: 13px; font-weight: 600; color: #1E293B; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.review-detail { font-size: 11px; color: #64748B; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.review-action-tag { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; margin-top: 4px; display: inline-block; }
+.tag-update { background: #E0E7FF; color: #3730A3; }
+.tag-add { background: #FEF3C7; color: #92400E; }
+.tag-note { background: #D1FAE5; color: #065F46; }
+
+.pill { font-size: 10px; padding: 1px 6px; border-radius: 8px; font-weight: 500; }
+.pill-blue { background: #DBEAFE; color: #1D4ED8; }
+.pill-amber { background: #FEF3C7; color: #92400E; }
+
+/* Note template section */
+.note-section { margin-top: 20px; background: #F8FAFC; border-radius: 10px; padding: 16px; border: 1px solid #E2E8F0; }
+.note-section-title { font-size: 13px; font-weight: 600; color: #1E293B; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.note-toggle { margin-left: auto; font-size: 11px; color: #6366F1; cursor: pointer; }
+.note-template { border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px; font-size: 13px; font-family: inherit; width: 100%; min-height: 60px; outline: none; color: #1E293B; resize: none; background: #fff; }
+.note-template:focus { border-color: #6366F1; }
+.note-help { font-size: 11px; color: #94A3B8; margin-top: 6px; }
+
+/* Summary box (for step 3 preview) */
+.summary-box { background: #F8FAFC; border-radius: 10px; padding: 16px; border: 1px solid #E2E8F0; margin-bottom: 20px; }
+.summary-title { font-size: 13px; font-weight: 600; color: #1E293B; margin-bottom: 12px; }
+.summary-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid #F1F5F9; font-size: 13px; }
+.summary-row:last-child { border-bottom: none; }
+.summary-icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+.sum-green { background: #D1FAE5; }
+.sum-amber { background: #FEF3C7; }
+.sum-blue { background: #DBEAFE; }
+.summary-label { flex: 1; color: #475569; }
+.summary-value { font-weight: 600; color: #1E293B; }
+
+/* Action footer */
+.wizard-footer { padding: 20px 32px; background: #F8FAFC; border-top: 1px solid #E2E8F0; display: flex; align-items: center; gap: 12px; }
+.btn { padding: 9px 18px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-family: inherit; font-weight: 500; display: flex; align-items: center; gap: 7px; transition: all 0.15s; }
+.btn-ghost { background: #fff; border: 1px solid #E2E8F0; color: #64748B; }
+.btn-ghost:hover { background: #F8FAFC; }
+.btn-primary { background: #6366F1; color: #fff; }
+.btn-primary:hover { background: #4F46E5; }
+.btn-success { background: #10B981; color: #fff; }
+.footer-note { font-size: 12px; color: #94A3B8; margin-left: auto; }
+.select-summary { font-size: 13px; color: #64748B; font-weight: 500; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+
+/* Step tabs at bottom */
+.step-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+.step-tab { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1.5px solid #E2E8F0; color: #64748B; background: #fff; transition: all 0.15s; }
+.step-tab:hover { border-color: #6366F1; color: #6366F1; }
+.step-tab.active { background: #6366F1; color: #fff; border-color: #6366F1; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <button class="back-btn">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M5 12l7-7M5 12l7 7"/></svg>
+    กลับ
+  </button>
+  <div class="page-title">ตรวจสอบรายชื่อผู้เข้าประชุม</div>
+  <div class="page-sub">ประชุม COBRA Kickoff · 29 เม.ย. 2026 · 7 คน</div>
+</div>
+
+<div class="wizard">
+
+  <!-- Stepper -->
+  <div class="stepper">
+    <div class="step">
+      <div class="step-circle done">✓</div>
+      <div class="step-text">
+        <div class="step-label">ขั้นตอน 1</div>
+        <div class="step-name done">วาง List</div>
+      </div>
+    </div>
+    <div class="step-connector done"></div>
+    <div class="step">
+      <div class="step-circle active">2</div>
+      <div class="step-text">
+        <div class="step-label">ขั้นตอน 2</div>
+        <div class="step-name active">ตรวจสอบผล</div>
+      </div>
+    </div>
+    <div class="step-connector pending"></div>
+    <div class="step">
+      <div class="step-circle pending">3</div>
+      <div class="step-text">
+        <div class="step-label">ขั้นตอน 3</div>
+        <div class="step-name pending">ยืนยัน & บันทึก</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2 Content -->
+  <div class="step-content">
+    <div class="step-heading">ตรวจสอบผลการค้นหา</div>
+    <div class="step-desc">เลือกคนที่ต้องการดำเนินการ แล้วกด "ถัดไป" เพื่อยืนยัน</div>
+
+    <div class="step-tabs">
+      <div class="step-tab active">ทั้งหมด (7)</div>
+      <div class="step-tab">✅ พบในระบบ (4)</div>
+      <div class="step-tab">➕ เพิ่มใหม่ (3)</div>
+    </div>
+
+    <!-- Two column review -->
+    <div class="review-grid">
+
+      <!-- Found panel -->
+      <div class="review-panel found-panel">
+        <div class="review-panel-header found">
+          <span class="panel-icon">✅</span>
+          <span class="panel-title">พบในระบบแล้ว</span>
+          <span class="panel-count">4 คน</span>
+        </div>
+
+        <div class="review-item">
+          <div class="review-checkbox checked"></div>
+          <div class="review-avatar av-indigo">สช</div>
+          <div class="review-info">
+            <div class="review-name">สมชาย วงษ์ศิลป์</div>
+            <div class="review-detail">Core Banking IT · C001 <span class="pill pill-blue">COBRA</span></div>
+            <div class="review-action-tag tag-note">📝 เพิ่ม Note</div>
+          </div>
+        </div>
+
+        <div class="review-item">
+          <div class="review-checkbox checked"></div>
+          <div class="review-avatar av-green">วร</div>
+          <div class="review-info">
+            <div class="review-name">วรรณา ประสพโชค</div>
+            <div class="review-detail">Digital Banking IT · C002</div>
+            <div class="review-action-tag tag-note">📝 เพิ่ม Note</div>
+          </div>
+        </div>
+
+        <div class="review-item">
+          <div class="review-checkbox checked"></div>
+          <div class="review-avatar av-indigo">อร</div>
+          <div class="review-info">
+            <div class="review-name">อรุณี สุขสันต์</div>
+            <div class="review-detail">Senior Management · C005</div>
+            <div class="review-action-tag tag-note">📝 เพิ่ม Note</div>
+          </div>
+        </div>
+
+        <div class="review-item">
+          <div class="review-checkbox checked"></div>
+          <div class="review-avatar av-amber">นต</div>
+          <div class="review-info">
+            <div class="review-name">นิตยา รักไทย</div>
+            <div class="review-detail">PMO · C004 <span class="pill pill-amber">NEXUS</span></div>
+            <div class="review-action-tag tag-update">✏️ อัพเดตข้อมูล</div>
+          </div>
+        </div>
+
+        <div style="padding: 10px 16px; background: #F0FDF4; border-top: 1px solid #BBF7D0;">
+          <div style="font-size: 12px; color: #065F46; font-weight: 500;">
+            <span style="font-weight: 700;">Action:</span> เพิ่ม Note "เข้าประชุม COBRA Kickoff" ให้ 4 คน
+          </div>
+        </div>
+      </div>
+
+      <!-- New panel -->
+      <div class="review-panel new-panel">
+        <div class="review-panel-header new">
+          <span class="panel-icon">➕</span>
+          <span class="panel-title">ยังไม่มีในระบบ</span>
+          <span class="panel-count">3 คน</span>
+        </div>
+
+        <div class="review-item">
+          <div class="review-checkbox new-check checked"></div>
+          <div class="review-avatar av-amber">มน</div>
+          <div class="review-info">
+            <div class="review-name" style="color:#92400E">มานะ พงษ์สุข</div>
+            <div class="review-detail" style="color:#F59E0B">ไม่พบในระบบ</div>
+            <div class="review-action-tag tag-add">➕ สร้าง Contact ใหม่</div>
+          </div>
+        </div>
+
+        <div class="review-item">
+          <div class="review-checkbox new-check checked"></div>
+          <div class="review-avatar av-amber">วช</div>
+          <div class="review-info">
+            <div class="review-name" style="color:#92400E">วิชาญ ศรีเมือง</div>
+            <div class="review-detail" style="color:#F59E0B">ไม่พบในระบบ</div>
+            <div class="review-action-tag tag-add">➕ สร้าง Contact ใหม่</div>
+          </div>
+        </div>
+
+        <div class="review-item">
+          <div class="review-checkbox new-check"></div>
+          <div class="review-avatar" style="background:#F1F5F9; color:#94A3B8">สด</div>
+          <div class="review-info">
+            <div class="review-name" style="color:#92400E">สุดาพร ทองดี</div>
+            <div class="review-detail" style="color:#F59E0B">ไม่พบในระบบ</div>
+            <div class="review-action-tag" style="background:#F1F5F9; color:#94A3B8;">⬜ ข้ามคนนี้</div>
+          </div>
+        </div>
+
+        <div style="padding: 10px 16px; background: #FFFBEB; border-top: 1px solid #FDE68A;">
+          <div style="font-size: 12px; color: #92400E; font-weight: 500;">
+            <span style="font-weight: 700;">Action:</span> สร้าง Contact ใหม่ 2 คน (ข้าม 1 คน)
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Note template -->
+    <div class="note-section">
+      <div class="note-section-title">
+        📝 เพิ่ม Note ให้ทุกคนที่เข้าประชุม
+        <span class="note-toggle">เปิด/ปิด</span>
+      </div>
+      <textarea class="note-template" rows="2">เข้าร่วมประชุม COBRA Kickoff Q2/2026 วันที่ 29 เม.ย. 2026</textarea>
+      <div class="note-help">Note นี้จะถูกเพิ่มใน Timeline ของทุกคนที่เลือกไว้ข้างต้น</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="wizard-footer">
+    <button class="btn btn-ghost">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M5 12l7-7M5 12l7 7"/></svg>
+      ย้อนกลับ
+    </button>
+    <div class="select-summary">เลือกแล้ว 6/7 คน · เพิ่ม Note 4 คน · สร้างใหม่ 2 คน</div>
+    <button class="btn btn-primary" style="margin-left: auto;">
+      ถัดไป: ยืนยัน
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- Design label -->
+<div style="margin-top: 20px; text-align: center; font-size: 12px; color: #94A3B8;">
+  <strong style="color: #6366F1">Design 2 — Wizard/Stepper</strong> &nbsp;·&nbsp; Workflow แบบ guided, ทีละขั้นตอน, ต้องกด confirm ก่อนดำเนินการ
+</div>
+
+</body>
+</html>

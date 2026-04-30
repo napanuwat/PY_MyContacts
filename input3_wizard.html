@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Form 3: Step Wizard — MyContacts</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter','Sarabun',sans-serif;background:#F8FAFC;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+    .topbar{display:flex;align-items:center;height:48px;background:#0F172A;padding:0 20px;gap:12px;border-bottom:1px solid #1E293B;flex-shrink:0}
+    .back-link{color:#475569;font-size:12px;text-decoration:none}.logo{font-size:14px;font-weight:700;color:#60A5FA}
+    .label-tag{font-size:11px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#A5B4FC;padding:2px 9px;border-radius:12px;font-weight:500}
+    .nav-links{margin-left:auto;display:flex;gap:8px}
+    .nav-link{color:#60A5FA;font-size:12px;text-decoration:none;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);padding:4px 10px;border-radius:6px}
+
+    .wizard-container{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;overflow:hidden}
+
+    /* Steps indicator */
+    .steps-bar{display:flex;align-items:center;gap:0;margin-bottom:32px;width:100%;max-width:560px}
+    .step-item{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1}
+    .step-circle{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;transition:all 0.2s}
+    .step-circle.done{background:#10B981;color:white}
+    .step-circle.active{background:#3B82F6;color:white;box-shadow:0 0 0 4px rgba(59,130,246,0.2)}
+    .step-circle.upcoming{background:#F1F5F9;color:#94A3B8;border:2px solid #E2E8F0}
+    .step-label{font-size:10px;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:0.8px;white-space:nowrap}
+    .step-label.active{color:#3B82F6}
+    .step-label.done{color:#10B981}
+    .step-connector{height:2px;flex:1;background:#E2E8F0;margin-bottom:20px}
+    .step-connector.done{background:#10B981}
+
+    /* Card */
+    .wizard-card{background:white;border-radius:16px;width:100%;max-width:560px;box-shadow:0 8px 32px rgba(0,0,0,0.08);display:flex;flex-direction:column;overflow:hidden;border:1px solid #F1F5F9}
+    .wcard-header{padding:24px 28px 20px;border-bottom:1px solid #F8FAFC}
+    .step-badge{display:inline-flex;align-items:center;gap:6px;background:#EFF6FF;color:#3B82F6;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:10px}
+    .wcard-title{font-size:22px;font-weight:800;color:#1E293B;margin-bottom:4px;letter-spacing:-0.3px}
+    .wcard-sub{font-size:14px;color:#64748B;font-family:'Sarabun',sans-serif}
+    .wcard-body{padding:24px 28px;overflow-y:auto;max-height:340px}
+    .form-group{margin-bottom:16px}
+    label{font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:5px}
+    label .req{color:#EF4444}
+    label .opt{color:#94A3B8;font-weight:400;text-transform:none;font-size:10px}
+    input,select,textarea{width:100%;border:1.5px solid #E2E8F0;border-radius:10px;padding:10px 13px;font-size:14px;font-family:'Sarabun',sans-serif;color:#1E293B;outline:none;transition:border-color 0.15s}
+    input:focus,select:focus,textarea:focus{border-color:#3B82F6;box-shadow:0 0 0 3px rgba(59,130,246,0.1)}
+    input.has-val{border-color:#10B981;background:#F0FDF4}
+    input::placeholder{color:#CBD5E1}
+    textarea{resize:none;min-height:80px;line-height:1.6}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .hint-text{font-size:11px;color:#94A3B8;margin-top:4px;font-family:'Sarabun',sans-serif}
+
+    /* Project pill select in wizard */
+    .proj-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+    .proj-pill{display:flex;align-items:center;gap:6px;padding:6px 12px;border:1.5px solid #E2E8F0;border-radius:20px;cursor:pointer;font-size:13px;color:#64748B;font-family:'Sarabun',sans-serif;transition:all 0.15s}
+    .proj-pill:hover{border-color:#3B82F6;color:#3B82F6}
+    .proj-pill.sel{border-color:#3B82F6;background:#EFF6FF;color:#3B82F6}
+    .proj-dot{width:8px;height:8px;border-radius:2px}
+    .role-select-row{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:9px;margin-top:8px}
+    .rsr-proj{font-size:12px;font-weight:600;color:#1E293B;font-family:'Sarabun',sans-serif;flex:1}
+    .rsr-sel{border:1px solid #E2E8F0;border-radius:7px;padding:4px 8px;font-size:12px;background:white;color:#64748B;outline:none}
+
+    /* Footer */
+    .wcard-footer{padding:16px 28px;border-top:1px solid #F8FAFC;display:flex;align-items:center;gap:10px;background:#FAFAFA}
+    .progress-text{font-size:12px;color:#94A3B8;flex:1}
+    .btn{padding:10px 20px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all 0.15s}
+    .btn-back{background:white;border:1.5px solid #E2E8F0;color:#64748B}
+    .btn-back:hover{background:#F8FAFC}
+    .btn-next{background:#3B82F6;color:white}
+    .btn-next:hover{background:#2563EB}
+    .btn-save{background:linear-gradient(135deg,#10B981,#059669);color:white}
+
+    /* Done state */
+    .done-card{text-align:center;padding:32px 28px}
+    .done-icon{font-size:48px;margin-bottom:12px}
+    .done-title{font-size:22px;font-weight:800;color:#1E293B;margin-bottom:6px}
+    .done-sub{font-size:14px;color:#64748B;font-family:'Sarabun',sans-serif;margin-bottom:20px}
+    .done-actions{display:flex;gap:10px;justify-content:center}
+
+    .annot{position:fixed;bottom:16px;left:16px;background:#1E293B;border:1px solid #334155;border-radius:10px;padding:10px 14px;max-width:240px;z-index:10}
+    .annot-title{font-size:10px;font-weight:700;color:#60A5FA;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+    .annot-text{font-size:11px;color:#64748B;line-height:1.5;font-family:'Sarabun',sans-serif}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="input_index.html" class="back-link">← กลับ</a>
+    <div class="logo">MyContacts</div>
+    <span class="label-tag">Form 3 · Step Wizard</span>
+    <div class="nav-links">
+      <a href="input2_drawer.html" class="nav-link">← Drawer</a>
+      <a href="input4_inline.html" class="nav-link">Inline →</a>
+    </div>
+  </div>
+
+  <div class="wizard-container">
+    <!-- Steps bar -->
+    <div class="steps-bar">
+      <div class="step-item">
+        <div class="step-circle done">✓</div>
+        <div class="step-label done">พื้นฐาน</div>
+      </div>
+      <div class="step-connector done"></div>
+      <div class="step-item">
+        <div class="step-circle active">2</div>
+        <div class="step-label active">ติดต่อ</div>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-item">
+        <div class="step-circle upcoming">3</div>
+        <div class="step-label">โปรเจค</div>
+      </div>
+      <div class="step-connector"></div>
+      <div class="step-item">
+        <div class="step-circle upcoming">4</div>
+        <div class="step-label">เสร็จ</div>
+      </div>
+    </div>
+
+    <!-- Wizard Card: Step 2 (active) -->
+    <div class="wizard-card">
+      <div class="wcard-header">
+        <div class="step-badge">📱 ขั้นที่ 2 / 4</div>
+        <div class="wcard-title">ข้อมูลติดต่อ</div>
+        <div class="wcard-sub">กรอก Email, เบอร์โทร และ Line ID (ไม่บังคับทุก field)</div>
+      </div>
+      <div class="wcard-body">
+        <!-- Preview of step 1 done -->
+        <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:9px;padding:10px 14px;margin-bottom:18px;display:flex;align-items:center;gap:10px">
+          <span style="font-size:16px">✅</span>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:#166534;font-family:'Sarabun',sans-serif">สมชาย มีสุข (ชาย) · Core Banking IT</div>
+            <div style="font-size:11px;color:#166534;opacity:0.7;font-family:'Sarabun',sans-serif">บันทึกข้อมูลพื้นฐานแล้ว</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Email หลัก <span class="req">*</span></label>
+          <input type="email" value="somchai.m@company.co.th" class="has-val">
+          <div class="hint-text">Email ขององค์กร — ถ้าเป็น Vendor อาจมีหลาย Email</div>
+        </div>
+        <div class="form-group">
+          <label>Email สำรอง <span class="opt">(ไม่บังคับ · สำหรับ Vendor)</span></label>
+          <input type="email" placeholder="email2@example.com">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>โทรศัพท์ <span class="opt">(ไม่บังคับ)</span></label>
+            <input type="text" value="081-234-5678" class="has-val">
+          </div>
+          <div class="form-group">
+            <label>Line ID <span class="opt">(ไม่บังคับ)</span></label>
+            <input type="text" value="@cha_somchai" class="has-val">
+          </div>
+        </div>
+      </div>
+      <div class="wcard-footer">
+        <div class="progress-text">กรอกครบ 3/4 fields แล้ว</div>
+        <button class="btn btn-back">← ย้อนกลับ</button>
+        <button class="btn btn-next">ถัดไป: โปรเจค →</button>
+      </div>
+    </div>
+
+    <!-- Step 3 preview (collapsed teaser) -->
+    <div style="margin-top:12px;max-width:560px;width:100%;padding:10px 16px;background:white;border:1px solid #F1F5F9;border-radius:10px;display:flex;align-items:center;gap:10px;opacity:0.5">
+      <div style="width:28px;height:28px;border-radius:50%;background:#F1F5F9;color:#94A3B8;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">3</div>
+      <div style="font-size:13px;color:#94A3B8;font-family:'Sarabun',sans-serif">ขั้นถัดไป: เพิ่มโปรเจค · COBRA, ATLAS, NEXUS, PHOENIX</div>
+    </div>
+  </div>
+
+  <div class="annot">
+    <div class="annot-title">Form 3 · Step Wizard</div>
+    <div class="annot-text">4 ขั้นตอน: พื้นฐาน → ติดต่อ → โปรเจค → เสร็จ ✓ ไม่ overwhelm · เห็น progress ชัดเจน · แก้ขั้นก่อนหน้าได้</div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<!-- v1.0 | Design 3: Command Palette — Compact overlay, keyboard-first -->
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design 3 — Command Palette</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Sarabun', 'Inter', sans-serif; font-size: 14px; overflow: hidden; height: 100vh; }
+
+/* === App background (blurred) === */
+.app-bg { position: fixed; inset: 0; display: flex; filter: blur(2px) brightness(0.7); pointer-events: none; }
+.bg-sidebar { width: 220px; background: #0F172A; height: 100%; }
+.bg-content { flex: 1; background: #F1F5F9; padding: 24px; }
+.bg-topbar { height: 52px; background: #fff; border-radius: 8px; margin-bottom: 16px; }
+.bg-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.bg-card { height: 80px; background: #fff; border-radius: 8px; opacity: 0.7; }
+.bg-list { margin-top: 16px; }
+.bg-list-item { height: 52px; background: #fff; border-radius: 6px; margin-bottom: 8px; opacity: 0.7; }
+
+/* === Dark overlay === */
+.overlay { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.75); display: flex; align-items: flex-start; justify-content: center; padding-top: 80px; }
+
+/* === Command Palette === */
+.palette { width: 640px; background: #1E293B; border-radius: 14px; box-shadow: 0 25px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08); overflow: hidden; }
+
+/* Search bar */
+.palette-search { display: flex; align-items: flex-start; gap: 12px; padding: 16px 18px; border-bottom: 1px solid #334155; }
+.search-icon { color: #64748B; flex-shrink: 0; margin-top: 3px; }
+.search-wrap { flex: 1; }
+.search-label { font-size: 10px; font-weight: 600; color: #64748B; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+.search-textarea { width: 100%; background: transparent; border: none; outline: none; font-size: 15px; color: #F8FAFC; font-family: inherit; resize: none; line-height: 1.6; min-height: 100px; }
+.search-textarea::placeholder { color: #475569; }
+.parse-btn { background: #6366F1; color: #fff; border: none; border-radius: 7px; padding: 6px 14px; font-size: 12px; font-family: inherit; font-weight: 600; cursor: pointer; flex-shrink: 0; margin-top: 20px; transition: background 0.15s; }
+.parse-btn:hover { background: #4F46E5; }
+
+/* Stats strip */
+.stats-strip { padding: 8px 18px; background: #162032; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #1E293B; }
+.stat { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.stat-dot { width: 7px; height: 7px; border-radius: 50%; }
+.s-total { background: #6366F1; }
+.s-found { background: #10B981; }
+.s-new { background: #F59E0B; }
+.stat-label { color: #64748B; }
+.stat-value { color: #E2E8F0; font-weight: 600; }
+.stats-meeting { margin-left: auto; font-size: 11px; color: #475569; }
+
+/* Tabs */
+.palette-tabs { display: flex; border-bottom: 1px solid #334155; }
+.p-tab { flex: 1; padding: 8px; text-align: center; font-size: 12px; font-weight: 500; color: #64748B; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; }
+.p-tab:hover { color: #94A3B8; }
+.p-tab.active { color: #A5B4FC; border-bottom-color: #6366F1; }
+
+/* Results list */
+.results { max-height: 320px; overflow-y: auto; }
+
+/* Section separator */
+.result-sep { padding: 6px 18px 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #475569; display: flex; align-items: center; gap: 8px; }
+.result-sep::after { content: ''; flex: 1; height: 1px; background: #334155; }
+
+/* Result row */
+.result-row { padding: 10px 18px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: background 0.1s; }
+.result-row:hover, .result-row.active-row { background: #334155; }
+.result-row.active-row { background: #312E81; }
+
+.r-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px; flex-shrink: 0; }
+.av-found { background: #1E3A5F; color: #60A5FA; }
+.av-new { background: #3B2A1A; color: #F59E0B; }
+
+.r-info { flex: 1; min-width: 0; }
+.r-name { font-size: 13px; font-weight: 600; color: #F1F5F9; margin-bottom: 1px; }
+.r-sub { font-size: 11px; color: #64748B; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.r-status { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+
+.badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+.badge-found { background: #064E3B; color: #34D399; border: 1px solid #065F46; }
+.badge-new { background: #451A03; color: #FCD34D; border: 1px solid #78350F; }
+.badge-similar { background: #1E1B4B; color: #A5B4FC; border: 1px solid #312E81; }
+
+.r-action-btns { display: flex; gap: 4px; }
+.r-btn { font-size: 10px; padding: 3px 8px; border-radius: 5px; border: none; cursor: pointer; font-family: inherit; font-weight: 500; transition: all 0.15s; }
+.r-btn-view { background: #334155; color: #94A3B8; }
+.r-btn-view:hover { background: #475569; color: #E2E8F0; }
+.r-btn-note { background: #1E3A5F; color: #60A5FA; }
+.r-btn-note:hover { background: #1D4ED8; color: #fff; }
+.r-btn-add { background: #451A03; color: #FCD34D; }
+.r-btn-add:hover { background: #D97706; color: #fff; }
+
+/* Inline expand panel */
+.expand-panel { background: #162032; border-top: 1px solid #1E293B; border-bottom: 1px solid #1E293B; padding: 12px 18px 12px 62px; }
+.expand-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px 16px; margin-bottom: 10px; }
+.expand-field label { font-size: 10px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.4px; display: block; margin-bottom: 2px; }
+.expand-field span { font-size: 12px; color: #CBD5E1; }
+.expand-actions { display: flex; gap: 8px; }
+.ea-btn { font-size: 11px; padding: 5px 12px; border-radius: 6px; border: none; cursor: pointer; font-family: inherit; font-weight: 500; }
+.ea-primary { background: #6366F1; color: #fff; }
+.ea-ghost { background: #334155; color: #94A3B8; }
+
+/* Footer */
+.palette-footer { padding: 10px 18px; background: #162032; border-top: 1px solid #1E293B; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.kbd-hint { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #475569; }
+kbd { background: #334155; color: #94A3B8; border: 1px solid #475569; border-radius: 4px; padding: 1px 5px; font-size: 10px; font-family: monospace; }
+.footer-action { margin-left: auto; display: flex; gap: 8px; }
+.fa-btn { font-size: 12px; padding: 6px 14px; border-radius: 7px; border: none; cursor: pointer; font-family: inherit; font-weight: 500; }
+.fa-ghost { background: #334155; color: #94A3B8; }
+.fa-primary { background: #6366F1; color: #fff; }
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- App background (blurred) -->
+<div class="app-bg">
+  <div class="bg-sidebar"></div>
+  <div class="bg-content">
+    <div class="bg-topbar"></div>
+    <div class="bg-cards">
+      <div class="bg-card"></div>
+      <div class="bg-card"></div>
+      <div class="bg-card"></div>
+    </div>
+    <div class="bg-list">
+      <div class="bg-list-item"></div>
+      <div class="bg-list-item"></div>
+      <div class="bg-list-item"></div>
+      <div class="bg-list-item"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Trigger hint -->
+<div style="position:fixed; top:20px; left:50%; transform:translateX(-50%); background:rgba(30,41,59,0.9); color:#94A3B8; font-size:12px; padding:6px 14px; border-radius:20px; border:1px solid #334155; z-index:10;">
+  เปิดด้วย <kbd style="background:#475569;color:#E2E8F0;border:1px solid #64748B;border-radius:3px;padding:2px 6px;font-size:11px;">Ctrl+M</kbd> หรือคลิก "ตรวจสอบผู้เข้าประชุม" ในเมนู
+</div>
+
+<!-- Overlay + Palette -->
+<div class="overlay">
+  <div class="palette">
+
+    <!-- Search / Paste area -->
+    <div class="palette-search">
+      <div class="search-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div class="search-wrap">
+        <div class="search-label">วาง List ผู้เข้าประชุม</div>
+        <textarea class="search-textarea" rows="4">สมชาย วงษ์ศิลป์
+วรรณา ประสพโชค
+อรุณี สุขสันต์
+นิตยา รักไทย
+มานะ พงษ์สุข
+วิชาญ ศรีเมือง
+สุดาพร ทองดี</textarea>
+      </div>
+      <button class="parse-btn">🔍 ค้นหา</button>
+    </div>
+
+    <!-- Stats strip -->
+    <div class="stats-strip">
+      <div class="stat">
+        <div class="stat-dot s-total"></div>
+        <span class="stat-label">ทั้งหมด</span>
+        <span class="stat-value">7</span>
+      </div>
+      <div class="stat">
+        <div class="stat-dot s-found"></div>
+        <span class="stat-label">พบ</span>
+        <span class="stat-value" style="color:#34D399">4</span>
+      </div>
+      <div class="stat">
+        <div class="stat-dot s-new"></div>
+        <span class="stat-label">ใหม่</span>
+        <span class="stat-value" style="color:#FCD34D">3</span>
+      </div>
+      <div class="stats-meeting">📅 ประชุม COBRA Kickoff · 29 เม.ย. 2026</div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="palette-tabs">
+      <div class="p-tab active">ทั้งหมด (7)</div>
+      <div class="p-tab">✅ พบ (4)</div>
+      <div class="p-tab">➕ ใหม่ (3)</div>
+    </div>
+
+    <!-- Results -->
+    <div class="results">
+
+      <div class="result-sep">พบในระบบ</div>
+
+      <!-- Found 1 - expanded (active) -->
+      <div class="result-row active-row">
+        <div class="r-avatar av-found">สช</div>
+        <div class="r-info">
+          <div class="r-name">สมชาย วงษ์ศิลป์</div>
+          <div class="r-sub">C001 · Core Banking IT · หัวหน้าทีม IT · somchai@bank.th</div>
+        </div>
+        <div class="r-status">
+          <div class="badge badge-found">✓ พบ</div>
+          <div class="r-action-btns">
+            <button class="r-btn r-btn-note">📝 Note</button>
+            <button class="r-btn r-btn-view">ดู</button>
+          </div>
+        </div>
+      </div>
+      <!-- Expanded detail for row 1 -->
+      <div class="expand-panel">
+        <div class="expand-grid">
+          <div class="expand-field"><label>ทีม</label><span>Core Banking IT</span></div>
+          <div class="expand-field"><label>ตำแหน่ง</label><span>หัวหน้าทีม IT</span></div>
+          <div class="expand-field"><label>โปรเจค</label><span>COBRA, ATLAS</span></div>
+          <div class="expand-field"><label>อีเมล</label><span>somchai@bank.th</span></div>
+          <div class="expand-field"><label>โทรศัพท์</label><span>081-234-5678</span></div>
+          <div class="expand-field"><label>Note ล่าสุด</label><span>14 เม.ย. 2026</span></div>
+        </div>
+        <div class="expand-actions">
+          <button class="ea-btn ea-primary">📝 เพิ่ม Note ประชุมนี้</button>
+          <button class="ea-btn ea-ghost">✏️ แก้ไขข้อมูล</button>
+          <button class="ea-btn ea-ghost">🔗 เปิดหน้า Contact</button>
+        </div>
+      </div>
+
+      <!-- Found 2 -->
+      <div class="result-row">
+        <div class="r-avatar av-found">วร</div>
+        <div class="r-info">
+          <div class="r-name">วรรณา ประสพโชค</div>
+          <div class="r-sub">C002 · Digital Banking IT · wannapa@bank.th</div>
+        </div>
+        <div class="r-status">
+          <div class="badge badge-found">✓ พบ</div>
+          <div class="r-action-btns">
+            <button class="r-btn r-btn-note">📝 Note</button>
+            <button class="r-btn r-btn-view">ดู</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Found 3 -->
+      <div class="result-row">
+        <div class="r-avatar av-found">อร</div>
+        <div class="r-info">
+          <div class="r-name">อรุณี สุขสันต์</div>
+          <div class="r-sub">C005 · Senior Management · CIO</div>
+        </div>
+        <div class="r-status">
+          <div class="badge badge-found">✓ พบ</div>
+          <div class="r-action-btns">
+            <button class="r-btn r-btn-note">📝 Note</button>
+            <button class="r-btn r-btn-view">ดู</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Found 4 -->
+      <div class="result-row">
+        <div class="r-avatar av-found" style="background:#2D1B69;color:#C4B5FD">นต</div>
+        <div class="r-info">
+          <div class="r-name">นิตยา รักไทย</div>
+          <div class="r-sub">C004 · PMO · Project Manager · NEXUS</div>
+        </div>
+        <div class="r-status">
+          <div class="badge badge-found">✓ พบ</div>
+          <div class="r-action-btns">
+            <button class="r-btn r-btn-note">📝 Note</button>
+            <button class="r-btn r-btn-view">ดู</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-sep">ยังไม่มีในระบบ</div>
+
+      <!-- New 1 -->
+      <div class="result-row">
+        <div class="r-avatar av-new">มน</div>
+        <div class="r-info">
+          <div class="r-name" style="color:#FCD34D">มานะ พงษ์สุข</div>
+          <div class="r-sub">ไม่พบในระบบ Contact</div>
+        </div>
+        <div class="r-status">
+          <div class="badge badge-new">➕ ใหม่</div>
+          <div class="r-action-btns">
+            <button class="r-btn r-btn-add">+ เพิ่ม</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- New 2 -->
+      <div class="result-row">
+        <div class="r-avatar av-new">วช</div>
+        <div class="r-info">
+          <div class="r-name" style="color:#FCD34D">วิชาญ ศรีเมือง</div>
+          <div class="r-sub">ไม่พบในระบบ Contact</div>
+        </div>
+        <div class="r-status">
+          <div class="badge badge-new">➕ ใหม่</div>
+          <div class="r-action-btns">
+            <button class="r-btn r-btn-add">+ เพิ่ม</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- New 3 -->
+      <div class="result-row">
+        <div class="r-avatar av-new">สด</div>
+        <div class="r-info">
+          <div class="r-name" style="color:#FCD34D">สุดาพร ทองดี</div>
+          <div class="r-sub">ไม่พบในระบบ Contact</div>
+        </div>
+        <div class="r-status">
+          <div class="badge badge-new">➕ ใหม่</div>
+          <div class="r-action-btns">
+            <button class="r-btn r-btn-add">+ เพิ่ม</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="palette-footer">
+      <div class="kbd-hint"><kbd>↑↓</kbd> เลือก</div>
+      <div class="kbd-hint"><kbd>Enter</kbd> ขยาย/ยุบ</div>
+      <div class="kbd-hint"><kbd>N</kbd> Note</div>
+      <div class="kbd-hint"><kbd>A</kbd> เพิ่มใหม่</div>
+      <div class="kbd-hint"><kbd>ESC</kbd> ปิด</div>
+      <div class="footer-action">
+        <button class="fa-btn fa-ghost">📝 Note ทุกคน</button>
+        <button class="fa-btn fa-primary">➕ เพิ่ม 3 คนใหม่</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Label -->
+<div style="position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:rgba(30,41,59,0.95); color:#94A3B8; font-size:12px; padding:8px 16px; border-radius:20px; border:1px solid #334155; z-index:100; text-align:center;">
+  <strong style="color:#A5B4FC">Design 3 — Command Palette</strong>&nbsp;·&nbsp; Overlay เล็กกะทัดรัด, Keyboard-first, ไม่ออกจากหน้าปัจจุบัน
+</div>
+
+</body>
+</html>

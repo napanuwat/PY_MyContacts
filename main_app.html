@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyContacts — Main App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --cobra: #3B82F6; --atlas: #10B981; --nexus: #F59E0B; --phoenix: #EF4444;
+      --t-core: #6366F1; --t-digital: #0EA5E9; --t-settlement: #14B8A6;
+      --t-bizops: #8B5CF6; --t-pmo: #F97316; --t-senior: #BE185D; --t-vendor: #6B7280;
+    }
+    body { font-family: 'Inter','Sarabun',sans-serif; display:flex; flex-direction:column; height:100vh; overflow:hidden; background:#F1F5F9; color:#1E293B; }
+
+    /* ======= TOP BAR ======= */
+    .topbar {
+      display:flex; align-items:center; height:54px; background:#0F172A;
+      padding:0 16px; gap:10px; flex-shrink:0; border-bottom:1px solid #1E293B; z-index:50;
+    }
+    .logo { font-size:15px; font-weight:800; color:#60A5FA; letter-spacing:-0.5px; flex-shrink:0; }
+
+    /* Quick Find Bar in topbar */
+    .quick-find-bar {
+      flex:1; max-width:480px; display:flex; align-items:center; gap:8px;
+      background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.1);
+      border-radius:10px; padding:7px 12px; cursor:pointer; transition:all 0.15s;
+    }
+    .quick-find-bar:hover { border-color:rgba(99,102,241,0.5); background:rgba(99,102,241,0.08); }
+    .qfb-icon { color:#64748B; font-size:13px; }
+    .qfb-placeholder { font-size:13px; color:#475569; flex:1; font-family:'Sarabun',sans-serif; }
+    .qfb-kbd { display:flex; gap:3px; }
+    .kbd { font-size:10px; padding:2px 5px; border-radius:4px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); color:#64748B; font-weight:600; }
+
+    /* Main view tabs */
+    .view-tabs { display:flex; background:rgba(255,255,255,0.05); border-radius:8px; padding:3px; gap:2px; margin-left:8px; }
+    .view-tab { padding:5px 14px; border-radius:6px; font-size:12px; color:#64748B; cursor:pointer; border:none; background:none; font-weight:500; transition:all 0.15s; white-space:nowrap; }
+    .view-tab.active { background:#1E293B; color:#E2E8F0; }
+    .view-tab:hover:not(.active) { color:#94A3B8; }
+
+    .topbar-right { margin-left:auto; display:flex; align-items:center; gap:8px; flex-shrink:0; }
+    .btn { padding:7px 13px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; border:none; display:flex; align-items:center; gap:5px; transition:all 0.15s; }
+    .btn-primary { background:#3B82F6; color:white; }
+    .btn-primary:hover { background:#2563EB; }
+    .btn-ghost { background:rgba(255,255,255,0.06); color:#94A3B8; border:1px solid rgba(255,255,255,0.1); }
+    .btn-ghost:hover { background:rgba(255,255,255,0.1); }
+    .avatar { width:30px; height:30px; border-radius:50%; background:#4338CA; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:white; }
+
+    /* ======= MAIN LAYOUT ======= */
+    .main { display:flex; flex:1; overflow:hidden; position:relative; }
+
+    /* ======= LEFT SIDEBAR ======= */
+    .sidebar { width:210px; background:#0F172A; border-right:1px solid #1E293B; display:flex; flex-direction:column; overflow-y:auto; flex-shrink:0; }
+    .sb-section { padding:14px 10px 8px; }
+    .sb-title { font-size:9px; font-weight:700; color:#334155; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:6px; padding:0 4px; }
+    .nav-item { display:flex; align-items:center; gap:7px; padding:6px 9px; border-radius:7px; font-size:12px; color:#64748B; cursor:pointer; margin-bottom:1px; transition:all 0.12s; font-family:'Sarabun',sans-serif; }
+    .nav-item:hover { background:rgba(255,255,255,0.05); color:#CBD5E1; }
+    .nav-item.active { background:rgba(59,130,246,0.15); color:#60A5FA; }
+    .nav-count { margin-left:auto; font-size:10px; background:rgba(255,255,255,0.06); padding:1px 6px; border-radius:8px; color:#475569; }
+    .dot8 { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .sq8 { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+    .sb-divider { height:1px; background:#1E293B; margin:4px 10px; }
+
+    /* ======= CONTACT LIST ======= */
+    .contact-list { width:300px; background:white; border-right:1px solid #E2E8F0; display:flex; flex-direction:column; overflow:hidden; flex-shrink:0; }
+    .list-header { padding:12px 14px 8px; border-bottom:1px solid #F1F5F9; background:white; flex-shrink:0; }
+    .list-title { font-size:14px; font-weight:700; color:#1E293B; margin-bottom:7px; }
+    .search-box { display:flex; align-items:center; gap:7px; background:#F8FAFC; border:1.5px solid #E2E8F0; border-radius:8px; padding:6px 10px; }
+    .search-box:focus-within { border-color:#3B82F6; }
+    .search-input { border:none; background:none; font-size:12px; color:#1E293B; outline:none; flex:1; font-family:'Sarabun',sans-serif; }
+    .search-input::placeholder { color:#94A3B8; }
+    .filter-row { display:flex; gap:4px; margin-top:6px; flex-wrap:wrap; }
+    .fchip { font-size:10px; padding:2px 8px; border-radius:12px; cursor:pointer; background:#F1F5F9; color:#64748B; border:1px solid #E2E8F0; font-weight:500; }
+    .fchip.active { background:rgba(59,130,246,0.1); color:#3B82F6; border-color:rgba(59,130,246,0.3); }
+
+    .list-body { overflow-y:auto; flex:1; }
+    .contact-row { display:flex; align-items:center; gap:9px; padding:9px 12px; border-bottom:1px solid #F8FAFC; cursor:pointer; transition:background 0.1s; }
+    .contact-row:hover { background:#F8FAFC; }
+    .contact-row.selected { background:#EFF6FF; border-left:3px solid #3B82F6; }
+    .contact-row.selected .cname { color:#1D4ED8; }
+    .c-avatar { width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:white; flex-shrink:0; }
+    .c-info { flex:1; min-width:0; }
+    .cname { font-size:12px; font-weight:600; color:#1E293B; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-family:'Sarabun',sans-serif; }
+    .cmeta { font-size:10px; color:#94A3B8; font-family:'Sarabun',sans-serif; }
+    .c-badges { display:flex; flex-direction:column; align-items:flex-end; gap:2px; flex-shrink:0; }
+    .pbadge { font-size:9px; font-weight:700; padding:1px 5px; border-radius:3px; color:white; }
+
+    /* ======= DETAIL PANEL ======= */
+    .detail-panel { flex:1; display:flex; flex-direction:column; overflow:hidden; background:white; }
+
+    .dp-header { padding:18px 24px 14px; border-bottom:1px solid #F1F5F9; display:flex; align-items:flex-start; gap:14px; flex-shrink:0; }
+    .dp-avatar { width:56px; height:56px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700; color:white; flex-shrink:0; }
+    .dp-names { flex:1; }
+    .dp-fullname { font-size:20px; font-weight:700; color:#1E293B; font-family:'Sarabun',sans-serif; margin-bottom:2px; }
+    .dp-en { font-size:12px; color:#94A3B8; margin-bottom:5px; font-style:italic; }
+    .dp-tags { display:flex; flex-wrap:wrap; gap:5px; }
+    .tag-team { font-size:11px; padding:3px 9px; border-radius:6px; font-weight:500; color:white; }
+    .tag-role { font-size:11px; padding:3px 9px; border-radius:6px; font-weight:500; background:rgba(99,102,241,0.1); color:#6366F1; border:1px solid rgba(99,102,241,0.2); }
+    .dp-actions { display:flex; gap:6px; flex-shrink:0; }
+    .act-btn { padding:6px 12px; border-radius:7px; font-size:11px; font-weight:500; border:1px solid #E2E8F0; background:white; color:#64748B; cursor:pointer; }
+    .act-btn:hover { background:#F8FAFC; }
+    .act-btn.primary { background:#3B82F6; color:white; border-color:#3B82F6; }
+
+    /* Tabs */
+    .dp-tabs { display:flex; padding:0 24px; border-bottom:1px solid #F1F5F9; flex-shrink:0; }
+    .dp-tab { padding:10px 14px; font-size:12px; font-weight:500; color:#94A3B8; border-bottom:2px solid transparent; cursor:pointer; font-family:'Sarabun',sans-serif; white-space:nowrap; transition:all 0.12s; }
+    .dp-tab:hover { color:#64748B; }
+    .dp-tab.active { color:#3B82F6; border-bottom-color:#3B82F6; }
+    .tab-badge { font-size:10px; background:#EFF6FF; color:#3B82F6; padding:1px 5px; border-radius:8px; margin-left:4px; }
+
+    .dp-content { flex:1; overflow-y:auto; padding:18px 24px; }
+
+    /* Info Tab */
+    .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
+    .info-item label { font-size:10px; color:#94A3B8; font-weight:600; text-transform:uppercase; letter-spacing:0.8px; display:block; margin-bottom:3px; }
+    .info-val { font-size:12px; color:#1E293B; font-family:'Sarabun',sans-serif; }
+    .info-val a { color:#3B82F6; text-decoration:none; }
+
+    /* Projects in info */
+    .proj-card { background:#F8FAFC; border:1px solid #E2E8F0; border-radius:9px; padding:10px 12px; margin-bottom:7px; display:flex; align-items:center; gap:10px; }
+    .proj-bar { width:4px; height:34px; border-radius:2px; flex-shrink:0; }
+    .proj-info { flex:1; }
+    .proj-name { font-size:12px; font-weight:600; color:#1E293B; font-family:'Sarabun',sans-serif; margin-bottom:2px; }
+    .proj-sub { font-size:10px; color:#94A3B8; font-family:'Sarabun',sans-serif; }
+    .role-pill { font-size:10px; font-weight:600; padding:3px 9px; border-radius:12px; }
+    .role-main { background:rgba(239,68,68,0.1); color:#EF4444; border:1px solid rgba(239,68,68,0.2); }
+    .role-support { background:#F1F5F9; color:#64748B; border:1px solid #E2E8F0; }
+    .role-pm { background:rgba(245,158,11,0.1); color:#F59E0B; border:1px solid rgba(245,158,11,0.2); }
+
+    /* ======= NOTES TAB ======= */
+    .notes-section { margin-bottom:22px; }
+    .notes-section-title { font-size:11px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+    .notes-section-title::after { content:''; flex:1; height:1px; background:#F1F5F9; }
+
+    /* General Note */
+    .general-note-box { background:#FFFBEB; border:1px solid #FDE68A; border-radius:10px; overflow:hidden; }
+    .gn-header { padding:8px 12px; display:flex; align-items:center; gap:6px; border-bottom:1px solid #FDE68A; }
+    .gn-icon { font-size:13px; }
+    .gn-label { font-size:11px; font-weight:600; color:#92400E; }
+    .gn-autosave { margin-left:auto; font-size:10px; color:#B45309; }
+    .gn-textarea { width:100%; border:none; background:transparent; padding:10px 12px; font-size:13px; font-family:'Sarabun',sans-serif; color:#1E293B; outline:none; resize:none; min-height:72px; line-height:1.6; }
+
+    /* Project Note Cards */
+    .note-card { border:1px solid #E2E8F0; border-radius:10px; margin-bottom:10px; overflow:hidden; }
+    .nc-header { padding:10px 14px; display:flex; align-items:center; gap:10px; cursor:pointer; }
+    .nc-header:hover { background:#F8FAFC; }
+    .nc-proj-dot { width:10px; height:10px; border-radius:3px; flex-shrink:0; }
+    .nc-title { font-size:13px; font-weight:600; color:#1E293B; font-family:'Sarabun',sans-serif; flex:1; }
+    .nc-date { font-size:10px; color:#94A3B8; }
+    .nc-toggle { font-size:11px; color:#CBD5E1; transition:transform 0.15s; }
+    .nc-toggle.open { transform:rotate(90deg); }
+    .nc-badge { font-size:10px; font-weight:600; padding:2px 7px; border-radius:4px; }
+    .nc-body { padding:0 14px 12px; border-top:1px solid #F1F5F9; display:none; }
+    .nc-body.open { display:block; padding-top:10px; }
+
+    /* Activity / Todo items in cards */
+    .activity-item { display:flex; align-items:flex-start; gap:8px; padding:6px 0; border-bottom:1px solid #F8FAFC; }
+    .activity-item:last-child { border-bottom:none; }
+    .todo-check { width:16px; height:16px; border-radius:4px; border:1.5px solid #CBD5E1; flex-shrink:0; cursor:pointer; display:flex; align-items:center; justify-content:center; margin-top:1px; }
+    .todo-check.done { background:#10B981; border-color:#10B981; color:white; font-size:10px; }
+    .todo-text { flex:1; font-size:12px; color:#374151; font-family:'Sarabun',sans-serif; line-height:1.5; }
+    .todo-text.done-text { text-decoration:line-through; color:#9CA3AF; }
+    .todo-date { font-size:10px; color:#94A3B8; flex-shrink:0; }
+    .todo-date.overdue { color:#EF4444; font-weight:600; }
+    .todo-date.near { color:#F59E0B; font-weight:500; }
+
+    .nc-add-todo { display:flex; align-items:center; gap:8px; padding:6px 0; cursor:pointer; color:#94A3B8; font-size:11px; font-family:'Sarabun',sans-serif; }
+    .nc-add-todo:hover { color:#3B82F6; }
+
+    /* ======= TODO TAB ======= */
+    .todo-filter-row { display:flex; gap:6px; margin-bottom:14px; }
+    .todo-fchip { font-size:11px; padding:4px 10px; border-radius:12px; cursor:pointer; background:#F1F5F9; color:#64748B; border:1px solid #E2E8F0; font-weight:500; }
+    .todo-fchip.active { background:rgba(59,130,246,0.1); color:#3B82F6; border-color:rgba(59,130,246,0.3); }
+
+    .todo-group { margin-bottom:20px; }
+    .todo-group-title { font-size:11px; font-weight:700; color:#94A3B8; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+    .todo-group-dot { width:8px; height:8px; border-radius:2px; }
+    .todo-row { display:flex; align-items:flex-start; gap:10px; padding:8px 10px; background:#F8FAFC; border-radius:8px; margin-bottom:5px; border:1px solid #F1F5F9; }
+    .todo-row:hover { border-color:#E2E8F0; }
+    .todo-row.done-row { opacity:0.5; }
+    .todo-info { flex:1; min-width:0; }
+    .todo-main { font-size:12px; color:#1E293B; font-family:'Sarabun',sans-serif; margin-bottom:3px; }
+    .todo-main.strikethrough { text-decoration:line-through; color:#9CA3AF; }
+    .todo-source { font-size:10px; color:#94A3B8; font-family:'Sarabun',sans-serif; display:flex; align-items:center; gap:4px; }
+    .todo-source-dot { width:6px; height:6px; border-radius:2px; }
+    .due-badge { font-size:10px; font-weight:600; padding:2px 7px; border-radius:5px; flex-shrink:0; }
+    .due-over { background:rgba(239,68,68,0.1); color:#EF4444; }
+    .due-near { background:rgba(245,158,11,0.1); color:#F59E0B; }
+    .due-ok { background:#F1F5F9; color:#64748B; }
+
+    /* ======= QUICK FIND OVERLAY ======= */
+    .qf-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:200; display:none; align-items:flex-start; justify-content:center; padding-top:80px; backdrop-filter:blur(4px); }
+    .qf-overlay.open { display:flex; }
+    .qf-modal { background:white; border-radius:16px; width:100%; max-width:580px; overflow:hidden; box-shadow:0 24px 60px rgba(0,0,0,0.3); }
+    .qf-search { display:flex; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px solid #F1F5F9; }
+    .qf-search-icon { font-size:18px; color:#3B82F6; }
+    .qf-input { flex:1; border:none; font-size:16px; color:#1E293B; outline:none; font-family:'Sarabun',sans-serif; }
+    .qf-input::placeholder { color:#CBD5E1; }
+    .qf-esc { font-size:11px; color:#94A3B8; padding:3px 7px; background:#F1F5F9; border-radius:5px; cursor:pointer; }
+
+    .qf-results { max-height:420px; overflow-y:auto; }
+    .qf-section-label { font-size:10px; font-weight:700; color:#94A3B8; text-transform:uppercase; letter-spacing:1px; padding:10px 16px 4px; }
+    .qf-result { display:flex; align-items:center; gap:10px; padding:10px 16px; cursor:pointer; transition:background 0.1s; }
+    .qf-result:hover, .qf-result.selected { background:#EFF6FF; }
+    .qf-r-avatar { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:white; flex-shrink:0; }
+    .qf-r-info { flex:1; min-width:0; }
+    .qf-r-name { font-size:13px; font-weight:600; color:#1E293B; font-family:'Sarabun',sans-serif; }
+    .qf-r-meta { font-size:11px; color:#94A3B8; font-family:'Sarabun',sans-serif; }
+    .qf-r-badges { display:flex; gap:4px; flex-shrink:0; }
+    .qf-badge { font-size:9px; font-weight:700; padding:2px 6px; border-radius:3px; color:white; }
+    .qf-r-enter { font-size:10px; color:#CBD5E1; }
+    .qf-footer { padding:8px 16px; border-top:1px solid #F1F5F9; display:flex; gap:12px; background:#F8FAFC; }
+    .qf-hint { font-size:10px; color:#94A3B8; display:flex; align-items:center; gap:4px; }
+    .qf-hint kbd { background:white; border:1px solid #E2E8F0; border-radius:3px; padding:1px 5px; font-size:10px; color:#475569; }
+
+    /* ======= GALAXY VIEW ======= */
+    .galaxy-view { flex:1; display:none; overflow:hidden; position:relative; }
+    .galaxy-view.active { display:flex; }
+    .gv-left { width:200px; background:rgba(15,23,42,0.95); border-right:1px solid rgba(255,255,255,0.06); display:flex; flex-direction:column; overflow-y:auto; }
+    .gv-canvas { flex:1; background:#0A0E1A; position:relative; overflow:hidden; }
+    .gv-right { width:260px; background:rgba(15,23,42,0.95); border-left:1px solid rgba(255,255,255,0.06); display:flex; flex-direction:column; overflow:hidden; }
+
+    /* galaxy panel styles */
+    .gv-section { padding:12px 12px 8px; border-bottom:1px solid rgba(255,255,255,0.06); }
+    .gv-title { font-size:9px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:8px; }
+    .gv-legend { display:flex; align-items:center; gap:6px; padding:4px 0; font-size:11px; color:#64748B; font-family:'Sarabun',sans-serif; }
+    .gv-toggle { display:flex; align-items:center; gap:6px; padding:5px 8px; background:rgba(255,255,255,0.04); border-radius:7px; margin-bottom:4px; cursor:pointer; }
+    .gv-toggle-label { font-size:11px; color:#64748B; font-family:'Sarabun',sans-serif; flex:1; }
+    .gv-sw { width:26px; height:13px; border-radius:7px; background:#334155; position:relative; }
+    .gv-sw.on { background:#4F46E5; }
+    .gv-sw::after { content:''; position:absolute; width:9px; height:9px; border-radius:50%; background:white; top:2px; left:2px; transition:left 0.15s; }
+    .gv-sw.on::after { left:15px; }
+
+    .gv-rp-header { padding:14px; border-bottom:1px solid rgba(255,255,255,0.06); }
+    .gv-rp-avatar { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:700; color:white; margin-bottom:8px; }
+    .gv-rp-name { font-size:14px; font-weight:700; color:#F1F5F9; font-family:'Sarabun',sans-serif; margin-bottom:2px; }
+    .gv-rp-sub { font-size:11px; color:#64748B; font-family:'Sarabun',sans-serif; }
+    .gv-rp-body { flex:1; overflow-y:auto; padding:12px 14px; }
+    .gv-info-row { display:flex; gap:6px; padding:4px 0; font-size:11px; color:#64748B; border-bottom:1px solid rgba(255,255,255,0.04); font-family:'Sarabun',sans-serif; align-items:center; }
+    .gv-conn { display:flex; align-items:center; gap:6px; padding:5px 7px; background:rgba(255,255,255,0.04); border-radius:7px; margin-bottom:4px; }
+    .gv-conn-dot { width:9px; height:9px; border-radius:2px; flex-shrink:0; }
+    .gv-conn-label { font-size:11px; color:#64748B; flex:1; font-family:'Sarabun',sans-serif; }
+    .gv-conn-role { font-size:9px; padding:2px 5px; border-radius:3px; }
+    .gv-rp-actions { padding:10px 14px; border-top:1px solid rgba(255,255,255,0.06); display:flex; gap:6px; flex-shrink:0; }
+    .gv-btn { flex:1; padding:7px; border-radius:7px; font-size:11px; font-weight:600; border:none; cursor:pointer; }
+    .gv-btn-p { background:#4F46E5; color:white; }
+    .gv-btn-g { background:rgba(255,255,255,0.06); color:#94A3B8; }
+
+    /* Section heading */
+    .sec-h { font-size:11px; font-weight:700; color:#475569; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+    .sec-h::after { content:''; flex:1; height:1px; background:#F1F5F9; }
+
+    /* Add note card button */
+    .add-card-btn { display:flex; align-items:center; gap:6px; padding:8px 12px; border:1.5px dashed #E2E8F0; border-radius:9px; font-size:12px; color:#94A3B8; cursor:pointer; transition:all 0.15s; font-family:'Sarabun',sans-serif; }
+    .add-card-btn:hover { border-color:#3B82F6; color:#3B82F6; background:#EFF6FF; }
+  </style>
+</head>
+<body>
+
+  <!-- ======= TOP BAR ======= -->
+  <div class="topbar">
+    <div class="logo">MyContacts</div>
+
+    <!-- Quick Find Bar -->
+    <div class="quick-find-bar" onclick="document.getElementById('qfOverlay').classList.add('open')">
+      <span class="qfb-icon">🔍</span>
+      <span class="qfb-placeholder">ค้นหาชื่อ, ทีม, โปรเจค...</span>
+      <div class="qfb-kbd"><span class="kbd">⌘</span><span class="kbd">K</span></div>
+    </div>
+
+    <!-- View Tabs -->
+    <div class="view-tabs">
+      <button class="view-tab active" onclick="switchView('contacts',this)">👥 Contacts</button>
+      <button class="view-tab" onclick="switchView('galaxy',this)">🌐 Galaxy</button>
+    </div>
+
+    <div class="topbar-right">
+      <a href="input_index.html" class="btn btn-ghost" style="text-decoration:none">⊞ Form Designs</a>
+      <button class="btn btn-primary" onclick="window.open('input_index.html')">+ เพิ่ม Contact</button>
+      <div class="avatar">TM</div>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- ======= CONTACTS VIEW ======= -->
+    <div id="contactsView" style="display:flex;flex:1;overflow:hidden">
+
+      <!-- Left Sidebar -->
+      <div class="sidebar">
+        <div class="sb-section">
+          <div class="sb-title">ดูทั้งหมด</div>
+          <div class="nav-item active"><span>👥</span>ทุก Contact<span class="nav-count">10</span></div>
+          <div class="nav-item"><span>⭐</span>สำคัญ<span class="nav-count">3</span></div>
+          <div class="nav-item"><span>🕐</span>เพิ่งเพิ่ม</div>
+        </div>
+        <div class="sb-divider"></div>
+        <div class="sb-section">
+          <div class="sb-title">โปรเจค</div>
+          <div class="nav-item active"><div class="dot8" style="background:var(--cobra)"></div>COBRA<span class="nav-count">4</span></div>
+          <div class="nav-item"><div class="dot8" style="background:var(--atlas)"></div>ATLAS<span class="nav-count">5</span></div>
+          <div class="nav-item"><div class="dot8" style="background:var(--nexus)"></div>NEXUS<span class="nav-count">3</span></div>
+          <div class="nav-item"><div class="dot8" style="background:var(--phoenix)"></div>PHOENIX<span class="nav-count">4</span></div>
+        </div>
+        <div class="sb-divider"></div>
+        <div class="sb-section">
+          <div class="sb-title">ทีม</div>
+          <div class="nav-item"><div class="sq8" style="background:var(--t-core)"></div>Core Banking IT<span class="nav-count">2</span></div>
+          <div class="nav-item"><div class="sq8" style="background:var(--t-digital)"></div>Digital Banking IT<span class="nav-count">2</span></div>
+          <div class="nav-item"><div class="sq8" style="background:var(--t-settlement)"></div>Settlement IT<span class="nav-count">1</span></div>
+          <div class="nav-item"><div class="sq8" style="background:var(--t-bizops)"></div>Business Ops<span class="nav-count">2</span></div>
+          <div class="nav-item"><div class="sq8" style="background:var(--t-pmo)"></div>PMO<span class="nav-count">1</span></div>
+          <div class="nav-item"><div class="sq8" style="background:var(--t-senior)"></div>Senior Mgmt<span class="nav-count">1</span></div>
+          <div class="nav-item"><div class="sq8" style="background:var(--t-vendor)"></div>Vendor<span class="nav-count">2</span></div>
+        </div>
+        <div class="sb-divider"></div>
+        <div class="sb-section">
+          <div class="sb-title">Role</div>
+          <div class="nav-item"><span style="font-size:9px;background:rgba(239,68,68,0.2);color:#EF4444;padding:1px 5px;border-radius:3px">M</span>Main Impact</div>
+          <div class="nav-item"><span style="font-size:9px;background:rgba(100,116,139,0.2);color:#94A3B8;padding:1px 5px;border-radius:3px">S</span>Supporter</div>
+          <div class="nav-item"><span style="font-size:9px;background:rgba(245,158,11,0.2);color:#F59E0B;padding:1px 5px;border-radius:3px">P</span>PM</div>
+        </div>
+      </div>
+
+      <!-- Contact List -->
+      <div class="contact-list">
+        <div class="list-header">
+          <div class="list-title">COBRA · 4 คน</div>
+          <div class="search-box">
+            <span style="color:#94A3B8;font-size:13px">🔍</span>
+            <input class="search-input" type="text" placeholder="ค้นหาในรายชื่อ...">
+          </div>
+          <div class="filter-row">
+            <span class="fchip active">ทั้งหมด</span>
+            <span class="fchip">Main</span>
+            <span class="fchip">IT</span>
+            <span class="fchip">PM</span>
+            <span class="fchip">A-Z ▾</span>
+          </div>
+        </div>
+        <div class="list-body">
+          <div class="contact-row selected">
+            <div class="c-avatar" style="background:var(--t-core)">ช</div>
+            <div class="c-info"><div class="cname">สมชาย มีสุข (ชาย)</div><div class="cmeta">QA Lead · Core Banking IT</div></div>
+            <div class="c-badges"><span class="pbadge" style="background:var(--cobra)">COBRA</span><span class="pbadge" style="background:var(--nexus)">NEXUS</span></div>
+          </div>
+          <div class="contact-row">
+            <div class="c-avatar" style="background:var(--t-pmo)">อั้</div>
+            <div class="c-info"><div class="cname">อนันต์ ใจดี (อั้น)</div><div class="cmeta">Project Manager · PMO</div></div>
+            <div class="c-badges"><span class="pbadge" style="background:var(--cobra)">COBRA</span><span class="pbadge" style="background:var(--atlas)">ATLAS</span></div>
+          </div>
+          <div class="contact-row">
+            <div class="c-avatar" style="background:var(--t-vendor)">SC</div>
+            <div class="c-info"><div class="cname">Sarah Chen</div><div class="cmeta">Tech Architect · Vendor: ABC Systems</div></div>
+            <div class="c-badges"><span class="pbadge" style="background:var(--nexus)">NEXUS</span></div>
+          </div>
+          <div class="contact-row">
+            <div class="c-avatar" style="background:var(--t-core)">ป้</div>
+            <div class="c-info"><div class="cname">ประภาส รักดี (ป้อม)</div><div class="cmeta">Developer · Core Banking IT</div></div>
+            <div class="c-badges"><span class="pbadge" style="background:var(--cobra)">COBRA</span></div>
+          </div>
+          <div style="padding:8px 12px;font-size:10px;color:#94A3B8;text-align:center;border-top:1px solid #F1F5F9">— ดูทั้งหมด 10 contacts —</div>
+          <div class="contact-row" style="opacity:0.5"><div class="c-avatar" style="background:var(--t-digital)">แน</div><div class="c-info"><div class="cname">นภาพร วงศ์ดี (แนน)</div><div class="cmeta">BA · Digital Banking IT</div></div><div class="c-badges"><span class="pbadge" style="background:var(--atlas)">ATLAS</span></div></div>
+          <div class="contact-row" style="opacity:0.5"><div class="c-avatar" style="background:var(--t-bizops)">หนิ</div><div class="c-info"><div class="cname">วรรณา ทองคำ (หนิง)</div><div class="cmeta">BA · Business Operations</div></div><div class="c-badges"><span class="pbadge" style="background:var(--phoenix)">PHX</span></div></div>
+        </div>
+      </div>
+
+      <!-- Detail Panel -->
+      <div class="detail-panel">
+        <div class="dp-header">
+          <div class="dp-avatar" style="background:var(--t-core)">ช</div>
+          <div class="dp-names">
+            <div class="dp-fullname">สมชาย มีสุข</div>
+            <div class="dp-en">Somchai Meesuk · ชื่อเล่น: ชาย</div>
+            <div class="dp-tags">
+              <span class="tag-team" style="background:var(--t-core)">Core Banking IT</span>
+              <span class="tag-role">QA Lead</span>
+            </div>
+          </div>
+          <div class="dp-actions">
+            <button class="act-btn primary" onclick="window.open('input_index.html')">✏️ แก้ไข</button>
+            <button class="act-btn">⭐</button>
+            <button class="act-btn" style="color:#EF4444">🗑</button>
+          </div>
+        </div>
+
+        <div class="dp-tabs">
+          <div class="dp-tab active" onclick="switchTab('info',this)">📋 ข้อมูล</div>
+          <div class="dp-tab" onclick="switchTab('notes',this)">📝 Notes<span class="tab-badge">3</span></div>
+          <div class="dp-tab" onclick="switchTab('todo',this)">☐ Todo<span class="tab-badge" style="background:#FEF3C7;color:#92400E">2</span></div>
+        </div>
+
+        <!-- ── TAB: INFO ── -->
+        <div class="dp-content" id="tab-info">
+          <div class="sec-h">ข้อมูลติดต่อ</div>
+          <div class="info-grid">
+            <div class="info-item"><label>📧 Email</label><div class="info-val"><a href="#">somchai.m@company.co.th</a></div></div>
+            <div class="info-item"><label>📱 โทรศัพท์</label><div class="info-val">081-234-5678</div></div>
+            <div class="info-item"><label>💬 Line</label><div class="info-val">@cha_somchai</div></div>
+            <div class="info-item"><label>🏢 ทีม</label><div class="info-val">Core Banking IT</div></div>
+            <div class="info-item"><label>👤 Direct Report</label><div class="info-val">นาย กฤษณ์ สมบูรณ์</div></div>
+            <div class="info-item"><label>📌 ตำแหน่ง</label><div class="info-val">QA Lead / Senior QA Engineer</div></div>
+          </div>
+          <div class="sec-h">โปรเจค (2)</div>
+          <div class="proj-card"><div class="proj-bar" style="background:var(--cobra)"></div><div class="proj-info"><div class="proj-name">🔵 COBRA — Core Banking Migration</div><div class="proj-sub">ดูแล Test Strategy และ Execution Plan</div></div><span class="role-pill role-main">Main Impact</span></div>
+          <div class="proj-card"><div class="proj-bar" style="background:var(--nexus)"></div><div class="proj-info"><div class="proj-name">🟡 NEXUS — Settlement System</div><div class="proj-sub">ช่วย Integration Test ระหว่างระบบ</div></div><span class="role-pill role-support">Supporter</span></div>
+        </div>
+
+        <!-- ── TAB: NOTES ── -->
+        <div class="dp-content" id="tab-notes" style="display:none">
+
+          <!-- General Note -->
+          <div class="notes-section">
+            <div class="notes-section-title">📌 General Note</div>
+            <div class="general-note-box">
+              <div class="gn-header">
+                <span class="gn-icon">📝</span>
+                <span class="gn-label">บันทึกทั่วไป — แก้ไขได้ตลอด</span>
+                <span class="gn-autosave">✓ Autosaved</span>
+              </div>
+              <textarea class="gn-textarea" placeholder="บันทึกอะไรก็ได้เกี่ยวกับคนนี้...">เชี่ยวชาญ UAT Banking เป็นพิเศษ — ถามเขาก่อนเลยเรื่อง Test Strategy ทุกครั้ง
+ตอบ Line เร็วมาก ติดตามผ่าน Line ได้ดีกว่า Email
+มีประสบการณ์ Migration มา 5+ ปี น่าจะเป็นคีย์แมนตลอดโปรเจค COBRA</textarea>
+            </div>
+          </div>
+
+          <!-- Project Note Cards -->
+          <div class="notes-section">
+            <div class="notes-section-title">🗂️ Project Notes / Sessions</div>
+
+            <!-- Card 1: COBRA Sprint 12 (expanded) -->
+            <div class="note-card">
+              <div class="nc-header" onclick="toggleCard(this)">
+                <div class="nc-proj-dot" style="background:var(--cobra)"></div>
+                <div class="nc-title">COBRA · Sprint 12 Review</div>
+                <span class="nc-badge" style="background:rgba(239,68,68,0.1);color:#EF4444">1 pending</span>
+                <span class="nc-date">14 เม.ย. 2026</span>
+                <span class="nc-toggle open">▶</span>
+              </div>
+              <div class="nc-body open">
+                <div style="font-size:11px;color:#94A3B8;margin-bottom:8px;font-family:'Sarabun',sans-serif">คุยเรื่อง Regression Test Plan — ขอให้เตรียม Smoke Test ก่อน 20 เม.ย. ชายยืนยันจะทำให้ครบ</div>
+                <div style="font-size:10px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px">Activities / Todos</div>
+                <div class="activity-item">
+                  <div class="todo-check">☐</div>
+                  <div class="todo-text">เตรียม Smoke Test สำหรับ Sprint 12</div>
+                  <div class="todo-date overdue">20 เม.ย.</div>
+                </div>
+                <div class="activity-item">
+                  <div class="todo-check done">✓</div>
+                  <div class="todo-text done-text">ส่ง Regression Plan</div>
+                  <div class="todo-date">12 เม.ย.</div>
+                </div>
+                <div class="activity-item">
+                  <div class="todo-check done">✓</div>
+                  <div class="todo-text done-text">Review UAT checklist กับทีม BA</div>
+                  <div class="todo-date">10 เม.ย.</div>
+                </div>
+                <div class="nc-add-todo" onclick>+ เพิ่ม activity</div>
+              </div>
+            </div>
+
+            <!-- Card 2: COBRA Kickoff (collapsed) -->
+            <div class="note-card">
+              <div class="nc-header" onclick="toggleCard(this)">
+                <div class="nc-proj-dot" style="background:var(--cobra)"></div>
+                <div class="nc-title">COBRA · Project Kickoff</div>
+                <span class="nc-badge" style="background:#F1F5F9;color:#64748B">1 done</span>
+                <span class="nc-date">2 เม.ย. 2026</span>
+                <span class="nc-toggle">▶</span>
+              </div>
+              <div class="nc-body">
+                <div style="font-size:11px;color:#94A3B8;margin-bottom:8px;font-family:'Sarabun',sans-serif">ชายรับปาก QA Plan ภายใน 5 วันทำการ — confirm via Line</div>
+                <div class="activity-item">
+                  <div class="todo-check done">✓</div>
+                  <div class="todo-text done-text">ส่ง QA Plan ภายใน 5 วันทำการ</div>
+                  <div class="todo-date">7 เม.ย.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 3: NEXUS integration (collapsed) -->
+            <div class="note-card">
+              <div class="nc-header" onclick="toggleCard(this)">
+                <div class="nc-proj-dot" style="background:var(--nexus)"></div>
+                <div class="nc-title">NEXUS · Integration Test Planning</div>
+                <span class="nc-badge" style="background:rgba(245,158,11,0.1);color:#F59E0B">1 pending</span>
+                <span class="nc-date">18 เม.ย. 2026</span>
+                <span class="nc-toggle">▶</span>
+              </div>
+              <div class="nc-body">
+                <div style="font-size:11px;color:#94A3B8;margin-bottom:8px;font-family:'Sarabun',sans-serif">หารือเรื่อง Data flow ระหว่าง COBRA กับ NEXUS</div>
+                <div class="activity-item">
+                  <div class="todo-check">☐</div>
+                  <div class="todo-text">จัดทำ Test Data สำหรับ NEXUS Integration</div>
+                  <div class="todo-date near">30 เม.ย.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="add-card-btn">+ เพิ่ม Project Note Card ใหม่</div>
+          </div>
+        </div>
+
+        <!-- ── TAB: TODO ── -->
+        <div class="dp-content" id="tab-todo" style="display:none">
+          <div class="todo-filter-row">
+            <span class="todo-fchip active">ทั้งหมด</span>
+            <span class="todo-fchip">Pending</span>
+            <span class="todo-fchip">Done</span>
+            <span class="todo-fchip">เรียงตาม Due Date</span>
+          </div>
+
+          <!-- Pending -->
+          <div class="todo-group">
+            <div class="todo-group-title"><div class="todo-group-dot" style="background:#EF4444"></div>⏰ Overdue / กำลังจะถึง (2)</div>
+            <div class="todo-row">
+              <div class="todo-check" style="border-color:#EF4444">☐</div>
+              <div class="todo-info">
+                <div class="todo-main">เตรียม Smoke Test สำหรับ Sprint 12</div>
+                <div class="todo-source"><div class="todo-source-dot" style="background:var(--cobra)"></div>จาก COBRA · Sprint 12 Review</div>
+              </div>
+              <span class="due-badge due-over">20 เม.ย. ⚠️</span>
+            </div>
+            <div class="todo-row">
+              <div class="todo-check" style="border-color:#F59E0B">☐</div>
+              <div class="todo-info">
+                <div class="todo-main">จัดทำ Test Data สำหรับ NEXUS Integration</div>
+                <div class="todo-source"><div class="todo-source-dot" style="background:var(--nexus)"></div>จาก NEXUS · Integration Test Planning</div>
+              </div>
+              <span class="due-badge due-near">30 เม.ย.</span>
+            </div>
+          </div>
+
+          <!-- Done -->
+          <div class="todo-group">
+            <div class="todo-group-title"><div class="todo-group-dot" style="background:#10B981"></div>✅ เสร็จแล้ว (3)</div>
+            <div class="todo-row done-row">
+              <div class="todo-check done">✓</div>
+              <div class="todo-info">
+                <div class="todo-main strikethrough">ส่ง Regression Plan</div>
+                <div class="todo-source"><div class="todo-source-dot" style="background:var(--cobra)"></div>จาก COBRA · Sprint 12 Review</div>
+              </div>
+              <span class="due-badge due-ok">12 เม.ย.</span>
+            </div>
+            <div class="todo-row done-row">
+              <div class="todo-check done">✓</div>
+              <div class="todo-info">
+                <div class="todo-main strikethrough">Review UAT checklist กับทีม BA</div>
+                <div class="todo-source"><div class="todo-source-dot" style="background:var(--cobra)"></div>จาก COBRA · Sprint 12 Review</div>
+              </div>
+              <span class="due-badge due-ok">10 เม.ย.</span>
+            </div>
+            <div class="todo-row done-row">
+              <div class="todo-check done">✓</div>
+              <div class="todo-info">
+                <div class="todo-main strikethrough">ส่ง QA Plan ภายใน 5 วันทำการ</div>
+                <div class="todo-source"><div class="todo-source-dot" style="background:var(--cobra)"></div>จาก COBRA · Project Kickoff</div>
+              </div>
+              <span class="due-badge due-ok">7 เม.ย.</span>
+            </div>
+          </div>
+        </div>
+      </div><!-- end detail-panel -->
+    </div><!-- end contactsView -->
+
+    <!-- ======= GALAXY VIEW ======= -->
+    <div id="galaxyView" class="galaxy-view">
+      <!-- Left Legend -->
+      <div class="gv-left">
+        <div class="gv-section">
+          <div class="gv-title">ทีม (สี Node)</div>
+          <div class="gv-legend"><div class="dot8" style="background:var(--t-core)"></div>Core Banking IT</div>
+          <div class="gv-legend"><div class="dot8" style="background:var(--t-digital)"></div>Digital Banking IT</div>
+          <div class="gv-legend"><div class="dot8" style="background:var(--t-settlement)"></div>Settlement IT</div>
+          <div class="gv-legend"><div class="dot8" style="background:var(--t-bizops)"></div>Business Ops</div>
+          <div class="gv-legend"><div class="dot8" style="background:var(--t-pmo)"></div>PMO</div>
+          <div class="gv-legend"><div class="dot8" style="background:var(--t-senior)"></div>Senior Mgmt</div>
+          <div class="gv-legend"><div class="dot8" style="background:var(--t-vendor)"></div>Vendor</div>
+        </div>
+        <div class="gv-section">
+          <div class="gv-title">Highlight โปรเจค</div>
+          <div class="gv-toggle"><div class="sq8" style="background:var(--cobra)"></div><span class="gv-toggle-label">COBRA</span><div class="gv-sw on"></div></div>
+          <div class="gv-toggle"><div class="sq8" style="background:var(--atlas)"></div><span class="gv-toggle-label">ATLAS</span><div class="gv-sw"></div></div>
+          <div class="gv-toggle"><div class="sq8" style="background:var(--nexus)"></div><span class="gv-toggle-label">NEXUS</span><div class="gv-sw"></div></div>
+          <div class="gv-toggle"><div class="sq8" style="background:var(--phoenix)"></div><span class="gv-toggle-label">PHOENIX</span><div class="gv-sw"></div></div>
+        </div>
+        <div class="gv-section" style="border-bottom:none">
+          <div class="gv-title">Zoom</div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button style="width:26px;height:26px;border-radius:5px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.06);color:#64748B;cursor:pointer;font-size:14px">−</button>
+            <span style="flex:1;text-align:center;font-size:11px;color:#475569">100%</span>
+            <button style="width:26px;height:26px;border-radius:5px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.06);color:#64748B;cursor:pointer;font-size:14px">+</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Canvas -->
+      <div class="gv-canvas">
+        <svg width="100%" height="100%" viewBox="0 0 750 520" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="glow2"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <pattern id="dots" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse"><circle cx="20" cy="20" r="0.8" fill="rgba(255,255,255,0.03)"/></pattern>
+          <rect width="750" height="520" fill="url(#dots)"/>
+          <!-- Project nodes -->
+          <rect x="220" y="60" width="70" height="28" rx="7" fill="rgba(59,130,246,0.12)" stroke="#3B82F6" stroke-width="1.5"/>
+          <text x="255" y="79" text-anchor="middle" fill="#60A5FA" font-size="11" font-weight="700" font-family="Inter">COBRA</text>
+          <rect x="470" y="60" width="70" height="28" rx="7" fill="rgba(16,185,129,0.12)" stroke="#10B981" stroke-width="1.5"/>
+          <text x="505" y="79" text-anchor="middle" fill="#34D399" font-size="11" font-weight="700" font-family="Inter">ATLAS</text>
+          <rect x="100" y="380" width="70" height="28" rx="7" fill="rgba(245,158,11,0.12)" stroke="#F59E0B" stroke-width="1.5"/>
+          <text x="135" y="399" text-anchor="middle" fill="#FCD34D" font-size="11" font-weight="700" font-family="Inter">NEXUS</text>
+          <rect x="580" y="380" width="74" height="28" rx="7" fill="rgba(239,68,68,0.12)" stroke="#EF4444" stroke-width="1.5"/>
+          <text x="617" y="399" text-anchor="middle" fill="#FCA5A5" font-size="11" font-weight="700" font-family="Inter">PHOENIX</text>
+          <!-- Edges -->
+          <line x1="280" y1="185" x2="255" y2="88" stroke="#3B82F6" stroke-width="2.5" opacity="0.7" filter="url(#glow2)"/>
+          <line x1="280" y1="185" x2="135" y2="380" stroke="#F59E0B" stroke-width="1" opacity="0.35"/>
+          <line x1="370" y1="155" x2="290" y2="88" stroke="#3B82F6" stroke-width="1.8" opacity="0.6"/>
+          <line x1="370" y1="155" x2="470" y2="74" stroke="#10B981" stroke-width="1.8" opacity="0.6"/>
+          <line x1="180" y1="265" x2="135" y2="380" stroke="#F59E0B" stroke-width="2.5" opacity="0.7" filter="url(#glow2)"/>
+          <line x1="180" y1="265" x2="220" y2="88" stroke="#3B82F6" stroke-width="0.8" opacity="0.3"/>
+          <line x1="290" y1="305" x2="255" y2="88" stroke="#3B82F6" stroke-width="1.5" opacity="0.5"/>
+          <line x1="475" y1="200" x2="505" y2="88" stroke="#10B981" stroke-width="2.5" opacity="0.7" filter="url(#glow2)"/>
+          <line x1="475" y1="200" x2="617" y2="380" stroke="#EF4444" stroke-width="1" opacity="0.35"/>
+          <line x1="590" y1="245" x2="617" y2="380" stroke="#EF4444" stroke-width="2.5" opacity="0.7" filter="url(#glow2)"/>
+          <line x1="590" y1="245" x2="540" y2="88" stroke="#10B981" stroke-width="1" opacity="0.35"/>
+          <line x1="390" y1="270" x2="255" y2="88" stroke="rgba(236,72,153,0.25)" stroke-width="1" stroke-dasharray="4,3"/>
+          <line x1="390" y1="270" x2="505" y2="88" stroke="rgba(236,72,153,0.25)" stroke-width="1" stroke-dasharray="4,3"/>
+          <line x1="390" y1="270" x2="135" y2="380" stroke="rgba(236,72,153,0.25)" stroke-width="1" stroke-dasharray="4,3"/>
+          <line x1="390" y1="270" x2="617" y2="380" stroke="rgba(236,72,153,0.25)" stroke-width="1" stroke-dasharray="4,3"/>
+          <line x1="100" y1="280" x2="135" y2="380" stroke="#F59E0B" stroke-width="2.5" opacity="0.65"/>
+          <line x1="640" y1="270" x2="617" y2="380" stroke="#EF4444" stroke-width="2.5" opacity="0.65"/>
+          <line x1="530" y1="280" x2="505" y2="88" stroke="#10B981" stroke-width="1.5" opacity="0.5"/>
+          <line x1="530" y1="280" x2="617" y2="380" stroke="#EF4444" stroke-width="1.5" opacity="0.5"/>
+          <!-- People nodes -->
+          <circle cx="280" cy="185" r="22" fill="rgba(99,102,241,0.25)" filter="url(#glow2)"/>
+          <circle cx="280" cy="185" r="19" fill="#6366F1"/>
+          <text x="280" y="181" text-anchor="middle" fill="white" font-size="11" font-weight="700" font-family="Sarabun">ช</text>
+          <text x="280" y="192" text-anchor="middle" fill="rgba(255,255,255,0.65)" font-size="7">ชาย</text>
+          <rect x="248" y="207" width="64" height="14" rx="4" fill="rgba(10,14,26,0.8)"/>
+          <text x="280" y="218" text-anchor="middle" fill="#94A3B8" font-size="9" font-family="Sarabun">สมชาย มีสุข</text>
+
+          <circle cx="370" cy="155" r="18" fill="#F97316"/>
+          <text x="370" y="151" text-anchor="middle" fill="white" font-size="10" font-weight="700" font-family="Sarabun">อั้</text>
+          <text x="370" y="162" text-anchor="middle" fill="rgba(255,255,255,0.65)" font-size="7">อั้น</text>
+          <rect x="340" y="175" width="60" height="13" rx="4" fill="rgba(10,14,26,0.8)"/>
+          <text x="370" y="185" text-anchor="middle" fill="#94A3B8" font-size="9" font-family="Sarabun">อนันต์ ใจดี</text>
+
+          <circle cx="180" cy="265" r="18" fill="#6B7280"/>
+          <text x="180" y="270" text-anchor="middle" fill="white" font-size="10" font-weight="700">SC</text>
+          <rect x="152" y="285" width="56" height="13" rx="4" fill="rgba(10,14,26,0.8)"/>
+          <text x="180" y="295" text-anchor="middle" fill="#94A3B8" font-size="9">Sarah Chen</text>
+
+          <circle cx="290" cy="305" r="16" fill="#6366F1"/>
+          <text x="290" y="309" text-anchor="middle" fill="white" font-size="10" font-weight="700" font-family="Sarabun">ป้</text>
+          <rect x="262" y="323" width="56" height="13" rx="4" fill="rgba(10,14,26,0.8)"/>
+          <text x="290" y="333" text-anchor="middle" fill="#94A3B8" font-size="9" font-family="Sarabun">ประภาส</text>
+
+          <circle cx="475" cy="200" r="18" fill="#0EA5E9"/>
+          <text x="475" y="196" text-anchor="middle" fill="white" font-size="10" font-weight="700" font-family="Sarabun">แน</text>
+          <text x="475" y="207" text-anchor="middle" fill="rgba(255,255,255,0.65)" font-size="7">แนน</text>
+          <rect x="444" y="220" width="62" height="13" rx="4" fill="rgba(10,14,26,0.8)"/>
+          <text x="475" y="230" text-anchor="middle" fill="#94A3B8" font-size="9" font-family="Sarabun">นภาพร</text>
+
+          <circle cx="590" cy="245" r="18" fill="#8B5CF6"/>
+          <text x="590" y="241" text-anchor="middle" fill="white" font-size="10" font-weight="700" font-family="Sarabun">หนิ</text>
+          <text x="590" y="252" text-anchor="middle" fill="rgba(255,255,255,0.65)" font-size="7">หนิง</text>
+          <rect x="560" y="265" width="60" height="13" rx="4" fill="rgba(10,14,26,0.8)"/>
+          <text x="590" y="275" text-anchor="middle" fill="#94A3B8" font-size="9" font-family="Sarabun">วรรณา</text>
+
+          <circle cx="390" cy="270" r="20" fill="rgba(236,72,153,0.25)" filter="url(#glow2)"/>
+          <circle cx="390" cy="270" r="17" fill="#EC4899"/>
+          <text x="390" y="266" text-anchor="middle" fill="white" font-size="10" font-weight="700" font-family="Sarabun">กิ๊</text>
+          <text x="390" y="277" text-anchor="middle" fill="rgba(255,255,255,0.65)" font-size="7">Dir</text>
+          <rect x="358" y="290" width="64" height="13" rx="4" fill="rgba(10,14,26,0.8)"/>
+          <text x="390" y="300" text-anchor="middle" fill="#94A3B8" font-size="9" font-family="Sarabun">กิตติ ศิริโชค</text>
+
+          <circle cx="100" cy="280" r="16" fill="#14B8A6"/>
+          <text x="100" y="284" text-anchor="middle" fill="white" font-size="10" font-weight="700" font-family="Sarabun">วิ</text>
+          <rect x="72" y="298" width="56" height="13" rx="4" fill="rgba(10,14,26,0.8)"/>
+          <text x="100" y="308" text-anchor="middle" fill="#94A3B8" font-size="9" font-family="Sarabun">วิชัย</text>
+
+          <circle cx="640" cy="270" r="16" fill="#6B7280"/>
+          <text x="640" y="275" text-anchor="middle" fill="white" font-size="9" font-weight="700">MR</text>
+          <rect x="610" y="288" width="60" height="13" rx="4" fill="rgba(10,14,26,0.8)"/>
+          <text x="640" y="298" text-anchor="middle" fill="#94A3B8" font-size="9">M.Rodriguez</text>
+
+          <circle cx="530" cy="280" r="16" fill="#8B5CF6"/>
+          <text x="530" y="284" text-anchor="middle" fill="white" font-size="10" font-weight="700" font-family="Sarabun">อ้</text>
+          <rect x="502" y="298" width="56" height="13" rx="4" fill="rgba(10,14,26,0.8)"/>
+          <text x="530" y="308" text-anchor="middle" fill="#94A3B8" font-size="9" font-family="Sarabun">จิราภา</text>
+
+          <!-- Legend bottom -->
+          <line x1="30" y1="490" x2="60" y2="490" stroke="rgba(255,255,255,0.5)" stroke-width="2.5"/>
+          <text x="65" y="494" fill="#475569" font-size="9" font-family="Sarabun">Main Impact</text>
+          <line x1="140" y1="490" x2="170" y2="490" stroke="rgba(255,255,255,0.35)" stroke-width="1"/>
+          <text x="175" y="494" fill="#475569" font-size="9" font-family="Sarabun">Supporter</text>
+          <line x1="240" y1="490" x2="270" y2="490" stroke="rgba(255,255,255,0.25)" stroke-width="1" stroke-dasharray="3,2"/>
+          <text x="275" y="494" fill="#475569" font-size="9" font-family="Sarabun">Oversight</text>
+        </svg>
+      </div>
+
+      <!-- Right Detail Panel (Galaxy) -->
+      <div class="gv-right">
+        <div class="gv-rp-header">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="gv-rp-avatar" style="background:var(--t-core)">ช</div>
+            <div style="flex:1"><div class="gv-rp-name">สมชาย มีสุข</div><div class="gv-rp-sub">QA Lead · Core Banking IT</div></div>
+            <div style="color:#334155;cursor:pointer;font-size:16px">×</div>
+          </div>
+        </div>
+        <div class="gv-rp-body">
+          <div style="margin-bottom:12px">
+            <div class="gv-title" style="margin-bottom:6px">ติดต่อ</div>
+            <div class="gv-info-row"><span>📧</span>somchai.m@company.co.th</div>
+            <div class="gv-info-row"><span>📱</span>081-234-5678</div>
+            <div class="gv-info-row"><span>💬</span>@cha_somchai</div>
+          </div>
+          <div>
+            <div class="gv-title" style="margin-bottom:6px">เชื่อมโยงโปรเจค (2)</div>
+            <div class="gv-conn"><div class="gv-conn-dot" style="background:var(--cobra)"></div><span class="gv-conn-label">COBRA</span><span class="gv-conn-role" style="background:rgba(239,68,68,0.12);color:#EF4444">Main</span></div>
+            <div class="gv-conn"><div class="gv-conn-dot" style="background:var(--nexus)"></div><span class="gv-conn-label">NEXUS</span><span class="gv-conn-role" style="background:rgba(100,116,139,0.12);color:#64748B">Support</span></div>
+          </div>
+        </div>
+        <div class="gv-rp-actions">
+          <button class="gv-btn gv-btn-p">✏️ แก้ไข</button>
+          <button class="gv-btn gv-btn-g">📋 ดูเต็ม</button>
+        </div>
+      </div>
+    </div><!-- end galaxyView -->
+
+  </div><!-- end main -->
+
+  <!-- ======= QUICK FIND OVERLAY ======= -->
+  <div class="qf-overlay" id="qfOverlay" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="qf-modal">
+      <div class="qf-search">
+        <span class="qf-search-icon">🔍</span>
+        <input class="qf-input" type="text" placeholder="ค้นหาชื่อ, ชื่อเล่น, ทีม, โปรเจค..." autofocus value="สมชาย">
+        <span class="qf-esc" onclick="document.getElementById('qfOverlay').classList.remove('open')">ESC</span>
+      </div>
+      <div class="qf-results">
+        <div class="qf-section-label">ผลการค้นหา · 1 คน</div>
+        <div class="qf-result selected">
+          <div class="qf-r-avatar" style="background:var(--t-core)">ช</div>
+          <div class="qf-r-info">
+            <div class="qf-r-name">สมชาย มีสุข (ชาย)</div>
+            <div class="qf-r-meta">QA Lead · Core Banking IT · 081-234-5678 · @cha_somchai</div>
+          </div>
+          <div class="qf-r-badges">
+            <span class="qf-badge" style="background:var(--cobra)">COBRA</span>
+            <span class="qf-badge" style="background:var(--nexus)">NEXUS</span>
+          </div>
+          <span class="qf-r-enter">↵</span>
+        </div>
+
+        <div class="qf-section-label" style="margin-top:4px">เพิ่งดูล่าสุด</div>
+        <div class="qf-result">
+          <div class="qf-r-avatar" style="background:var(--t-pmo)">อั้</div>
+          <div class="qf-r-info"><div class="qf-r-name">อนันต์ ใจดี (อั้น)</div><div class="qf-r-meta">PM · PMO · @anan_pm</div></div>
+          <div class="qf-r-badges"><span class="qf-badge" style="background:var(--cobra)">COBRA</span><span class="qf-badge" style="background:var(--atlas)">ATLAS</span></div>
+        </div>
+        <div class="qf-result">
+          <div class="qf-r-avatar" style="background:var(--t-vendor)">SC</div>
+          <div class="qf-r-info"><div class="qf-r-name">Sarah Chen</div><div class="qf-r-meta">Tech Architect · Vendor ABC</div></div>
+          <div class="qf-r-badges"><span class="qf-badge" style="background:var(--nexus)">NEXUS</span></div>
+        </div>
+        <div class="qf-result">
+          <div class="qf-r-avatar" style="background:var(--t-digital)">แน</div>
+          <div class="qf-r-info"><div class="qf-r-name">นภาพร วงศ์ดี (แนน)</div><div class="qf-r-meta">BA · Digital Banking IT</div></div>
+          <div class="qf-r-badges"><span class="qf-badge" style="background:var(--atlas)">ATLAS</span></div>
+        </div>
+      </div>
+      <div class="qf-footer">
+        <div class="qf-hint"><kbd>↑↓</kbd> นำทาง</div>
+        <div class="qf-hint"><kbd>↵</kbd> เปิด</div>
+        <div class="qf-hint"><kbd>ESC</kbd> ปิด</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchView(view, btn) {
+      document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('contactsView').style.display = view === 'contacts' ? 'flex' : 'none';
+      const gv = document.getElementById('galaxyView');
+      gv.classList.toggle('active', view === 'galaxy');
+    }
+    function switchTab(tab, el) {
+      document.querySelectorAll('.dp-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      ['info','notes','todo'].forEach(t => {
+        const el = document.getElementById('tab-'+t);
+        if (el) el.style.display = t === tab ? 'block' : 'none';
+      });
+    }
+    function toggleCard(header) {
+      const body = header.nextElementSibling;
+      const arrow = header.querySelector('.nc-toggle');
+      const isOpen = body.classList.toggle('open');
+      arrow.classList.toggle('open', isOpen);
+    }
+    document.addEventListener('keydown', e => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        document.getElementById('qfOverlay').classList.add('open');
+      }
+      if (e.key === 'Escape') document.getElementById('qfOverlay').classList.remove('open');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Input & Edit Form — Design Options</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Inter','Sarabun',sans-serif; background:#0F172A; color:#E2E8F0; min-height:100vh; padding:48px 32px 80px; }
+    .header { text-align:center; margin-bottom:48px; }
+    .header h1 { font-size:36px; font-weight:800; color:#F1F5F9; letter-spacing:-1px; margin-bottom:8px; }
+    .header h1 span { background:linear-gradient(135deg,#60A5FA,#A78BFA); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .header p { font-size:15px; color:#64748B; font-family:'Sarabun',sans-serif; max-width:560px; margin:0 auto; line-height:1.7; }
+    .back-row { display:flex; justify-content:space-between; align-items:center; max-width:1100px; margin:0 auto 32px; }
+    .back-link { color:#475569; font-size:13px; text-decoration:none; }
+    .back-link:hover { color:#94A3B8; }
+    .main-app-link { background:#1E293B; border:1px solid #334155; color:#60A5FA; font-size:12px; font-weight:600; padding:7px 14px; border-radius:8px; text-decoration:none; }
+
+    .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; max-width:1100px; margin:0 auto 24px; }
+    .grid-2 { display:grid; grid-template-columns:repeat(2,1fr); gap:20px; max-width:740px; margin:0 auto; }
+    .card { background:#1E293B; border:1px solid #334155; border-radius:14px; overflow:hidden; text-decoration:none; color:inherit; display:block; transition:all 0.18s; }
+    .card:hover { transform:translateY(-3px); border-color:#60A5FA; box-shadow:0 16px 40px rgba(0,0,0,0.4); }
+    .card-preview { height:160px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
+    .card-body { padding:18px 18px 22px; }
+    .design-num { font-size:10px; font-weight:600; color:#475569; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:5px; }
+    .design-name { font-size:18px; font-weight:700; color:#F1F5F9; margin-bottom:4px; }
+    .design-sub { font-size:12px; color:#475569; font-style:italic; margin-bottom:10px; }
+    .design-desc { font-size:13px; color:#64748B; font-family:'Sarabun',sans-serif; line-height:1.6; margin-bottom:12px; }
+    .tags-row { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:12px; }
+    .badge { font-size:10px; padding:2px 8px; border-radius:12px; font-weight:500; }
+    .badge-blue { background:rgba(59,130,246,0.15); color:#60A5FA; border:1px solid rgba(59,130,246,0.25); }
+    .badge-purple { background:rgba(139,92,246,0.15); color:#C4B5FD; border:1px solid rgba(139,92,246,0.25); }
+    .badge-green { background:rgba(16,185,129,0.15); color:#6EE7B7; border:1px solid rgba(16,185,129,0.25); }
+    .badge-amber { background:rgba(245,158,11,0.15); color:#FCD34D; border:1px solid rgba(245,158,11,0.25); }
+    .badge-red { background:rgba(239,68,68,0.15); color:#FCA5A5; border:1px solid rgba(239,68,68,0.25); }
+    .btn-open { display:block; text-align:center; background:linear-gradient(135deg,#3B82F6,#6366F1); color:white; font-size:13px; font-weight:600; padding:9px; border-radius:8px; text-decoration:none; }
+
+    /* Mini mockups in preview */
+    .mini-modal { background:rgba(0,0,0,0.5); width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
+    .mini-modal-box { background:#1E293B; border:1px solid #334155; border-radius:8px; width:200px; padding:12px; }
+    .mini-field { height:6px; background:rgba(255,255,255,0.12); border-radius:3px; margin-bottom:6px; }
+    .mini-field.w60 { width:60%; }
+    .mini-label { height:4px; background:rgba(255,255,255,0.06); border-radius:2px; width:40%; margin-bottom:4px; }
+    .mini-btn { height:16px; background:#3B82F6; border-radius:4px; margin-top:8px; width:70px; margin-left:auto; }
+
+    /* Drawer preview */
+    .mini-drawer { display:flex; width:100%; height:100%; }
+    .mini-draw-bg { flex:1; background:rgba(0,0,0,0.3); }
+    .mini-draw-panel { width:130px; background:#1E293B; border-left:1px solid #334155; padding:10px 8px; display:flex; flex-direction:column; gap:5px; }
+
+    /* Wizard preview */
+    .mini-wizard { display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; gap:8px; background:#0F172A; }
+    .mini-steps { display:flex; gap:4px; align-items:center; }
+    .mini-step { width:20px; height:4px; border-radius:2px; }
+    .mini-wiz-box { background:#1E293B; border:1px solid #334155; border-radius:8px; padding:10px 14px; width:180px; }
+    .mini-wiz-title { height:6px; background:rgba(255,255,255,0.25); border-radius:3px; width:80%; margin-bottom:10px; }
+
+    /* Inline preview */
+    .mini-inline { display:flex; width:100%; height:100%; }
+    .mini-il-list { width:80px; background:rgba(0,0,0,0.2); padding:6px; display:flex; flex-direction:column; gap:3px; }
+    .mini-il-row { height:14px; background:rgba(255,255,255,0.05); border-radius:3px; }
+    .mini-il-row.sel { background:rgba(59,130,246,0.2); border-left:2px solid #3B82F6; }
+    .mini-il-detail { flex:1; padding:8px; display:flex; flex-direction:column; gap:4px; }
+    .mini-il-field { display:flex; align-items:center; gap:4px; }
+    .mini-il-label { width:28px; height:3px; background:rgba(255,255,255,0.1); border-radius:2px; }
+    .mini-il-input { flex:1; height:12px; background:rgba(59,130,246,0.2); border:1px solid #3B82F6; border-radius:3px; }
+
+    /* Command preview */
+    .mini-cmd { display:flex; flex-direction:column; align-items:center; justify-content:center; background:#0A0E1A; width:100%; height:100%; gap:6px; }
+    .mini-cmd-bar { background:#1E293B; border:1px solid rgba(99,102,241,0.5); border-radius:8px; padding:7px 12px; width:200px; display:flex; align-items:center; gap:6px; }
+    .mini-cmd-icon { width:10px; height:10px; border-radius:50%; background:#6366F1; }
+    .mini-cmd-text { flex:1; height:4px; background:rgba(255,255,255,0.2); border-radius:2px; }
+    .mini-cmd-hint { height:3px; background:rgba(255,255,255,0.08); border-radius:2px; width:140px; }
+    .mini-cmd-result { background:#1E293B; border:1px solid #334155; border-radius:6px; padding:6px 10px; width:200px; display:flex; align-items:center; gap:6px; }
+    .mini-cmd-avatar { width:16px; height:16px; border-radius:4px; background:#6366F1; }
+  </style>
+</head>
+<body>
+  <div class="back-row">
+    <a href="index.html" class="back-link">← กลับหน้าหลัก</a>
+    <a href="main_app.html" class="main-app-link">🖥 ดู Main App →</a>
+  </div>
+
+  <div class="header">
+    <h1>Input & Edit Form<br><span>5 Design Options</span></h1>
+    <p>5 แนวคิดที่แตกต่างกันสำหรับหน้าเพิ่ม/แก้ไข Contact — Mental Model ต่างกัน เหมาะกับสถานการณ์ที่ต่างกัน</p>
+  </div>
+
+  <div class="grid">
+    <!-- Form 1: Modal -->
+    <a href="input1_modal.html" class="card">
+      <div class="card-preview" style="background:#0F172A">
+        <div class="mini-modal">
+          <div class="mini-modal-box">
+            <div style="height:8px;background:rgba(255,255,255,0.25);border-radius:3px;width:60%;margin-bottom:10px"></div>
+            <div class="mini-label"></div><div class="mini-field"></div>
+            <div class="mini-label"></div><div class="mini-field w60"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+              <div><div class="mini-label"></div><div class="mini-field"></div></div>
+              <div><div class="mini-label"></div><div class="mini-field"></div></div>
+            </div>
+            <div class="mini-btn"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="design-num">Form Design 01</div>
+        <div class="design-name">Centered Modal</div>
+        <div class="design-sub">Overlay · Tab Sections · 2-Column Grid</div>
+        <div class="design-desc">Modal ลอยกลางจอ แบ่งเป็น Tabs: ข้อมูล / โปรเจค / Notes ทุก field มองเห็นพร้อมกัน Save/Cancel ชัดเจน แบบที่คุ้นเคยที่สุด</div>
+        <div class="tags-row"><span class="badge badge-blue">Familiar</span><span class="badge badge-green">All-in-one</span><span class="badge badge-purple">Tabbed</span></div>
+        <div class="btn-open">ดู Mock Screen →</div>
+      </div>
+    </a>
+
+    <!-- Form 2: Drawer -->
+    <a href="input2_drawer.html" class="card">
+      <div class="card-preview" style="background:#0F172A">
+        <div class="mini-drawer">
+          <div class="mini-draw-bg"></div>
+          <div class="mini-draw-panel">
+            <div style="height:6px;background:rgba(255,255,255,0.25);border-radius:3px;width:80%;margin-bottom:4px"></div>
+            <div class="mini-label"></div><div class="mini-field"></div>
+            <div class="mini-label"></div><div class="mini-field w60"></div>
+            <div class="mini-label"></div><div class="mini-field"></div>
+            <div class="mini-label"></div><div class="mini-field w60"></div>
+            <div style="height:12px;background:#3B82F6;border-radius:3px;margin-top:6px"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="design-num">Form Design 02</div>
+        <div class="design-name">Right Drawer</div>
+        <div class="design-sub">Slide-In Panel · Context Preserved</div>
+        <div class="design-desc">Panel เลื่อนมาจากขวา รายการ Contact ยังมองเห็นอยู่ด้านหลัง ไม่ถูก interrupt แก้ไขได้โดยไม่ต้องออกจาก context</div>
+        <div class="tags-row"><span class="badge badge-green">Non-disruptive</span><span class="badge badge-blue">Context</span><span class="badge badge-amber">Slide-in</span></div>
+        <div class="btn-open">ดู Mock Screen →</div>
+      </div>
+    </a>
+
+    <!-- Form 3: Wizard -->
+    <a href="input3_wizard.html" class="card">
+      <div class="card-preview" style="background:#0F172A">
+        <div class="mini-wizard">
+          <div class="mini-steps">
+            <div class="mini-step" style="background:#3B82F6;width:32px"></div>
+            <div class="mini-step" style="background:#334155;width:20px"></div>
+            <div class="mini-step" style="background:#334155;width:20px"></div>
+            <div class="mini-step" style="background:#334155;width:20px"></div>
+          </div>
+          <div class="mini-wiz-box">
+            <div class="mini-wiz-title"></div>
+            <div class="mini-label"></div><div class="mini-field" style="margin-bottom:8px"></div>
+            <div class="mini-label"></div><div class="mini-field w60" style="margin-bottom:8px"></div>
+            <div style="display:flex;justify-content:space-between;margin-top:4px">
+              <div style="height:12px;width:50px;background:rgba(255,255,255,0.08);border-radius:4px"></div>
+              <div style="height:12px;width:50px;background:#3B82F6;border-radius:4px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="design-num">Form Design 03</div>
+        <div class="design-name">Step Wizard</div>
+        <div class="design-sub">4 Steps · Progress Bar · Guided</div>
+        <div class="design-desc">แบ่งเป็น 4 ขั้น: พื้นฐาน → ติดต่อ → โปรเจค → เสร็จ ข้อมูลน้อยต่อหน้า ไม่ overwhelming เหมาะสำหรับการเพิ่มคนใหม่ครั้งแรก</div>
+        <div class="tags-row"><span class="badge badge-purple">Guided</span><span class="badge badge-blue">Step-by-Step</span><span class="badge badge-green">Low overwhelm</span></div>
+        <div class="btn-open">ดู Mock Screen →</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="grid-2">
+    <!-- Form 4: Inline -->
+    <a href="input4_inline.html" class="card">
+      <div class="card-preview" style="background:#0F172A">
+        <div class="mini-inline">
+          <div class="mini-il-list">
+            <div class="mini-il-row"></div>
+            <div class="mini-il-row sel"></div>
+            <div class="mini-il-row"></div>
+          </div>
+          <div class="mini-il-detail">
+            <div style="height:10px;background:rgba(255,255,255,0.2);border-radius:4px;width:70%;margin-bottom:8px"></div>
+            <div class="mini-il-field"><div class="mini-il-label"></div><div class="mini-il-input"></div></div>
+            <div class="mini-il-field"><div class="mini-il-label"></div><div class="mini-il-input"></div></div>
+            <div class="mini-il-field"><div class="mini-il-label"></div><div class="mini-il-input" style="background:rgba(16,185,129,0.15);border-color:#10B981"></div></div>
+            <div style="display:flex;justify-content:flex-end;gap:4px;margin-top:4px">
+              <div style="height:12px;width:36px;background:rgba(255,255,255,0.06);border-radius:3px"></div>
+              <div style="height:12px;width:36px;background:#3B82F6;border-radius:3px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="design-num">Form Design 04</div>
+        <div class="design-name">Inline Edit</div>
+        <div class="design-sub">Click-to-Edit · No Modal · Field-Level</div>
+        <div class="design-desc">Detail Panel กลายเป็น Edit Mode ทันทีเมื่อกด Edit คลิกที่ field ไหนก็แก้ได้ตรงนั้นเลย ไม่มี Modal ไม่มีการ navigate ออกไปไหน</div>
+        <div class="tags-row"><span class="badge badge-green">Seamless</span><span class="badge badge-amber">Contextual</span><span class="badge badge-red">Fast Edit</span></div>
+        <div class="btn-open">ดู Mock Screen →</div>
+      </div>
+    </a>
+
+    <!-- Form 5: Command Palette -->
+    <a href="input5_command.html" class="card">
+      <div class="card-preview" style="background:#0A0E1A">
+        <div class="mini-cmd">
+          <div class="mini-cmd-bar"><div class="mini-cmd-icon"></div><div class="mini-cmd-text"></div></div>
+          <div class="mini-cmd-hint"></div>
+          <div class="mini-cmd-result"><div class="mini-cmd-avatar"></div><div style="flex:1;display:flex;flex-direction:column;gap:2px"><div style="height:4px;background:rgba(255,255,255,0.2);border-radius:2px;width:70%"></div><div style="height:3px;background:rgba(255,255,255,0.08);border-radius:2px;width:50%"></div></div></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="design-num">Form Design 05</div>
+        <div class="design-name">Command Palette Form</div>
+        <div class="design-sub">Conversational · Type-First · Fast</div>
+        <div class="design-desc">กรอกข้อมูลแบบ "คุยกับระบบ" ทีละ field ผ่าน Command Palette เหมือน Raycast/Linear Quick Add เร็วมากสำหรับคนที่ชอบ keyboard-first</div>
+        <div class="tags-row"><span class="badge badge-purple">Keyboard-First</span><span class="badge badge-blue">Raycast-Style</span><span class="badge badge-red">Ultra Fast</span></div>
+        <div class="btn-open">ดู Mock Screen →</div>
+      </div>
+    </a>
+  </div>
+</body>
+</html>

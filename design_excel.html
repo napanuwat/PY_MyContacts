@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Excel Design & Sync Workflow — MyContacts</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&family=Calibri&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', 'Sarabun', sans-serif; background: #1E293B; color: #E2E8F0; min-height: 100vh; }
+
+    /* Page Header */
+    .page-header {
+      background: #0F172A; border-bottom: 1px solid #334155;
+      padding: 16px 32px; display: flex; align-items: center; gap: 16px;
+    }
+    .page-header h1 { font-size: 20px; font-weight: 700; color: #F1F5F9; }
+    .page-header p { font-size: 13px; color: #64748B; font-family: 'Sarabun', sans-serif; }
+    .back-link { color: #94A3B8; font-size: 12px; text-decoration: none; display: flex; align-items: center; gap: 4px; }
+
+    /* Content sections */
+    .page-content { max-width: 1200px; margin: 0 auto; padding: 40px 32px 80px; }
+
+    /* Section headers */
+    .section-header { margin-bottom: 24px; }
+    .section-num { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
+    .section-title { font-size: 24px; font-weight: 700; color: #F1F5F9; margin-bottom: 6px; letter-spacing: -0.3px; }
+    .section-desc { font-size: 14px; color: #64748B; font-family: 'Sarabun', sans-serif; line-height: 1.7; max-width: 680px; }
+    .divider { height: 1px; background: #1E293B; margin: 48px 0; }
+
+    /* ===== EXCEL MOCKUP ===== */
+    .excel-window {
+      border-radius: 10px; overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+      border: 1px solid #374151;
+    }
+
+    /* Excel Title Bar */
+    .excel-title {
+      background: #2D7D32; padding: 8px 16px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .excel-title-text { font-size: 13px; font-weight: 600; color: white; }
+    .excel-window-btns { margin-left: auto; display: flex; gap: 8px; }
+    .excel-wb { width: 12px; height: 12px; border-radius: 50%; }
+
+    /* Excel Ribbon */
+    .excel-ribbon {
+      background: #E8F5E9; border-bottom: 1px solid #C8E6C9;
+      padding: 6px 12px; display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+    }
+    .ribbon-group {
+      display: flex; align-items: center; gap: 3px; padding: 0 8px;
+      border-right: 1px solid #C8E6C9;
+    }
+    .ribbon-group:last-child { border-right: none; }
+    .ribbon-btn {
+      font-size: 11px; padding: 5px 10px; border-radius: 4px;
+      border: 1px solid transparent; cursor: pointer; background: transparent; color: #1B5E20;
+      display: flex; align-items: center; gap: 4px; font-weight: 500;
+    }
+    .ribbon-btn:hover { background: rgba(46,125,50,0.1); border-color: #A5D6A7; }
+    .ribbon-btn.macro { background: #2E7D32; color: white; border-color: #1B5E20; }
+    .ribbon-btn.macro:hover { background: #1B5E20; }
+    .ribbon-btn.warn { background: #E65100; color: white; border-color: #BF360C; }
+    .ribbon-group-label { font-size: 9px; color: #66BB6A; text-transform: uppercase; letter-spacing: 0.8px; display: block; text-align: center; margin-top: 2px; width: 100%; }
+
+    /* Formula Bar */
+    .excel-formula {
+      background: white; padding: 4px 8px; border-bottom: 1px solid #E0E0E0;
+      display: flex; align-items: center; gap: 8px; font-size: 12px;
+    }
+    .cell-ref { width: 60px; border: 1px solid #BDBDBD; padding: 2px 6px; border-radius: 2px; font-family: 'Calibri', monospace; font-size: 12px; color: #333; }
+    .fx-icon { color: #9E9E9E; font-size: 13px; }
+    .formula-bar { flex: 1; border: 1px solid #E0E0E0; padding: 2px 8px; font-family: 'Calibri', monospace; font-size: 12px; color: #333; border-radius: 2px; }
+
+    /* Excel Grid */
+    .excel-grid { overflow-x: auto; background: white; }
+    .excel-table { border-collapse: collapse; min-width: 100%; font-family: 'Calibri', 'Sarabun', sans-serif; }
+
+    /* Row/Col headers */
+    .col-header {
+      background: #F5F5F5; border: 1px solid #BDBDBD; padding: 3px 6px;
+      font-size: 11px; color: #616161; text-align: center; font-weight: 600;
+      min-width: 28px; white-space: nowrap; position: sticky; top: 0; z-index: 2;
+    }
+    .row-header {
+      background: #F5F5F5; border: 1px solid #BDBDBD; padding: 2px 6px;
+      font-size: 11px; color: #616161; text-align: center; font-weight: 500;
+      min-width: 28px; white-space: nowrap;
+    }
+
+    /* Cells */
+    td.cell {
+      border: 1px solid #E0E0E0; padding: 3px 7px; font-size: 12px;
+      color: #212121; white-space: nowrap; min-width: 80px; max-width: 200px;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    td.cell.header-row {
+      background: #1B5E20; color: white; font-weight: 700; font-size: 11px;
+      letter-spacing: 0.3px; border-color: #2E7D32;
+    }
+    td.cell.frozen-col {
+      background: #F9FBF9; font-weight: 600; color: #1B5E20;
+      border-right: 2px solid #A5D6A7; position: sticky; left: 28px; z-index: 1;
+    }
+    td.cell.selected { background: #E3F2FD; border: 2px solid #1565C0; outline: 2px solid rgba(21,101,192,0.3); }
+    td.cell.dropdown::after { content: ' ▾'; color: #9E9E9E; }
+
+    /* Row colors by team */
+    .row-core { background: rgba(99,102,241,0.06); }
+    .row-digital { background: rgba(14,165,233,0.06); }
+    .row-settlement { background: rgba(20,184,166,0.06); }
+    .row-bizops { background: rgba(139,92,246,0.06); }
+    .row-pmo { background: rgba(249,115,22,0.06); }
+    .row-senior { background: rgba(190,24,93,0.06); }
+    .row-vendor { background: rgba(107,114,128,0.06); }
+
+    /* Role chips in cells */
+    .cell-chip {
+      display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 3px;
+      font-weight: 600; vertical-align: middle;
+    }
+    .chip-main { background: #FFCDD2; color: #B71C1C; }
+    .chip-support { background: #EEEEEE; color: #616161; }
+    .chip-pm { background: #FFF3E0; color: #E65100; }
+
+    /* Project dot in cell */
+    .proj-dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; vertical-align: middle; margin-right: 3px; }
+
+    /* Freeze line indicator */
+    .freeze-indicator {
+      height: 4px; background: linear-gradient(90deg, transparent, rgba(21,101,192,0.3), transparent);
+      margin: 0;
+    }
+
+    /* Sheet Tabs */
+    .excel-sheets {
+      background: #ECEFF1; border-top: 1px solid #CFD8DC;
+      display: flex; align-items: center; padding: 0 8px; gap: 2px;
+    }
+    .sheet-tab {
+      padding: 6px 16px; font-size: 12px; cursor: pointer;
+      border: 1px solid transparent; border-bottom: none;
+      color: #546E7A; background: #ECEFF1; font-family: 'Calibri', sans-serif;
+    }
+    .sheet-tab:hover { background: #E0E7EE; }
+    .sheet-tab.active {
+      background: white; color: #1B5E20; border-color: #CFD8DC; font-weight: 600;
+      border-top: 2px solid #2E7D32; position: relative; bottom: -1px;
+    }
+    .sheet-add { color: #90A4AE; font-size: 18px; cursor: pointer; padding: 0 8px; line-height: 1; }
+
+    /* Status Bar */
+    .excel-status {
+      background: #2E7D32; padding: 4px 12px; display: flex; align-items: center;
+      gap: 20px; font-size: 11px; color: #C8E6C9;
+    }
+    .status-item { display: flex; align-items: center; gap: 4px; }
+
+    /* ===== SYNC WORKFLOW ===== */
+    .workflow-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+    .workflow-card {
+      background: #1E293B; border: 1px solid #334155; border-radius: 14px;
+      overflow: hidden;
+    }
+    .wf-card-header { padding: 16px 20px 14px; border-bottom: 1px solid #334155; }
+    .wf-card-num { font-size: 10px; color: #475569; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+    .wf-card-title { font-size: 17px; font-weight: 700; color: #F1F5F9; margin-bottom: 4px; }
+    .wf-card-sub { font-size: 12px; color: #64748B; font-family: 'Sarabun', sans-serif; }
+    .wf-card-body { padding: 16px 20px; }
+
+    .step {
+      display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start;
+    }
+    .step-num {
+      width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center;
+      justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .step-content { flex: 1; }
+    .step-title { font-size: 13px; font-weight: 600; color: #F1F5F9; margin-bottom: 3px; font-family: 'Sarabun', sans-serif; }
+    .step-desc { font-size: 12px; color: #64748B; line-height: 1.5; font-family: 'Sarabun', sans-serif; }
+    .step-arrow { text-align: center; color: #334155; font-size: 18px; margin: -8px 0 -4px 36px; }
+
+    .pros-cons-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+    .pc-box { background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px 12px; }
+    .pc-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+    .pc-item { font-size: 11px; color: #94A3B8; font-family: 'Sarabun', sans-serif; padding: 2px 0 2px 12px; position: relative; }
+    .pc-item::before { position: absolute; left: 0; }
+    .pc-pros::before { content: '✓'; color: #4ADE80; }
+    .pc-cons::before { content: '✗'; color: #F87171; }
+
+    .recommend-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3);
+      color: #60A5FA; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px;
+      margin-top: 10px;
+    }
+
+    /* Architecture diagram */
+    .arch-diagram {
+      background: #0F172A; border: 1px solid #1E293B; border-radius: 12px; padding: 24px;
+      margin-top: 32px;
+    }
+    .arch-title { font-size: 16px; font-weight: 700; color: #F1F5F9; margin-bottom: 20px; text-align: center; }
+    .arch-row { display: flex; align-items: center; justify-content: center; gap: 0; flex-wrap: wrap; }
+    .arch-node {
+      background: #1E293B; border: 1px solid #334155; border-radius: 12px; padding: 14px 18px;
+      text-align: center; min-width: 130px;
+    }
+    .arch-node-icon { font-size: 28px; margin-bottom: 6px; }
+    .arch-node-label { font-size: 13px; font-weight: 600; color: #F1F5F9; margin-bottom: 3px; }
+    .arch-node-sub { font-size: 11px; color: #475569; font-family: 'Sarabun', sans-serif; }
+    .arch-arrow { display: flex; flex-direction: column; align-items: center; padding: 0 12px; min-width: 80px; }
+    .arch-arrow-line { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .arch-arrow-label { font-size: 10px; color: #475569; font-family: 'Sarabun', sans-serif; text-align: center; max-width: 90px; }
+    .arrow-fw { color: #3B82F6; font-size: 20px; }
+    .arrow-bw { color: #10B981; font-size: 20px; }
+    .arch-db { background: #1E293B; border: 2px solid #F59E0B; border-radius: 12px; padding: 14px 18px; text-align: center; min-width: 130px; }
+
+    /* Sheet guide */
+    .sheet-guide { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 32px; }
+    .sg-card {
+      background: #1E293B; border: 1px solid #334155; border-radius: 10px; padding: 14px 14px;
+      border-top: 3px solid;
+    }
+    .sg-tab { font-size: 12px; font-weight: 700; color: #F1F5F9; margin-bottom: 4px; }
+    .sg-desc { font-size: 11px; color: #64748B; font-family: 'Sarabun', sans-serif; line-height: 1.5; margin-bottom: 8px; }
+    .sg-col { font-size: 10px; color: #94A3B8; padding: 2px 0; font-family: 'Sarabun', sans-serif; }
+    .sg-col::before { content: '· '; }
+
+    /* Column spec table */
+    .col-spec { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    .col-spec th { background: #0F172A; padding: 8px 12px; font-size: 11px; font-weight: 700; color: #475569; text-align: left; border-bottom: 1px solid #334155; text-transform: uppercase; letter-spacing: 0.8px; }
+    .col-spec td { padding: 8px 12px; font-size: 12px; color: #94A3B8; border-bottom: 1px solid #1E293B; font-family: 'Sarabun', sans-serif; }
+    .col-spec tr:hover td { background: rgba(255,255,255,0.02); }
+    .col-spec td:first-child { color: #F1F5F9; font-weight: 500; }
+    .col-badge { font-size: 10px; padding: 1px 6px; border-radius: 4px; font-weight: 500; }
+    .col-required { background: rgba(239,68,68,0.1); color: #F87171; }
+    .col-optional { background: rgba(100,116,139,0.1); color: #94A3B8; }
+    .col-auto { background: rgba(59,130,246,0.1); color: #60A5FA; }
+    .col-dropdown { background: rgba(16,185,129,0.1); color: #34D399; }
+
+    .info-box {
+      background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 10px; padding: 14px 16px; margin-top: 20px;
+      font-size: 13px; color: #93C5FD; font-family: 'Sarabun', sans-serif; line-height: 1.7;
+    }
+    .info-box strong { color: #60A5FA; }
+
+    .warn-box {
+      background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2);
+      border-radius: 10px; padding: 14px 16px; margin-top: 12px;
+      font-size: 13px; color: #FCD34D; font-family: 'Sarabun', sans-serif; line-height: 1.7;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <a href="index.html" class="back-link">← กลับหน้าหลัก</a>
+    <div>
+      <h1>Excel Design & Sync Workflow</h1>
+      <p>ออกแบบไฟล์ Excel ที่ใช้งานได้จริง + 2 ตัวเลือก Sync กับ Web</p>
+    </div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- ===== SECTION 1: SHEET STRUCTURE ===== -->
+    <div class="section-header">
+      <div class="section-num">Section 01</div>
+      <div class="section-title">โครงสร้าง Excel File</div>
+      <div class="section-desc">ออกแบบเป็น 5 Sheet โดย Sheet หลักคือ "📋 Contacts" ใช้งานประจำ ส่วน Sheet อื่นเป็น Master Data และ Junction Table รองรับ Contact ที่อยู่หลายโปรเจค</div>
+    </div>
+
+    <!-- Sheet Guide Cards -->
+    <div class="sheet-guide">
+      <div class="sg-card" style="border-top-color:#2E7D32">
+        <div class="sg-tab">📋 Contacts</div>
+        <div class="sg-desc">Sheet หลัก — ข้อมูลพื้นฐานทุกคน 1 Row = 1 คน</div>
+        <div class="sg-col">ชื่อ-นามสกุล (ไทย/Eng)</div>
+        <div class="sg-col">ชื่อเล่น</div>
+        <div class="sg-col">ทีม, Direct Report</div>
+        <div class="sg-col">Email, โทร, Line</div>
+        <div class="sg-col">หมายเหตุ (สั้น)</div>
+      </div>
+      <div class="sg-card" style="border-top-color:#1565C0">
+        <div class="sg-tab">🔗 Contact_Projects</div>
+        <div class="sg-desc">Junction Table — ความสัมพันธ์ คน ↔ โปรเจค</div>
+        <div class="sg-col">ContactID (อ้างอิง)</div>
+        <div class="sg-col">ชื่อโปรเจค (Dropdown)</div>
+        <div class="sg-col">Role ในโปรเจคนั้น</div>
+        <div class="sg-col">เพิ่มได้ไม่จำกัด rows</div>
+      </div>
+      <div class="sg-card" style="border-top-color:#6A1B9A">
+        <div class="sg-tab">📝 Notes</div>
+        <div class="sg-desc">บันทึกส่วนตัว Timeline — 1 Row = 1 Note</div>
+        <div class="sg-col">ContactID (อ้างอิง)</div>
+        <div class="sg-col">วันที่บันทึก</div>
+        <div class="sg-col">หัวข้อ/ประชุม</div>
+        <div class="sg-col">ข้อความ Note ยาวๆ</div>
+      </div>
+      <div class="sg-card" style="border-top-color:#B71C1C">
+        <div class="sg-tab">⚙ Master_Data</div>
+        <div class="sg-desc">ข้อมูลอ้างอิง — Dropdown Source</div>
+        <div class="sg-col">รายชื่อโปรเจค + สี</div>
+        <div class="sg-col">รายชื่อทีม + สี</div>
+        <div class="sg-col">Role Types</div>
+        <div class="sg-col">แก้ที่นี่ Dropdown เปลี่ยนทุก Sheet</div>
+      </div>
+      <div class="sg-card" style="border-top-color:#E65100">
+        <div class="sg-tab">🔄 Sync</div>
+        <div class="sg-desc">Control Panel สำหรับ Sync กับ Web</div>
+        <div class="sg-col">ปุ่ม "Sync Now"</div>
+        <div class="sg-col">Last Sync timestamp</div>
+        <div class="sg-col">Status log</div>
+        <div class="sg-col">API URL settings</div>
+      </div>
+    </div>
+
+    <!-- Column Spec Table -->
+    <div style="margin-top:32px">
+      <div style="font-size:15px;font-weight:700;color:#F1F5F9;margin-bottom:14px">📋 Sheet: Contacts — Column Specification</div>
+      <table class="col-spec">
+        <thead>
+          <tr>
+            <th>Col</th>
+            <th>ชื่อ Column (Header)</th>
+            <th>รายละเอียด</th>
+            <th>ประเภท</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>A</td><td>ContactID</td><td>Auto-generated (C001, C002...) — ใช้อ้างอิงข้าม Sheet</td><td><span class="col-badge col-auto">Auto</span></td></tr>
+          <tr><td>B</td><td>ชื่อ (ไทย)</td><td>ชื่อ-นามสกุลภาษาไทย เช่น สมชาย มีสุข</td><td><span class="col-badge col-required">Required</span></td></tr>
+          <tr><td>C</td><td>Name (Eng)</td><td>ชื่อ-นามสกุลภาษาอังกฤษ</td><td><span class="col-badge col-optional">Optional</span></td></tr>
+          <tr><td>D</td><td>ชื่อเล่น</td><td>ชื่อเล่น เช่น ชาย, แนน</td><td><span class="col-badge col-optional">Optional</span></td></tr>
+          <tr><td>E</td><td>ทีม</td><td>Dropdown จาก Master_Data → ทีม</td><td><span class="col-badge col-dropdown">Dropdown</span></td></tr>
+          <tr><td>F</td><td>ตำแหน่ง/Role ในองค์กร</td><td>เช่น QA Lead, BA, Project Manager</td><td><span class="col-badge col-optional">Optional</span></td></tr>
+          <tr><td>G</td><td>Direct Report ถึง</td><td>ชื่อหัวหน้าตรง (พิมพ์อิสระหรือ Dropdown จาก Contacts)</td><td><span class="col-badge col-optional">Optional</span></td></tr>
+          <tr><td>H</td><td>Email (หลัก)</td><td>Email หลักขององค์กร</td><td><span class="col-badge col-required">Required</span></td></tr>
+          <tr><td>I</td><td>Email (2)</td><td>Email สำรอง / Vendor อาจมี 2 เมล</td><td><span class="col-badge col-optional">Optional</span></td></tr>
+          <tr><td>J</td><td>โทรศัพท์</td><td>เบอร์มือถือ</td><td><span class="col-badge col-optional">Optional</span></td></tr>
+          <tr><td>K</td><td>Line ID</td><td>Line Account สำหรับติดต่อ</td><td><span class="col-badge col-optional">Optional</span></td></tr>
+          <tr><td>L</td><td>หมายเหตุสั้น</td><td>Note 1 บรรทัด เช่น "เชี่ยวชาญ UAT Banking"</td><td><span class="col-badge col-optional">Optional</span></td></tr>
+          <tr><td>M</td><td>Last Updated</td><td>Auto-fill วันที่แก้ไขล่าสุด</td><td><span class="col-badge col-auto">Auto</span></td></tr>
+          <tr><td>N</td><td>Sync Status</td><td>✅ Synced / 🔄 Pending / ❌ Error</td><td><span class="col-badge col-auto">Auto</span></td></tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:16px;font-size:15px;font-weight:700;color:#F1F5F9;margin-bottom:14px">🔗 Sheet: Contact_Projects — Column Specification</div>
+      <table class="col-spec">
+        <thead>
+          <tr><th>Col</th><th>ชื่อ Column</th><th>รายละเอียด</th><th>ประเภท</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>A</td><td>ContactID</td><td>อ้างอิงจาก Sheet Contacts Col A (เช่น C001)</td><td><span class="col-badge col-required">Required</span></td></tr>
+          <tr><td>B</td><td>ชื่อ (แสดงผล)</td><td>Auto VLOOKUP จาก ContactID — ไม่ต้องพิมพ์เอง</td><td><span class="col-badge col-auto">Auto</span></td></tr>
+          <tr><td>C</td><td>โปรเจค</td><td>Dropdown จาก Master_Data → โปรเจค เช่น COBRA, ATLAS</td><td><span class="col-badge col-dropdown">Dropdown</span></td></tr>
+          <tr><td>D</td><td>Role ในโปรเจค</td><td>Dropdown: Main Impact / Supporter / Project Manager / IT / User</td><td><span class="col-badge col-dropdown">Dropdown</span></td></tr>
+          <tr><td>E</td><td>หมายเหตุ (เฉพาะโปรเจค)</td><td>เพิ่มเติมเฉพาะบทบาทในโปรเจคนี้</td><td><span class="col-badge col-optional">Optional</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ===== SECTION 2: EXCEL MOCKUP ===== -->
+    <div class="section-header">
+      <div class="section-num">Section 02</div>
+      <div class="section-title">Mock Screen: Excel Contacts Sheet</div>
+      <div class="section-desc">หน้าตาที่ควรจะเป็นของ Sheet "Contacts" — Row 1 = Header (Freeze), Column B = Freeze, มี Conditional Formatting แบ่งสีตามทีม, Dropdown สำหรับ Column ที่ Fixed</div>
+    </div>
+
+    <div class="excel-window">
+      <!-- Title Bar -->
+      <div class="excel-title">
+        <span style="font-size:16px">🟢</span>
+        <span class="excel-title-text">MyContacts.xlsx — Microsoft Excel</span>
+        <div class="excel-window-btns">
+          <div class="excel-wb" style="background:#FFBD2E"></div>
+          <div class="excel-wb" style="background:#FF6058"></div>
+          <div class="excel-wb" style="background:#28CA41"></div>
+        </div>
+      </div>
+
+      <!-- Ribbon -->
+      <div class="excel-ribbon">
+        <div class="ribbon-group">
+          <div style="display:flex;flex-direction:column;align-items:center">
+            <button class="ribbon-btn macro">🔄 Sync Now</button>
+            <span class="ribbon-group-label">Sync</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center">
+            <button class="ribbon-btn">📥 Pull Latest</button>
+            <span class="ribbon-group-label">จากเว็บ</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center">
+            <button class="ribbon-btn">📤 Push Changes</button>
+            <span class="ribbon-group-label">ขึ้นเว็บ</span>
+          </div>
+        </div>
+        <div class="ribbon-group">
+          <div style="display:flex;flex-direction:column;align-items:center">
+            <button class="ribbon-btn">➕ Add Row</button>
+            <span class="ribbon-group-label">เพิ่ม Contact</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center">
+            <button class="ribbon-btn warn">🗑 Delete</button>
+            <span class="ribbon-group-label">ลบ Contact</span>
+          </div>
+        </div>
+        <div class="ribbon-group">
+          <div style="display:flex;flex-direction:column;align-items:center">
+            <button class="ribbon-btn">🔍 Find</button>
+            <span class="ribbon-group-label">ค้นหา</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center">
+            <button class="ribbon-btn">🔽 Filter</button>
+            <span class="ribbon-group-label">กรอง</span>
+          </div>
+        </div>
+        <div style="margin-left:auto;font-size:11px;color:#2E7D32;display:flex;align-items:center;gap:6px">
+          <span style="width:8px;height:8px;border-radius:50%;background:#4CAF50;display:inline-block"></span>
+          ✅ Synced · Last: 25 เม.ย. 10:32 น.
+        </div>
+      </div>
+
+      <!-- Formula Bar -->
+      <div class="excel-formula">
+        <div class="cell-ref">B3</div>
+        <span class="fx-icon">fx</span>
+        <div class="formula-bar">สมชาย มีสุข</div>
+      </div>
+
+      <!-- Grid -->
+      <div class="excel-grid">
+        <table class="excel-table">
+          <thead>
+            <tr>
+              <th class="col-header" style="min-width:28px"></th>
+              <th class="col-header">A</th>
+              <th class="col-header" style="min-width:150px">B</th>
+              <th class="col-header" style="min-width:130px">C</th>
+              <th class="col-header">D</th>
+              <th class="col-header" style="min-width:140px">E</th>
+              <th class="col-header" style="min-width:130px">F</th>
+              <th class="col-header" style="min-width:150px">G</th>
+              <th class="col-header" style="min-width:180px">H</th>
+              <th class="col-header" style="min-width:150px">I</th>
+              <th class="col-header">J</th>
+              <th class="col-header">K</th>
+              <th class="col-header" style="min-width:200px">L</th>
+              <th class="col-header">M</th>
+              <th class="col-header">N</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Row 1: Header -->
+            <tr>
+              <td class="row-header">1</td>
+              <td class="cell header-row">ContactID</td>
+              <td class="cell header-row">ชื่อ (ไทย) ▾</td>
+              <td class="cell header-row">Name (Eng) ▾</td>
+              <td class="cell header-row">ชื่อเล่น ▾</td>
+              <td class="cell header-row">ทีม ▾</td>
+              <td class="cell header-row">ตำแหน่ง ▾</td>
+              <td class="cell header-row">Direct Report ▾</td>
+              <td class="cell header-row">Email (หลัก) ▾</td>
+              <td class="cell header-row">Email (2) ▾</td>
+              <td class="cell header-row">โทรศัพท์ ▾</td>
+              <td class="cell header-row">Line ID ▾</td>
+              <td class="cell header-row">หมายเหตุสั้น ▾</td>
+              <td class="cell header-row">Last Updated</td>
+              <td class="cell header-row">Sync</td>
+            </tr>
+            <!-- Row 2: สมชาย (selected) -->
+            <tr class="row-core">
+              <td class="row-header">2</td>
+              <td class="cell" style="color:#9E9E9E;font-size:10px">C001</td>
+              <td class="cell frozen-col selected">สมชาย มีสุข</td>
+              <td class="cell selected">Somchai Meesuk</td>
+              <td class="cell selected">ชาย</td>
+              <td class="cell dropdown selected" style="color:#6366F1;font-weight:500">Core Banking IT</td>
+              <td class="cell selected">QA Lead</td>
+              <td class="cell selected">นาย กฤษณ์ สมบูรณ์</td>
+              <td class="cell selected" style="color:#1565C0">somchai.m@company.co.th</td>
+              <td class="cell selected" style="color:#9E9E9E">—</td>
+              <td class="cell selected">081-234-5678</td>
+              <td class="cell selected">@cha_somchai</td>
+              <td class="cell selected" style="font-size:11px">เชี่ยวชาญ UAT Banking ถามก่อน</td>
+              <td class="cell" style="font-size:10px;color:#9E9E9E">25/04/26</td>
+              <td class="cell" style="font-size:12px">✅</td>
+            </tr>
+            <!-- Row 3: อนันต์ -->
+            <tr class="row-pmo">
+              <td class="row-header">3</td>
+              <td class="cell" style="color:#9E9E9E;font-size:10px">C002</td>
+              <td class="cell frozen-col">อนันต์ ใจดี</td>
+              <td class="cell">Anan Jaidee</td>
+              <td class="cell">อั้น</td>
+              <td class="cell dropdown" style="color:#F97316;font-weight:500">PMO</td>
+              <td class="cell">Project Manager</td>
+              <td class="cell">นาง สุภาพร ชัยวัฒน์</td>
+              <td class="cell" style="color:#1565C0">anan.j@company.co.th</td>
+              <td class="cell" style="color:#9E9E9E">—</td>
+              <td class="cell">091-234-5678</td>
+              <td class="cell">@anan_pm</td>
+              <td class="cell" style="font-size:11px">PM ที่ตอบเร็ว ติดตามผ่าน Line ได้</td>
+              <td class="cell" style="font-size:10px;color:#9E9E9E">23/04/26</td>
+              <td class="cell" style="font-size:12px">✅</td>
+            </tr>
+            <!-- Row 4: Sarah -->
+            <tr class="row-vendor">
+              <td class="row-header">4</td>
+              <td class="cell" style="color:#9E9E9E;font-size:10px">C003</td>
+              <td class="cell frozen-col">Sarah Chen</td>
+              <td class="cell">Sarah Chen</td>
+              <td class="cell" style="color:#9E9E9E">—</td>
+              <td class="cell dropdown" style="color:#6B7280;font-weight:500">Vendor: ABC Systems</td>
+              <td class="cell">Tech Architect</td>
+              <td class="cell" style="color:#9E9E9E">—</td>
+              <td class="cell" style="color:#1565C0">sarah.c@abcsystems.com</td>
+              <td class="cell" style="color:#1565C0">sarah@abcbkk.co.th</td>
+              <td class="cell">02-456-7890</td>
+              <td class="cell" style="color:#9E9E9E">—</td>
+              <td class="cell" style="font-size:11px">Vendor หลัก NEXUS ติดต่อ 2 email</td>
+              <td class="cell" style="font-size:10px;color:#9E9E9E">20/04/26</td>
+              <td class="cell" style="font-size:12px">✅</td>
+            </tr>
+            <!-- Row 5: นภาพร -->
+            <tr class="row-digital">
+              <td class="row-header">5</td>
+              <td class="cell" style="color:#9E9E9E;font-size:10px">C004</td>
+              <td class="cell frozen-col">นภาพร วงศ์ดี</td>
+              <td class="cell">Napaporn Wongdee</td>
+              <td class="cell">แนน</td>
+              <td class="cell dropdown" style="color:#0EA5E9;font-weight:500">Digital Banking IT</td>
+              <td class="cell">Business Analyst</td>
+              <td class="cell">นาย วิทยา ประสิทธิ์</td>
+              <td class="cell" style="color:#1565C0">napaporn.w@company.co.th</td>
+              <td class="cell" style="color:#9E9E9E">—</td>
+              <td class="cell">086-345-6789</td>
+              <td class="cell">@nan_ba</td>
+              <td class="cell" style="font-size:11px">รู้เรื่อง Digital Banking flow ดีมาก</td>
+              <td class="cell" style="font-size:10px;color:#9E9E9E">18/04/26</td>
+              <td class="cell" style="font-size:12px">🔄</td>
+            </tr>
+            <!-- Row 6: วรรณา -->
+            <tr class="row-bizops">
+              <td class="row-header">6</td>
+              <td class="cell" style="color:#9E9E9E;font-size:10px">C005</td>
+              <td class="cell frozen-col">วรรณา ทองคำ</td>
+              <td class="cell">Wanna Thongkam</td>
+              <td class="cell">หนิง</td>
+              <td class="cell dropdown" style="color:#8B5CF6;font-weight:500">Business Operations</td>
+              <td class="cell">Business Analyst</td>
+              <td class="cell">นาย สุรศักดิ์ มั่นคง</td>
+              <td class="cell" style="color:#1565C0">wanna.t@company.co.th</td>
+              <td class="cell" style="color:#9E9E9E">—</td>
+              <td class="cell">088-901-2345</td>
+              <td class="cell">@ning_wa</td>
+              <td class="cell" style="font-size:11px">User Rep PHOENIX ตัวจริง</td>
+              <td class="cell" style="font-size:10px;color:#9E9E9E">15/04/26</td>
+              <td class="cell" style="font-size:12px">✅</td>
+            </tr>
+            <!-- Row 7: กิตติ -->
+            <tr class="row-senior">
+              <td class="row-header">7</td>
+              <td class="cell" style="color:#9E9E9E;font-size:10px">C006</td>
+              <td class="cell frozen-col">กิตติ ศิริโชค</td>
+              <td class="cell">Kitti Sirichoke</td>
+              <td class="cell">กิ๊ต</td>
+              <td class="cell dropdown" style="color:#BE185D;font-weight:500">Senior Management</td>
+              <td class="cell">Program Director</td>
+              <td class="cell">นาย พิทักษ์ อำนาจ</td>
+              <td class="cell" style="color:#1565C0">kitti.s@company.co.th</td>
+              <td class="cell" style="color:#9E9E9E">—</td>
+              <td class="cell">081-111-2222</td>
+              <td class="cell" style="color:#9E9E9E">—</td>
+              <td class="cell" style="font-size:11px">Senior ดูภาพรวมทุก Project ไม่ต้อง detail</td>
+              <td class="cell" style="font-size:10px;color:#9E9E9E">10/04/26</td>
+              <td class="cell" style="font-size:12px">✅</td>
+            </tr>
+            <!-- New Row indicator -->
+            <tr>
+              <td class="row-header" style="color:#9E9E9E">8</td>
+              <td class="cell" style="color:#BDBDBD;font-style:italic;font-size:11px">C007</td>
+              <td class="cell frozen-col" style="color:#BDBDBD;font-style:italic;font-size:11px">← พิมพ์ชื่อใหม่ที่นี่</td>
+              <td class="cell" style="background:#FAFAFA"></td>
+              <td class="cell" style="background:#FAFAFA"></td>
+              <td class="cell" style="background:#FAFAFA"></td>
+              <td class="cell" style="background:#FAFAFA"></td>
+              <td class="cell" style="background:#FAFAFA"></td>
+              <td class="cell" style="background:#FAFAFA"></td>
+              <td class="cell" style="background:#FAFAFA"></td>
+              <td class="cell" style="background:#FAFAFA"></td>
+              <td class="cell" style="background:#FAFAFA"></td>
+              <td class="cell" style="background:#FAFAFA"></td>
+              <td class="cell" style="background:#FAFAFA"></td>
+              <td class="cell" style="background:#FAFAFA"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Sheet Tabs -->
+      <div class="excel-sheets">
+        <div class="sheet-tab active">📋 Contacts</div>
+        <div class="sheet-tab">🔗 Contact_Projects</div>
+        <div class="sheet-tab">📝 Notes</div>
+        <div class="sheet-tab">⚙ Master_Data</div>
+        <div class="sheet-tab">🔄 Sync</div>
+        <span class="sheet-add">+</span>
+      </div>
+
+      <!-- Status Bar -->
+      <div class="excel-status">
+        <div class="status-item">📊 10 contacts</div>
+        <div class="status-item">🔄 1 pending sync</div>
+        <div class="status-item">✅ Last sync: 10:32 น.</div>
+        <div style="margin-left:auto;display:flex;gap:16px">
+          <span>Count: 6</span>
+          <span>⊞ Page Layout</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box" style="margin-top:20px">
+      <strong>💡 UX Tips ที่ควรทำใน Excel:</strong><br>
+      • Row 1 + Column B = Freeze Pane → เลื่อน scroll แล้วยังเห็น Header และชื่อเสมอ<br>
+      • Conditional Formatting: แต่ละ Row สีอ่อนตามทีม (Core Banking = Indigo, PMO = Orange ฯลฯ)<br>
+      • Data Validation (Dropdown) ที่ Column ทีม, โปรเจค, Role → ป้องกัน typo และ inconsistency<br>
+      • Column A (ContactID) และ M-N = Lock (Protected) ไม่ให้แก้ไขโดยตรง<br>
+      • ใส่ VBA Macro ปุ่ม "🔄 Sync Now" ใน Ribbon และ Sheet Sync
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ===== SECTION 3: SYNC WORKFLOW ===== -->
+    <div class="section-header">
+      <div class="section-num">Section 03</div>
+      <div class="section-title">Sync Workflow — 2 แนวทาง</div>
+      <div class="section-desc">เลือกได้ตามความสะดวก ทั้ง 2 แบบทำงานกับ Python backend เหมือนกัน ต่างกันที่วิธี "ส่งข้อมูล" ระหว่าง Excel กับ Web</div>
+    </div>
+
+    <div class="workflow-grid">
+      <!-- Option A: File-Based via OneDrive -->
+      <div class="workflow-card">
+        <div class="wf-card-header">
+          <div class="wf-card-num">Option A · แนะนำสำหรับ Personal Use</div>
+          <div class="wf-card-title">☁️ File-Based Sync via OneDrive</div>
+          <div class="wf-card-sub">Excel อยู่ใน OneDrive → Python อ่านไฟล์โดยตรง → Web แสดงผล</div>
+        </div>
+        <div class="wf-card-body">
+          <div class="step">
+            <div class="step-num" style="background:rgba(16,185,129,0.2);color:#4ADE80">1</div>
+            <div class="step-content">
+              <div class="step-title">เปิด Excel จาก OneDrive</div>
+              <div class="step-desc">ไฟล์ MyContacts.xlsx อยู่บน OneDrive — เปิดได้ทั้งจาก Desktop Excel หรือ Excel Online (Browser)</div>
+            </div>
+          </div>
+          <div class="step-arrow">↓</div>
+          <div class="step">
+            <div class="step-num" style="background:rgba(59,130,246,0.2);color:#60A5FA">2</div>
+            <div class="step-content">
+              <div class="step-title">แก้ไขข้อมูลใน Excel</div>
+              <div class="step-desc">เพิ่ม Contact ใหม่, แก้เบอร์, เพิ่ม Note — Excel Save ไปที่ OneDrive อัตโนมัติ (AutoSave)</div>
+            </div>
+          </div>
+          <div class="step-arrow">↓</div>
+          <div class="step">
+            <div class="step-num" style="background:rgba(245,158,11,0.2);color:#FCD34D">3</div>
+            <div class="step-content">
+              <div class="step-title">Python อ่านไฟล์จาก OneDrive path</div>
+              <div class="step-desc">Python server ใช้ openpyxl อ่าน .xlsx จาก local OneDrive sync path เช่น C:\Users\napan\OneDrive\MyContacts.xlsx</div>
+            </div>
+          </div>
+          <div class="step-arrow">↓</div>
+          <div class="step">
+            <div class="step-num" style="background:rgba(99,102,241,0.2);color:#A5B4FC">4</div>
+            <div class="step-content">
+              <div class="step-title">Web แสดงข้อมูลล่าสุด</div>
+              <div class="step-desc">Refresh Web → ดึงจาก .xlsx ทันที ไม่ต้องกด Sync แยก (หรือ Auto-Refresh ทุก 30 วินาที)</div>
+            </div>
+          </div>
+
+          <div class="pros-cons-row">
+            <div class="pc-box">
+              <div class="pc-label" style="color:#4ADE80">ข้อดี</div>
+              <div class="pc-item pc-pros">Setup ง่ายมาก</div>
+              <div class="pc-item pc-pros">ไม่ต้องเขียน API</div>
+              <div class="pc-item pc-pros">Excel = Source of Truth</div>
+              <div class="pc-item pc-pros">ทำงาน Offline ได้</div>
+            </div>
+            <div class="pc-box">
+              <div class="pc-label" style="color:#F87171">ข้อเสีย</div>
+              <div class="pc-item pc-cons">ต้องมี OneDrive</div>
+              <div class="pc-item pc-cons">Web แก้ไม่ได้ (อ่านอย่างเดียว)</div>
+              <div class="pc-item pc-cons">Conflict ถ้าเปิดพร้อมกัน</div>
+            </div>
+          </div>
+          <div class="recommend-badge">⭐ แนะนำ — ง่าย เร็ว เหมาะ Personal System</div>
+        </div>
+      </div>
+
+      <!-- Option B: API-Based Sync -->
+      <div class="workflow-card">
+        <div class="wf-card-header">
+          <div class="wf-card-num">Option B · สำหรับ Two-Way Sync</div>
+          <div class="wf-card-title">🔌 API-Based Sync via VBA Macro</div>
+          <div class="wf-card-sub">Excel ส่งข้อมูลผ่าน HTTP ไปที่ Python API → ทั้ง 2 ฝั่งแก้ได้</div>
+        </div>
+        <div class="wf-card-body">
+          <div class="step">
+            <div class="step-num" style="background:rgba(239,68,68,0.2);color:#F87171">1</div>
+            <div class="step-content">
+              <div class="step-title">กด "🔄 Sync Now" ใน Excel Ribbon</div>
+              <div class="step-desc">ปุ่ม VBA Macro ส่ง HTTP POST ไปที่ Python local server (localhost:5000/api/sync)</div>
+            </div>
+          </div>
+          <div class="step-arrow">↓</div>
+          <div class="step">
+            <div class="step-num" style="background:rgba(59,130,246,0.2);color:#60A5FA">2</div>
+            <div class="step-content">
+              <div class="step-title">Python รับข้อมูล → Merge + Save</div>
+              <div class="step-desc">Python เปรียบเทียบ Last Updated timestamp → เก็บ Record ล่าสุด → บันทึกลง SQLite</div>
+            </div>
+          </div>
+          <div class="step-arrow">↓</div>
+          <div class="step">
+            <div class="step-num" style="background:rgba(245,158,11,0.2);color:#FCD34D">3</div>
+            <div class="step-content">
+              <div class="step-title">Python ส่งข้อมูลล่าสุดกลับ Excel</div>
+              <div class="step-desc">Response JSON → VBA อัพเดต Cells ที่เปลี่ยนแปลง + ปรับ Sync Status Column</div>
+            </div>
+          </div>
+          <div class="step-arrow">↓</div>
+          <div class="step">
+            <div class="step-num" style="background:rgba(99,102,241,0.2);color:#A5B4FC">4</div>
+            <div class="step-content">
+              <div class="step-title">Web ดึงจาก SQLite ได้ทันที</div>
+              <div class="step-desc">Web app อ่านจาก SQLite → ข้อมูลตรงกันทั้ง 2 Client</div>
+            </div>
+          </div>
+
+          <div class="pros-cons-row">
+            <div class="pc-box">
+              <div class="pc-label" style="color:#4ADE80">ข้อดี</div>
+              <div class="pc-item pc-pros">Two-way sync จริง</div>
+              <div class="pc-item pc-pros">Web แก้ได้ด้วย</div>
+              <div class="pc-item pc-pros">Conflict handling</div>
+              <div class="pc-item pc-pros">Scale ได้ในอนาคต</div>
+            </div>
+            <div class="pc-box">
+              <div class="pc-label" style="color:#F87171">ข้อเสีย</div>
+              <div class="pc-item pc-cons">ต้อง Python server running</div>
+              <div class="pc-item pc-cons">Setup ซับซ้อนกว่า</div>
+              <div class="pc-item pc-cons">ต้องเขียน VBA + API</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Architecture Diagram -->
+    <div class="arch-diagram">
+      <div class="arch-title">Architecture Overview — Option A (แนะนำ)</div>
+      <div class="arch-row">
+        <div class="arch-node">
+          <div class="arch-node-icon">📗</div>
+          <div class="arch-node-label">Excel Desktop</div>
+          <div class="arch-node-sub">แก้ไขข้อมูล<br>ได้ Offline</div>
+        </div>
+        <div class="arch-arrow">
+          <div class="arch-arrow-line">
+            <div class="arrow-fw">→</div>
+            <div class="arch-arrow-label">AutoSave</div>
+          </div>
+        </div>
+        <div class="arch-db">
+          <div class="arch-node-icon">☁️</div>
+          <div class="arch-node-label">MyContacts.xlsx</div>
+          <div class="arch-node-sub" style="color:#FCD34D">OneDrive (Shared File)</div>
+        </div>
+        <div class="arch-arrow">
+          <div class="arch-arrow-line">
+            <div class="arrow-bw">←→</div>
+            <div class="arch-arrow-label">openpyxl<br>อ่าน/เขียน</div>
+          </div>
+        </div>
+        <div class="arch-node">
+          <div class="arch-node-icon">🐍</div>
+          <div class="arch-node-label">Python Flask</div>
+          <div class="arch-node-sub">localhost:5000<br>Backend</div>
+        </div>
+        <div class="arch-arrow">
+          <div class="arch-arrow-line">
+            <div class="arrow-fw">→</div>
+            <div class="arch-arrow-label">HTTP API<br>JSON</div>
+          </div>
+        </div>
+        <div class="arch-node">
+          <div class="arch-node-icon">🌐</div>
+          <div class="arch-node-label">Web Browser</div>
+          <div class="arch-node-sub">หนึ่งใน<br>5 Design</div>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:20px;padding:0 40px">
+        <div style="display:inline-flex;align-items:center;gap:24px;flex-wrap:wrap;justify-content:center">
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#64748B">
+            <span style="color:#3B82F6;font-size:16px">→</span> AutoSave (OneDrive Sync)
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#64748B">
+            <span style="color:#10B981;font-size:16px">←→</span> Python อ่าน .xlsx ตาม schedule หรือ on-demand
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#64748B">
+            <span style="color:#F59E0B;font-size:16px">★</span> ไม่มี database แยก — Excel IS the database
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="warn-box">
+      <strong>⚠️ สิ่งที่ต้องระวัง:</strong><br>
+      • ถ้าเปิด Excel Desktop และ Excel Online พร้อมกัน → OneDrive จะ Merge อัตโนมัติ แต่อาจมี Conflict ถ้าแก้ Cell เดียวกัน<br>
+      • ควร Lock Column A (ContactID), M (Last Updated), N (Sync Status) ไม่ให้แก้ไขตรง → ใช้ Sheet Protection ใน Excel<br>
+      • Python server ต้องรัน (ใช้ Windows Task Scheduler รัน auto ตอน startup ได้)
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ===== SECTION 4: VBA MACRO CODE PREVIEW ===== -->
+    <div class="section-header">
+      <div class="section-num">Section 04</div>
+      <div class="section-title">VBA Macro — ตัวอย่างโค้ด Sync (Option B)</div>
+      <div class="section-desc">ถ้าเลือก Option B ต้องเขียน VBA Macro ในปุ่ม "Sync Now" — นี่คือ structure ของโค้ดที่ต้องใช้</div>
+    </div>
+
+    <div style="background:#0F172A;border:1px solid #334155;border-radius:12px;padding:24px;font-family:monospace;font-size:13px;line-height:1.7;overflow-x:auto">
+      <div style="color:#64748B;margin-bottom:12px">' VBA Module: MyContacts_Sync.bas</div>
+      <div style="color:#94A3B8">' ================================================================</div>
+      <div style="color:#94A3B8">' ปุ่ม "Sync Now" → เรียกใช้ Macro นี้</div>
+      <div style="color:#94A3B8">' ================================================================</div>
+      <br>
+      <div><span style="color:#C084FC">Sub</span> <span style="color:#60A5FA">SyncContacts</span><span style="color:#E2E8F0">()</span></div>
+      <div style="padding-left:20px">
+        <div><span style="color:#94A3B8">Dim</span> <span style="color:#E2E8F0">http </span><span style="color:#94A3B8">As Object</span></div>
+        <div><span style="color:#94A3B8">Dim</span> <span style="color:#E2E8F0">jsonBody </span><span style="color:#94A3B8">As String</span></div>
+        <div><span style="color:#94A3B8">Dim</span> <span style="color:#E2E8F0">ws </span><span style="color:#94A3B8">As Worksheet</span></div>
+        <br>
+        <div><span style="color:#94A3B8">Set</span> ws = ThisWorkbook.Sheets(<span style="color:#A3E635">"Contacts"</span>)</div>
+        <div><span style="color:#94A3B8">Set</span> http = CreateObject(<span style="color:#A3E635">"MSXML2.XMLHTTP"</span>)</div>
+        <br>
+        <div><span style="color:#94A3B8">' 1. สร้าง JSON จาก Excel rows</span></div>
+        <div>jsonBody = <span style="color:#C084FC">BuildJSON</span>(ws)</div>
+        <br>
+        <div><span style="color:#94A3B8">' 2. POST ไปที่ Python API</span></div>
+        <div>http.Open <span style="color:#A3E635">"POST"</span>, <span style="color:#A3E635">"http://localhost:5000/api/sync"</span>, <span style="color:#94A3B8">False</span></div>
+        <div>http.setRequestHeader <span style="color:#A3E635">"Content-Type"</span>, <span style="color:#A3E635">"application/json"</span></div>
+        <div>http.send jsonBody</div>
+        <br>
+        <div><span style="color:#94A3B8">' 3. รับ Response และอัพเดต Sync Status Column</span></div>
+        <div><span style="color:#C084FC">If</span> http.Status = 200 <span style="color:#C084FC">Then</span></div>
+        <div style="padding-left:20px">
+          <div><span style="color:#C084FC">Call</span> <span style="color:#60A5FA">UpdateSyncStatus</span>(ws, <span style="color:#A3E635">"✅ Synced"</span>)</div>
+          <div>MsgBox <span style="color:#A3E635">"Sync สำเร็จ! "</span> & Now(), vbInformation</div>
+        </div>
+        <div><span style="color:#C084FC">Else</span></div>
+        <div style="padding-left:20px">
+          <div><span style="color:#C084FC">Call</span> <span style="color:#60A5FA">UpdateSyncStatus</span>(ws, <span style="color:#A3E635">"❌ Error"</span>)</div>
+          <div>MsgBox <span style="color:#A3E635">"Sync ไม่สำเร็จ: Status "</span> & http.Status, vbCritical</div>
+        </div>
+        <div><span style="color:#C084FC">End If</span></div>
+      </div>
+      <div><span style="color:#C084FC">End Sub</span></div>
+      <br>
+      <div style="color:#64748B">' ============================================================</div>
+      <div style="color:#64748B">' Python API endpoint ที่ต้องสร้าง (Flask)</div>
+      <div style="color:#64748B">' POST /api/sync → รับ JSON → save to SQLite → return updated data</div>
+      <div style="color:#64748B">' GET /api/contacts → Web ใช้ดึงข้อมูล</div>
+      <div style="color:#64748B">' ============================================================</div>
+    </div>
+
+    <div class="info-box" style="margin-top:20px">
+      <strong>📌 สรุปคำแนะนำ:</strong><br>
+      ถ้าเริ่มต้น → เลือก <strong>Option A (OneDrive)</strong> ก่อน — setup 30 นาที ใช้ได้เลย<br>
+      ถ้าต้องการ Two-way sync (แก้จากเว็บได้ด้วย) → upgrade เป็น <strong>Option B (API)</strong> ทีหลัง<br>
+      Architecture ออกแบบให้ migrate ระหว่าง A → B ได้โดยไม่ต้องแก้ Excel Schema
+    </div>
+
+  </div>
+
+</body>
+</html>

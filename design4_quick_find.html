@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design 4: Quick Find — MyContacts</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', 'Sarabun', sans-serif; min-height: 100vh; background: #FFFFFF; color: #0F172A; display: flex; flex-direction: column; }
+
+    /* Top Bar */
+    .topbar {
+      display: flex; align-items: center; height: 52px;
+      background: #FAFAFA; padding: 0 20px; gap: 16px; flex-shrink: 0;
+      border-bottom: 1px solid #F1F5F9;
+    }
+    .logo { font-size: 16px; font-weight: 700; color: #1E293B; }
+    .logo span { color: #3B82F6; }
+    .topbar-label { font-size: 11px; background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); color: #3B82F6; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .btn { padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; display: flex; align-items: center; gap: 6px; }
+    .btn-primary { background: #3B82F6; color: white; }
+    .btn-ghost { background: transparent; color: #64748B; border: 1px solid #E2E8F0; }
+    .btn-meeting { background: #DC2626; color: white; font-size: 12px; }
+    .back-link { color: #94A3B8; font-size: 12px; text-decoration: none; }
+
+    /* Main: Two states */
+    /* State 1: Default / Search Mode */
+    .state-default { display: flex; flex-direction: column; align-items: center; flex: 1; }
+
+    /* Hero Search */
+    .hero { padding: 80px 20px 40px; text-align: center; max-width: 640px; margin: 0 auto; width: 100%; }
+    .hero-label { font-size: 13px; color: #94A3B8; margin-bottom: 16px; font-family: 'Sarabun', sans-serif; }
+    .hero-title { font-size: 28px; font-weight: 800; color: #0F172A; margin-bottom: 8px; letter-spacing: -0.5px; }
+    .hero-title span { color: #3B82F6; }
+    .hero-sub { font-size: 15px; color: #64748B; margin-bottom: 32px; font-family: 'Sarabun', sans-serif; line-height: 1.6; }
+
+    /* Search Box */
+    .search-wrapper { position: relative; width: 100%; margin-bottom: 24px; }
+    .search-main {
+      display: flex; align-items: center; gap: 12px;
+      background: white; border: 2.5px solid #3B82F6;
+      border-radius: 16px; padding: 14px 18px; width: 100%;
+      box-shadow: 0 8px 30px rgba(59,130,246,0.15), 0 0 0 4px rgba(59,130,246,0.08);
+    }
+    .search-icon { font-size: 22px; color: #3B82F6; }
+    .search-input {
+      flex: 1; border: none; background: none; font-size: 18px;
+      color: #0F172A; outline: none; font-family: 'Sarabun', sans-serif;
+      font-weight: 500;
+    }
+    .search-input::placeholder { color: #CBD5E1; font-weight: 400; }
+    .search-kbd { display: flex; gap: 4px; }
+    .kbd {
+      font-size: 11px; padding: 3px 7px; border-radius: 5px;
+      background: #F8FAFC; border: 1px solid #E2E8F0;
+      color: #94A3B8; font-weight: 600; font-family: 'Inter', monospace;
+    }
+
+    /* Quick Filters */
+    .quick-filters { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 32px; }
+    .qf-chip {
+      display: flex; align-items: center; gap: 6px; padding: 7px 14px;
+      border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer;
+      border: 1.5px solid #E2E8F0; color: #475569; background: white;
+      transition: all 0.15s; font-family: 'Sarabun', sans-serif;
+    }
+    .qf-chip:hover { border-color: #3B82F6; color: #3B82F6; }
+    .qf-chip.active { background: #EFF6FF; border-color: #3B82F6; color: #3B82F6; }
+    .qf-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    /* Recent Contacts */
+    .recent-label { font-size: 12px; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
+    .recent-avatars { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; }
+    .recent-avatar-item { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
+    .recent-avatar-item:hover .ra-circle { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .ra-circle {
+      width: 52px; height: 52px; border-radius: 16px; display: flex;
+      align-items: center; justify-content: center; font-size: 18px; font-weight: 700;
+      color: white; transition: all 0.15s;
+    }
+    .ra-name { font-size: 11px; color: #64748B; font-family: 'Sarabun', sans-serif; text-align: center; max-width: 56px; }
+
+    /* Search Results (shown when typing) */
+    .results-area { width: 100%; max-width: 640px; padding: 0 0 40px; }
+    .results-count { font-size: 12px; color: #94A3B8; padding: 0 4px 10px; font-family: 'Sarabun', sans-serif; }
+    .result-card {
+      background: white; border: 1.5px solid #F1F5F9; border-radius: 14px;
+      padding: 16px; margin-bottom: 10px; cursor: pointer;
+      transition: all 0.15s; box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    .result-card:hover { border-color: #3B82F6; box-shadow: 0 4px 16px rgba(59,130,246,0.12); transform: translateY(-1px); }
+    .result-card.selected { border-color: #3B82F6; background: #F0F9FF; }
+
+    .rc-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .rc-avatar { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 700; color: white; flex-shrink: 0; }
+    .rc-names { flex: 1; }
+    .rc-name { font-size: 16px; font-weight: 700; color: #0F172A; font-family: 'Sarabun', sans-serif; }
+    .rc-nick { font-size: 12px; color: #94A3B8; font-family: 'Sarabun', sans-serif; }
+    .rc-match { background: #FEF9C3; color: #854D0E; padding: 0 2px; border-radius: 3px; }
+
+    .rc-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .rc-badge-team { font-size: 11px; padding: 3px 10px; border-radius: 6px; font-weight: 500; color: white; }
+    .rc-badge-role { font-size: 11px; padding: 3px 10px; border-radius: 6px; font-weight: 500; }
+
+    .rc-contacts { display: flex; gap: 20px; flex-wrap: wrap; }
+    .rc-contact-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #64748B; font-family: 'Sarabun', sans-serif; }
+    .rc-contact-item a { color: #3B82F6; text-decoration: none; }
+
+    .rc-projects { display: flex; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #F1F5F9; flex-wrap: wrap; }
+    .rc-proj { display: flex; align-items: center; gap: 5px; font-size: 11px; }
+    .rc-proj-dot { width: 8px; height: 8px; border-radius: 2px; }
+    .rc-proj-name { color: #64748B; font-family: 'Sarabun', sans-serif; }
+    .rc-proj-role { color: #94A3B8; font-family: 'Sarabun', sans-serif; }
+    .rc-note { background: #FFFBEB; border-radius: 8px; padding: 8px 12px; font-size: 12px; color: #78350F; font-family: 'Sarabun', sans-serif; line-height: 1.5; margin-top: 8px; border-left: 3px solid #F59E0B; }
+
+    /* Meeting Mode Banner */
+    .meeting-banner {
+      background: linear-gradient(135deg, #7C3AED, #DB2777);
+      color: white; padding: 14px 20px;
+      display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+    }
+    .meeting-banner-icon { font-size: 20px; }
+    .meeting-banner-text { flex: 1; }
+    .meeting-banner-title { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+    .meeting-banner-sub { font-size: 12px; opacity: 0.8; font-family: 'Sarabun', sans-serif; }
+    .meeting-attendees { display: flex; gap: -8px; }
+    .att-avatar { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: white; }
+    .meeting-banner-close { font-size: 18px; cursor: pointer; opacity: 0.7; }
+    .meeting-banner-close:hover { opacity: 1; }
+
+    /* Annotation */
+    .annotation {
+      position: fixed; bottom: 24px; right: 24px; background: #0F172A; border: 1px solid #1E293B;
+      border-radius: 12px; padding: 12px 16px; max-width: 280px; z-index: 100;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    }
+    .annotation-title { font-size: 11px; font-weight: 700; color: #60A5FA; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .annotation-text { font-size: 12px; color: #64748B; line-height: 1.5; font-family: 'Sarabun', sans-serif; }
+
+    /* Divider */
+    .section-divider { width: 100%; max-width: 640px; display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .section-divider::before, .section-divider::after { content:''; flex:1; height:1px; background:#F1F5F9; }
+    .section-divider span { font-size: 11px; color: #CBD5E1; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; }
+  </style>
+</head>
+<body>
+
+  <!-- Meeting Mode Banner (shown when meeting active) -->
+  <div class="meeting-banner">
+    <div class="meeting-banner-icon">🔴</div>
+    <div class="meeting-banner-text">
+      <div class="meeting-banner-title">Meeting Mode · COBRA Sprint 12 Review</div>
+      <div class="meeting-banner-sub">วันนี้ 10:00 น. — มี 4 คน ที่คุณบันทึกไว้ในประชุมนี้</div>
+    </div>
+    <div class="meeting-attendees">
+      <div class="att-avatar" style="background:#6366F1;margin-left:-6px">ช</div>
+      <div class="att-avatar" style="background:#F97316;margin-left:-6px">อั้</div>
+      <div class="att-avatar" style="background:#6B7280;margin-left:-6px">SC</div>
+      <div class="att-avatar" style="background:#6366F1;margin-left:-6px">ป้</div>
+    </div>
+    <div class="meeting-banner-close">×</div>
+  </div>
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <a href="index.html" class="back-link">← กลับ</a>
+    <div class="logo">My<span>Contacts</span></div>
+    <span class="topbar-label">Design 4 · Quick Find</span>
+    <div class="topbar-right">
+      <button class="btn btn-meeting">🔴 เปิด Meeting Mode</button>
+      <button class="btn btn-ghost">⬇ Export</button>
+      <button class="btn btn-primary">+ เพิ่ม</button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="state-default">
+    <div class="hero">
+      <div class="hero-label">👋 สวัสดี, TM — วันนี้ 25 เม.ย. 2026</div>
+      <div class="hero-title">ค้นหาใครสักคน<br><span>ได้เลย</span></div>
+      <div class="hero-sub">พิมพ์ชื่อ, ชื่อเล่น, ทีม, หรือโปรเจค — เจอทันที</div>
+
+      <div class="search-wrapper">
+        <div class="search-main">
+          <span class="search-icon">🔍</span>
+          <input class="search-input" type="text" placeholder="พิมพ์ชื่อ หรือชื่อเล่น เช่น ชาย, สมชาย, COBRA..." value="สมชาย">
+          <div class="search-kbd">
+            <span class="kbd">⌘</span>
+            <span class="kbd">K</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="quick-filters">
+        <div class="qf-chip">
+          <div class="qf-dot" style="background:#475569"></div>ทั้งหมด
+        </div>
+        <div class="qf-chip active">
+          <div class="qf-dot" style="background:#3B82F6"></div>COBRA
+        </div>
+        <div class="qf-chip">
+          <div class="qf-dot" style="background:#10B981"></div>ATLAS
+        </div>
+        <div class="qf-chip">
+          <div class="qf-dot" style="background:#F59E0B"></div>NEXUS
+        </div>
+        <div class="qf-chip">
+          <div class="qf-dot" style="background:#EF4444"></div>PHOENIX
+        </div>
+        <div class="qf-chip">Main Impact</div>
+        <div class="qf-chip">Vendor</div>
+      </div>
+    </div>
+
+    <!-- Search Results -->
+    <div class="results-area">
+      <div class="results-count">พบ 1 คน ที่ตรงกับ "<strong>สมชาย</strong>" ใน COBRA</div>
+
+      <!-- Result Card 1 (Selected/Expanded) -->
+      <div class="result-card selected">
+        <div class="rc-top">
+          <div class="rc-avatar" style="background:#6366F1">ช</div>
+          <div class="rc-names">
+            <div class="rc-name"><span class="rc-match">สมชาย</span> มีสุข <span style="color:#94A3B8;font-weight:400;font-size:14px">(ชาย)</span></div>
+            <div class="rc-nick">Somchai Meesuk · QA Lead</div>
+          </div>
+          <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px">✏️ แก้ไข</button>
+        </div>
+
+        <div class="rc-badges">
+          <span class="rc-badge-team" style="background:#6366F1">Core Banking IT</span>
+          <span class="rc-badge-role" style="background:rgba(220,38,38,0.1);color:#DC2626;border:1px solid rgba(220,38,38,0.2)">🔴 Main Impact</span>
+        </div>
+
+        <div class="rc-contacts">
+          <div class="rc-contact-item">📧 <a href="#">somchai.m@company.co.th</a></div>
+          <div class="rc-contact-item">📱 081-234-5678</div>
+          <div class="rc-contact-item">💬 @cha_somchai</div>
+        </div>
+
+        <div class="rc-projects">
+          <div class="rc-proj">
+            <div class="rc-proj-dot" style="background:#3B82F6"></div>
+            <span class="rc-proj-name">COBRA</span>
+            <span class="rc-proj-role">· Main Impact</span>
+          </div>
+          <div class="rc-proj">
+            <div class="rc-proj-dot" style="background:#F59E0B"></div>
+            <span class="rc-proj-name">NEXUS</span>
+            <span class="rc-proj-role">· Supporter</span>
+          </div>
+          <div style="flex:1"></div>
+          <span style="font-size:11px;color:#94A3B8;font-family:'Sarabun',sans-serif">Report: นาย กฤษณ์ สมบูรณ์</span>
+        </div>
+
+        <div class="rc-note">
+          💡 <strong>บันทึก:</strong> เชี่ยวชาญ UAT Banking — ถามเขาก่อนเลยเรื่อง Test Strategy. คุย Regression Test Plan Sprint 12 ต้องการ Smoke Test ก่อน 20 เม.ย.
+        </div>
+      </div>
+
+      <div class="section-divider"><span>ค้นหาทั้งหมด</span></div>
+
+      <!-- Additional context results -->
+      <div style="font-size:13px;color:#94A3B8;text-align:center;padding:8px;font-family:'Sarabun',sans-serif">
+        ลองค้นหา: <a href="#" style="color:#3B82F6;text-decoration:none">อั้น</a> ·
+        <a href="#" style="color:#3B82F6;text-decoration:none">Sarah</a> ·
+        <a href="#" style="color:#3B82F6;text-decoration:none">COBRA</a> ·
+        <a href="#" style="color:#3B82F6;text-decoration:none">ทั้งหมด</a>
+      </div>
+    </div>
+
+    <!-- Recent Contacts (shown when no search) -->
+    <div style="max-width:640px;width:100%;padding:0 20px 40px">
+      <div class="section-divider"><span>เพิ่งดูล่าสุด</span></div>
+      <div class="recent-avatars">
+        <div class="recent-avatar-item">
+          <div class="ra-circle" style="background:#6366F1">ช</div>
+          <div class="ra-name">สมชาย มีสุข</div>
+        </div>
+        <div class="recent-avatar-item">
+          <div class="ra-circle" style="background:#F97316">อั้</div>
+          <div class="ra-name">อนันต์ ใจดี</div>
+        </div>
+        <div class="recent-avatar-item">
+          <div class="ra-circle" style="background:#6B7280">SC</div>
+          <div class="ra-name">Sarah Chen</div>
+        </div>
+        <div class="recent-avatar-item">
+          <div class="ra-circle" style="background:#0EA5E9">แน</div>
+          <div class="ra-name">นภาพร วงศ์ดี</div>
+        </div>
+        <div class="recent-avatar-item">
+          <div class="ra-circle" style="background:#EC4899">กิ๊</div>
+          <div class="ra-name">กิตติ ศิริโชค</div>
+        </div>
+        <div class="recent-avatar-item">
+          <div class="ra-circle" style="background:#8B5CF6">หนิ</div>
+          <div class="ra-name">วรรณา ทองคำ</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Annotation -->
+  <div class="annotation">
+    <div class="annotation-title">Design 4 · Quick Find</div>
+    <div class="annotation-text">
+      <strong style="color:#E2E8F0">Mental Model:</strong> "ฉันอยู่กลางประชุม ต้องการรู้ว่า 'ชาย' คือใคร ภายใน 3 วินาที"<br><br>
+      <strong style="color:#E2E8F0">Meeting Mode:</strong> แถบสีม่วง-ชมพูด้านบน = มีประชุม active อยู่ แสดง Attendees ที่บันทึกไว้<br><br>
+      <span style="color:#818CF8">⌘K</span> เปิด Search จากทุกหน้าได้
+    </div>
+  </div>
+
+</body>
+</html>

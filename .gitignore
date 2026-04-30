@@ -1,0 +1,40 @@
+# Database
+contacts.db
+mycontacts.db
+*.db
+
+# Uploaded photos (user data)
+static/avatars/
+
+# Excel files (personal data)
+*.xlsx
+*.xlsx.tmp
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Playwright test artifacts
+.playwright-mcp/
+test_photo_*.png
+test_person.jpg
+test_*.jpg
+
+# Screenshots (dev artifacts)
+screenshot_*.png
+ss_*.png
+*.jpeg
+
+# Temp files
+29B57630
+50468630
+738B8630
+85009630
+BA247630
+EC667630
+
+# OS
+.DS_Store
+Thumbs.db

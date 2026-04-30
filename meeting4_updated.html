@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<!-- v2.0 | Design 4 — Meeting Room Cards | Expand/Collapse + Checkbox + Search -->
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meeting Room — Attendee Check v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Sarabun','Inter',sans-serif; background: #0F172A; color: #CBD5E1; font-size: 14px; min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ── Nav ── */
+.nav { position: sticky; top: 0; z-index: 200; background: #1E293B; border-bottom: 1px solid #334155; padding: 0 24px; height: 52px; display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+.nav-logo { font-size: 15px; font-weight: 800; color: #fff; }
+.nav-logo span { color: #6366F1; }
+.nav-sep { width: 1px; height: 20px; background: #334155; }
+.nav-crumb { font-size: 13px; color: #64748B; display: flex; align-items: center; gap: 6px; }
+.nav-crumb strong { color: #E2E8F0; }
+.nav-actions { margin-left: auto; display: flex; gap: 8px; }
+
+/* ── Buttons ── */
+.btn { padding: 7px 14px; border-radius: 8px; border: none; cursor: pointer; font-size: 12px; font-family: inherit; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: all .15s; white-space: nowrap; }
+.btn-ghost  { background: transparent; border: 1px solid #334155; color: #94A3B8; }
+.btn-ghost:hover  { border-color: #475569; color: #E2E8F0; }
+.btn-indigo { background: #6366F1; color: #fff; }
+.btn-indigo:hover { background: #4F46E5; }
+.btn-green  { background: #10B981; color: #fff; }
+.btn-green:hover  { background: #059669; }
+.btn-amber  { background: #F59E0B; color: #1A1A1A; }
+.btn-amber:hover  { background: #D97706; }
+.btn-sm { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
+
+/* ── Paste Strip ── */
+.paste-section { background: #162032; border-bottom: 2px solid #1E3A5F; }
+.paste-header { padding: 10px 24px; display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; }
+.paste-chevron { color: #6366F1; transition: transform .2s; flex-shrink: 0; }
+.paste-section.open .paste-chevron { transform: rotate(180deg); }
+.paste-title  { font-size: 13px; font-weight: 600; color: #E2E8F0; flex-shrink: 0; }
+.paste-preview { flex: 1; font-size: 11px; color: #475569; font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.parse-stats { display: flex; gap: 10px; flex-shrink: 0; }
+.ps { font-size: 12px; font-weight: 600; }
+.ps-total { color: #94A3B8; } .ps-found { color: #34D399; } .ps-new { color: #FCD34D; } .ps-group { color: #C084FC; }
+.paste-body { padding: 12px 24px 16px; display: none; }
+.paste-section.open .paste-body { display: flex; gap: 12px; }
+.paste-area { flex: 1; background: #0F172A; border: 1px solid #334155; border-radius: 8px; padding: 12px; font-size: 12px; font-family: monospace; color: #94A3B8; line-height: 1.8; min-height: 180px; resize: vertical; outline: none; }
+.paste-area:focus { border-color: #6366F1; color: #CBD5E1; }
+.paste-sidebar { display: flex; flex-direction: column; gap: 8px; width: 120px; flex-shrink: 0; }
+.parse-hint { font-size: 11px; color: #475569; line-height: 1.6; }
+
+/* ── Meeting Meta ── */
+.meeting-meta { margin: 0 24px; padding: 14px 20px; background: linear-gradient(135deg,#1E293B,#162032); border: 1px solid #1E3A5F; border-top: none; border-bottom: 2px solid #334155; display: flex; align-items: flex-start; gap: 16px; }
+.meeting-icon { width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg,#3730A3,#6366F1); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.meeting-info { flex: 1; min-width: 0; }
+.meeting-subject { font-size: 14px; font-weight: 700; color: #E2E8F0; margin-bottom: 3px; line-height: 1.3; }
+.meeting-datetime { font-size: 12px; color: #64748B; margin-bottom: 8px; }
+.meeting-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.mtag { font-size: 11px; font-weight: 600; padding: 2px 10px; border-radius: 20px; }
+.mtag-total { background: #1E293B; color: #94A3B8; border: 1px solid #334155; }
+.mtag-found { background: #064E3B; color: #34D399; border: 1px solid #065F46; }
+.mtag-new   { background: #451A03; color: #FCD34D; border: 1px solid #78350F; }
+.mtag-group { background: #2D1B69; color: #C084FC; border: 1px solid #4C1D95; }
+.meeting-note-field { display: flex; flex-direction: column; gap: 4px; width: 220px; flex-shrink: 0; }
+.meeting-note-label { font-size: 10px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: .5px; }
+.meeting-note-input { background: #0F172A; border: 1px solid #334155; border-radius: 6px; padding: 6px 8px; font-size: 11px; font-family: monospace; color: #94A3B8; resize: none; outline: none; min-height: 44px; }
+.meeting-note-input:focus { border-color: #6366F1; color: #CBD5E1; }
+
+/* ── Search Bar ── */
+.search-bar { margin: 0 24px; padding: 10px 16px; background: #1E293B; border: 1px solid #334155; border-top: none; display: flex; align-items: center; gap: 10px; }
+.search-icon-wrap { color: #475569; flex-shrink: 0; }
+.search-input { flex: 1; background: transparent; border: none; outline: none; font-size: 14px; font-family: inherit; color: #E2E8F0; }
+.search-input::placeholder { color: #334155; }
+.search-count { font-size: 12px; font-weight: 600; min-width: 80px; text-align: right; flex-shrink: 0; }
+.search-nav { display: flex; gap: 4px; }
+.search-nav-btn { background: #334155; border: none; color: #94A3B8; border-radius: 5px; width: 26px; height: 26px; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+.search-nav-btn:hover { background: #475569; color: #E2E8F0; }
+.search-clear { background: none; border: none; color: #475569; cursor: pointer; font-size: 16px; line-height: 1; padding: 0 4px; }
+.search-clear:hover { color: #FC8181; }
+
+/* ── Kanban ── */
+.kanban-wrap { flex: 1; padding: 20px 24px 100px; overflow-y: auto; }
+.kanban-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.col-wrap { display: flex; flex-direction: column; gap: 10px; }
+.col-header { padding: 12px 16px; border-radius: 10px; display: flex; align-items: center; gap: 10px; }
+.col-found { background: linear-gradient(135deg,#064E3B,#065F46); }
+.col-new   { background: linear-gradient(135deg,#451A03,#78350F); }
+.col-title { font-size: 15px; font-weight: 700; }
+.col-found .col-title { color: #A7F3D0; }
+.col-new   .col-title { color: #FDE68A; }
+.col-count { font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 20px; }
+.col-found .col-count { background: rgba(16,185,129,.3); color: #A7F3D0; }
+.col-new   .col-count { background: rgba(245,158,11,.3);  color: #FDE68A; }
+.col-bulk  { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+/* ── Select All checkbox ── */
+.select-all-wrap { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.select-all-wrap input { width: 14px; height: 14px; cursor: pointer; accent-color: #F59E0B; }
+.select-all-wrap label { font-size: 11px; color: #FDE68A; cursor: pointer; font-weight: 600; }
+
+/* ── Card (shared) ── */
+.card { background: #1E293B; border-radius: 10px; border: 1px solid #334155; overflow: hidden; transition: border-color .2s, box-shadow .2s; }
+.card.found-card { border-left: 3px solid #10B981; }
+.card.new-card   { border-left: 3px solid #F59E0B; border-left-style: dashed; }
+.card.group-card { border-left: 3px solid #8B5CF6; }
+.card.expanded   { border-color: #4F46E5; border-left-style: solid; }
+.card.skipped    { opacity: .45; }
+
+/* search highlight */
+.card.search-highlight { border-color: #FCD34D !important; box-shadow: 0 0 0 2px rgba(252,211,77,.35); }
+@keyframes hlPulse { 0%{box-shadow:0 0 0 0 rgba(252,211,77,.5)} 60%{box-shadow:0 0 0 8px rgba(252,211,77,.15)} 100%{box-shadow:0 0 0 2px rgba(252,211,77,.25)} }
+.card.search-highlight { animation: hlPulse .5s ease-out; }
+
+/* ── Compact view ── */
+.card-compact-view { display: flex; }
+.card-compact { flex: 1; padding: 10px 14px; display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+.card-compact:hover { background: rgba(255,255,255,.02); }
+.c-checkbox { width: 16px; height: 16px; cursor: pointer; accent-color: #F59E0B; flex-shrink: 0; }
+.c-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px; flex-shrink: 0; }
+.av-found { background: linear-gradient(135deg,#065F46,#10B981); color: #fff; }
+.av-new   { background: #1E293B; border: 2px dashed #475569; color: #64748B; font-size: 14px; }
+.av-group { background: linear-gradient(135deg,#4C1D95,#7C3AED); color: #fff; }
+.c-info   { flex: 1; min-width: 0; }
+.c-name   { font-size: 13px; font-weight: 600; color: #E2E8F0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.c-sub    { font-size: 11px; color: #475569; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.c-right  { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+.badge-found { background: #064E3B; color: #34D399; }
+.badge-new   { background: #451A03; color: #FCD34D; }
+.badge-group { background: #2D1B69; color: #C084FC; }
+.expand-btn  { font-size: 10px; color: #475569; background: none; border: none; cursor: pointer; font-family: inherit; padding: 2px 4px; transition: color .15s; }
+.expand-btn:hover { color: #A5B4FC; }
+
+/* ── Detail view ── */
+.card-detail-view { display: none; }
+.card-expanded-header { padding: 12px 16px; background: #162032; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; }
+.ceh-checkbox { width: 16px; height: 16px; cursor: pointer; accent-color: #F59E0B; flex-shrink: 0; }
+.ceh-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+.ceh-info  { flex: 1; min-width: 0; }
+.ceh-name  { font-size: 14px; font-weight: 700; color: #F1F5F9; margin-bottom: 2px; }
+.ceh-email { font-size: 11px; color: #475569; }
+.ceh-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.edit-indicator { font-size: 10px; color: #6366F1; font-weight: 600; }
+.collapse-btn { font-size: 10px; color: #475569; background: none; border: none; cursor: pointer; font-family: inherit; }
+.collapse-btn:hover { color: #FC8181; }
+
+/* ── Field Grid ── */
+.field-grid { padding: 14px 16px; background: #162032; display: flex; flex-direction: column; gap: 12px; }
+.field-row   { display: grid; gap: 10px; }
+.field-row-1 { grid-template-columns: 1fr; }
+.field-row-2 { grid-template-columns: 1fr 1fr; }
+.field-row-3 { grid-template-columns: 1fr 1fr 1fr; }
+.field-row-4 { grid-template-columns: 2fr 1fr 1fr 1.5fr; }
+.field-sep   { height: 1px; background: #1E293B; }
+
+.fld { display: flex; flex-direction: column; gap: 3px; }
+.fld label { font-size: 10px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: .5px; }
+
+/* Inline-editable field */
+.f-input {
+  background: transparent; border: none; border-bottom: 1.5px solid transparent;
+  color: #CBD5E1; font-family: 'Sarabun','Inter',sans-serif; font-size: 13px;
+  padding: 4px 4px 3px; width: 100%; outline: none; transition: all .15s; border-radius: 3px 3px 0 0;
+}
+.f-input::placeholder { color: #2D3F55; }
+.f-input:hover  { background: rgba(255,255,255,.04); border-bottom-color: #475569; cursor: text; }
+.f-input:focus  { background: rgba(99,102,241,.08); border-bottom-color: #6366F1; color: #F1F5F9; }
+.f-textarea     { resize: vertical; min-height: 50px; line-height: 1.6; }
+.f-textarea.short { min-height: 36px; }
+
+/* Email derived indicator */
+.f-derived-wrap { display: flex; align-items: flex-end; gap: 6px; }
+.f-derived-wrap .f-input { flex: 1; }
+.derived-tag { font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: #1E3A5F; color: #60A5FA; white-space: nowrap; flex-shrink: 0; margin-bottom: 3px; }
+
+/* Project chips */
+.project-chips { display: flex; flex-direction: column; gap: 6px; }
+.project-row-item { background: #1E293B; border-radius: 7px; padding: 7px 10px; display: flex; align-items: center; gap: 8px; }
+.project-chip-name { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+.project-color-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.chip-name-text { font-size: 12px; font-weight: 700; color: #A5B4FC; }
+.chip-remove { background: none; border: none; color: #475569; cursor: pointer; font-size: 14px; line-height: 1; padding: 0 2px; }
+.chip-remove:hover { color: #FC8181; }
+.remark-sep  { color: #334155; font-size: 11px; flex-shrink: 0; }
+.chip-add-btn { display: flex; align-items: center; gap: 5px; padding: 6px 10px; background: #1E293B; border: 1.5px dashed #334155; border-radius: 7px; color: #475569; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all .15s; }
+.chip-add-btn:hover { border-color: #6366F1; color: #A5B4FC; background: rgba(99,102,241,.05); }
+
+/* System chips */
+.system-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.sys-chip { background: #1E293B; border: 1px solid #334155; border-radius: 6px; padding: 4px 10px; font-size: 11px; color: #94A3B8; display: flex; align-items: center; gap: 5px; }
+
+/* Associated to Meeting */
+.atm-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; }
+.atm-new-badge { font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 4px; background: #064E3B; color: #34D399; }
+.atm-textarea { background: #0F172A; border: 1px solid #334155; border-radius: 6px; padding: 8px 10px; color: #64748B; font-family: monospace; font-size: 11px; line-height: 1.7; width: 100%; min-height: 64px; resize: vertical; outline: none; transition: all .15s; }
+.atm-textarea:hover { border-color: #475569; }
+.atm-textarea:focus { border-color: #6366F1; color: #94A3B8; }
+
+/* Card action row */
+.card-actions-row { padding: 10px 16px; background: #0F172A; border-top: 1px solid #1E293B; display: flex; gap: 8px; justify-content: flex-end; }
+
+/* Group section */
+.group-section { max-width: 640px; margin-top: 20px; }
+.group-section-header { padding: 10px 14px; background: linear-gradient(135deg,#2D1B69,#4C1D95); border-radius: 10px; display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.group-section-title { font-size: 14px; font-weight: 700; color: #E9D5FF; }
+.group-count { font-size: 12px; padding: 2px 10px; border-radius: 20px; background: rgba(139,92,246,.3); color: #E9D5FF; font-weight: 600; }
+
+/* Bottom bar */
+.bottom-bar { position: sticky; bottom: 0; z-index: 200; background: #1E293B; border-top: 2px solid #334155; padding: 12px 24px; display: flex; align-items: center; gap: 16px; }
+.bottom-summary { font-size: 13px; color: #64748B; }
+.bottom-summary strong { color: #E2E8F0; font-size: 15px; }
+.bottom-summary strong.green  { color: #34D399; }
+.bottom-summary strong.amber  { color: #FCD34D; }
+.bottom-summary strong.purple { color: #C084FC; }
+
+.pill { font-size: 10px; padding: 2px 7px; border-radius: 7px; font-weight: 600; }
+.p-blue { background: #1E3A5F; color: #60A5FA; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ══ NAV ══ -->
+<div class="nav">
+  <div class="nav-logo">My<span>Contacts</span></div>
+  <div class="nav-sep"></div>
+  <div class="nav-crumb">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <strong>Meeting Room</strong> — ตรวจสอบรายชื่อผู้เข้าร่วม
+  </div>
+  <div class="nav-actions">
+    <button class="btn btn-ghost">📋 ประวัติ</button>
+    <button class="btn btn-ghost">📤 Export</button>
+    <button class="btn btn-green">📝 Note ทุกคน</button>
+    <button class="btn btn-amber" id="addSelectedBtn">➕ เพิ่มที่เลือก (9)</button>
+  </div>
+</div>
+
+<!-- ══ PASTE SECTION ══ -->
+<div class="paste-section" id="pasteSection">
+  <div class="paste-header" onclick="togglePaste()">
+    <svg class="paste-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+    <span class="paste-title">📋 Outlook Calendar Invite</span>
+    <span class="paste-preview">Subject: [QAD]Internal Digital channel Sync up... | Datetime: Thu 30 Apr 26 10:00-11:00 | Attendees: 14 คน</span>
+    <div class="parse-stats">
+      <span class="ps ps-total">14 คน</span>
+      <span class="ps ps-found">✅ 4 พบ</span>
+      <span class="ps ps-new">➕ 9 ใหม่</span>
+      <span class="ps ps-group">👥 1 Group</span>
+    </div>
+  </div>
+  <div class="paste-body">
+    <textarea class="paste-area" rows="10">Subject: [QAD]Internal Digital channel Sync up & Dependencies project alignment.
+Datetime: Thu 30 Apr 26 10:00 - 11:00
+Attendees:
+ Achara Sanguansatjapong (Bank of Ayudhya PCL.)
+ Ananya Phetcharat (Bank of Ayudhya PCL.)
+ Apirak Kampeera (Bank of Ayudhya PCL.)
+ Apirom Nantichai (Bank of Ayudhya PCL.)
+ BAY_QA_Architect
+ Channapa Madaeng (Bank of Ayudhya PCL.)
+ Donnapa Malison (Bank of Ayudhya PCL.)
+ Farida Pholterm (Bank of Ayudhya PCL.)
+ Sathit Saetae (Bank of Ayudhya PCL.)
+ Suchawadee.Sritiparch@krungsri.com
+ Surisa Suwantappha (Bank of Ayudhya PCL.)
+ Teerapong Kruasrisawat (Bank of Ayudhya PCL.)
+ Thanet Luengsoomboon (Bank of Ayudhya PCL.)
+ Veerapong Prakobpanich (Bank of Ayudhya PCL.)</textarea>
+    <div class="paste-sidebar">
+      <button class="btn btn-indigo" style="justify-content:center">🔍 Parse</button>
+      <button class="btn btn-ghost" style="justify-content:center">ล้าง</button>
+      <div class="parse-hint">รองรับ:<br>• Name (Org)<br>• Email@domain<br>• GRP_Name<br><br>Entity = KS อัตโนมัติ<br>Email = auto-derived</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MEETING META ══ -->
+<div class="meeting-meta">
+  <div class="meeting-icon">📅</div>
+  <div class="meeting-info">
+    <div class="meeting-subject">[QAD] Internal Digital channel Sync up &amp; Dependencies project alignment.</div>
+    <div class="meeting-datetime">📅 Thu, 30 Apr 2026 &nbsp;·&nbsp; 10:00 – 11:00 &nbsp;·&nbsp; 60 min</div>
+    <div class="meeting-tags">
+      <span class="mtag mtag-total">👥 14 คน</span>
+      <span class="mtag mtag-found">✅ 4 พบในระบบ</span>
+      <span class="mtag mtag-new">➕ 9 ยังไม่มีในระบบ</span>
+      <span class="mtag mtag-group">👥 1 Group Mail</span>
+    </div>
+  </div>
+  <div class="meeting-note-field">
+    <span class="meeting-note-label">Note Template (เพิ่มให้ทุกคน)</span>
+    <textarea class="meeting-note-input" rows="3">เข้าร่วมประชุม [QAD] Internal Digital channel Sync up — 30 Apr 2026</textarea>
+  </div>
+</div>
+
+<!-- ══ SEARCH BAR ══ -->
+<div class="search-bar" id="searchBar">
+  <div class="search-icon-wrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+  </div>
+  <input class="search-input" id="searchInput" type="text" placeholder="ค้นหาชื่อ เพื่อวิ่งไปที่การ์ด... (รองรับ 100+ คน)" oninput="onSearch(this.value)">
+  <span class="search-count" id="searchCount" style="color:#334155">— / 14</span>
+  <div class="search-nav">
+    <button class="search-nav-btn" onclick="navSearch(-1)" title="ก่อนหน้า">▲</button>
+    <button class="search-nav-btn" onclick="navSearch(+1)" title="ถัดไป">▼</button>
+  </div>
+  <button class="search-clear" onclick="clearSearch()" title="ล้าง">✕</button>
+</div>
+
+<!-- ══ KANBAN ══ -->
+<div class="kanban-wrap">
+<div class="kanban-grid">
+
+<!-- ════ FOUND COLUMN ════ -->
+<div class="col-wrap">
+  <div class="col-header col-found">
+    <span style="font-size:20px">✅</span>
+    <span class="col-title">พบในระบบแล้ว</span>
+    <span class="col-count">4 คน</span>
+    <div class="col-bulk"><button class="btn btn-green btn-sm">📝 Note ทั้ง 4</button></div>
+  </div>
+
+  <!-- Sathit — FOUND, starts EXPANDED -->
+  <div class="card found-card expanded" id="card-sathit"
+       data-person="Sathit Saetae" data-email="sathit.saetae@krungsri.com"
+       data-entity="KS" data-id="C006" data-team="Digital Banking IT" data-type="found">
+    <div class="card-compact-view" style="display:none">
+      <div class="card-compact" onclick="toggleCard('sathit')">
+        <div class="c-avatar av-found">SS</div>
+        <div class="c-info">
+          <div class="c-name">Sathit Saetae</div>
+          <div class="c-sub">sathit.saetae@krungsri.com · C006 · Digital Banking IT</div>
+        </div>
+        <div class="c-right">
+          <span class="badge badge-found">✓ พบ</span>
+          <button class="expand-btn">▼ ขยาย</button>
+        </div>
+      </div>
+    </div>
+    <div class="card-detail-view" style="display:block">
+      <div class="card-expanded-header" onclick="toggleCard('sathit')">
+        <div class="ceh-avatar av-found">SS</div>
+        <div class="ceh-info">
+          <div class="ceh-name">Sathit Saetae</div>
+          <div class="ceh-email">sathit.saetae@krungsri.com · KS · <span class="pill p-blue">C006</span> · Digital Banking IT</div>
+        </div>
+        <div class="ceh-right">
+          <span class="badge badge-found">✓ พบ</span>
+          <span class="edit-indicator">✏️ แก้ไขได้เลย</span>
+          <button class="collapse-btn" onclick="event.stopPropagation();toggleCard('sathit')">▲ ยุบ</button>
+        </div>
+      </div>
+      <div class="field-grid">
+        <div class="field-row field-row-4">
+          <div class="fld"><label>ชื่อจริง (Eng)</label><input class="f-input" type="text" value="Sathit Saetae"></div>
+          <div class="fld"><label>ชื่อเล่น</label><input class="f-input" type="text" value="สาธิต" placeholder="ชื่อเล่น..."></div>
+          <div class="fld"><label>Entity</label><input class="f-input" type="text" value="KS"></div>
+          <div class="fld"><label>Main Role</label><input class="f-input" type="text" value="QA Lead / Automation"></div>
+        </div>
+        <div class="field-row field-row-2">
+          <div class="fld"><label>Team</label><input class="f-input" type="text" value="Digital Banking IT"></div>
+          <div class="fld"><label>Sub-team</label><input class="f-input" type="text" value="QA Automation" placeholder="Sub-team..."></div>
+        </div>
+        <div class="fld">
+          <label>Email</label>
+          <div class="f-derived-wrap">
+            <input class="f-input" type="email" value="sathit.saetae@krungsri.com">
+            <span class="derived-tag">🔧 auto-derived</span>
+          </div>
+        </div>
+        <div class="field-sep"></div>
+        <div class="fld"><label>หมายเหตุสั้น</label><input class="f-input" type="text" value="QA Lead ดูแล Digital channel ทั้งหมด"></div>
+        <div class="fld"><label>บันทึกส่วนตัว</label><textarea class="f-input f-textarea" placeholder="บันทึกส่วนตัว...">ทำงานเก่ง ตรงไปตรงมา เชี่ยวชาญ automation testing ให้ loop เข้า meeting QA planning เสมอ</textarea></div>
+        <div class="fld"><label>Work Notes</label><textarea class="f-input f-textarea short" placeholder="Work notes...">กำลัง setup Playwright framework สำหรับ COBRA — ETA May 2026</textarea></div>
+        <div class="fld"><label>Quick Notes about Team</label><textarea class="f-input f-textarea short" placeholder="Quick notes เกี่ยวกับทีม...">ทีม QA Digital มี 4 คน — lead คือ Sathit</textarea></div>
+        <div class="field-sep"></div>
+        <div class="fld">
+          <label>โปรเจค</label>
+          <div class="project-chips">
+            <div class="project-row-item">
+              <div class="project-chip-name"><div class="project-color-dot" style="background:#3B82F6"></div><span class="chip-name-text">COBRA</span><button class="chip-remove">×</button></div>
+              <span class="remark-sep">—</span>
+              <input class="f-input" type="text" value="QA Lead, Automation" placeholder="Remark..." style="flex:1">
+            </div>
+            <div class="project-row-item">
+              <div class="project-chip-name"><div class="project-color-dot" style="background:#10B981"></div><span class="chip-name-text">ATLAS</span><button class="chip-remove">×</button></div>
+              <span class="remark-sep">—</span>
+              <input class="f-input" type="text" value="Observer / Support" placeholder="Remark..." style="flex:1">
+            </div>
+            <button class="chip-add-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>เพิ่ม Project</button>
+          </div>
+        </div>
+        <div class="fld">
+          <label>Systems</label>
+          <div class="system-chips">
+            <span class="sys-chip">Digital Banking App <button class="chip-remove">×</button></span>
+            <span class="sys-chip">Payment Gateway <button class="chip-remove">×</button></span>
+            <button class="chip-add-btn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>เพิ่ม</button>
+          </div>
+        </div>
+        <div class="field-sep"></div>
+        <div class="fld">
+          <div class="atm-label-row"><label>Associated to Meeting</label><span class="atm-new-badge">✨ auto-appended บรรทัดล่าสุด</span></div>
+          <textarea class="atm-textarea" rows="4">2026.02.20(Thu) 14:00 - 15:00 >> [COBRA] UAT Planning Session Q1
+2026.03.15(Sun) 10:00 - 11:30 >> [QAD] Sprint 4 Review & Retrospective
+2026.04.30(Thu) 10:00 - 11:00 >> [QAD]Internal Digital channel Sync up & Dependencies project alignment.</textarea>
+        </div>
+      </div>
+      <div class="card-actions-row">
+        <button class="btn btn-ghost btn-sm">🔗 เปิดหน้า Contact</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleCard('sathit')">▲ ยุบ</button>
+        <button class="btn btn-indigo btn-sm">💾 บันทึก</button>
+        <button class="btn btn-green btn-sm">ถัดไป →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Teerapong — FOUND, compact -->
+  <div class="card found-card" id="card-teerapong"
+       data-person="Teerapong Kruasrisawat" data-email="teerapong.kruasrisawat@krungsri.com"
+       data-entity="KS" data-id="C007" data-team="Core Banking IT" data-type="found">
+    <div class="card-compact-view">
+      <div class="card-compact" onclick="toggleCard('teerapong')">
+        <div class="c-avatar av-found">TK</div>
+        <div class="c-info">
+          <div class="c-name">Teerapong Kruasrisawat</div>
+          <div class="c-sub">teerapong.kruasrisawat@krungsri.com · C007 · Core Banking IT</div>
+        </div>
+        <div class="c-right">
+          <span class="badge badge-found">✓ พบ</span>
+          <button class="expand-btn">▼ ขยาย</button>
+        </div>
+      </div>
+    </div>
+    <div class="card-detail-view"></div>
+  </div>
+
+  <!-- Veerapong — FOUND, compact -->
+  <div class="card found-card" id="card-veerapong"
+       data-person="Veerapong Prakobpanich" data-email="veerapong.prakobpanich@krungsri.com"
+       data-entity="KS" data-id="C008" data-team="Settlement IT" data-type="found">
+    <div class="card-compact-view">
+      <div class="card-compact" onclick="toggleCard('veerapong')">
+        <div class="c-avatar av-found">VP</div>
+        <div class="c-info">
+          <div class="c-name">Veerapong Prakobpanich</div>
+          <div class="c-sub">veerapong.prakobpanich@krungsri.com · C008 · Settlement IT</div>
+        </div>
+        <div class="c-right">
+          <span class="badge badge-found">✓ พบ</span>
+          <button class="expand-btn">▼ ขยาย</button>
+        </div>
+      </div>
+    </div>
+    <div class="card-detail-view"></div>
+  </div>
+
+  <!-- Suchawadee — FOUND, parsed from email -->
+  <div class="card found-card" id="card-suchawadee"
+       data-person="Suchawadee Sritiparch" data-email="suchawadee.sritiparch@krungsri.com"
+       data-entity="KS" data-id="C009" data-team="PMO" data-type="found" data-source="email">
+    <div class="card-compact-view">
+      <div class="card-compact" onclick="toggleCard('suchawadee')">
+        <div class="c-avatar av-found">SC</div>
+        <div class="c-info">
+          <div class="c-name">Suchawadee Sritiparch</div>
+          <div class="c-sub">suchawadee.sritiparch@krungsri.com · C009 &nbsp;<span style="color:#60A5FA;font-size:10px">[จากอีเมล]</span></div>
+        </div>
+        <div class="c-right">
+          <span class="badge badge-found">✓ พบ</span>
+          <button class="expand-btn">▼ ขยาย</button>
+        </div>
+      </div>
+    </div>
+    <div class="card-detail-view"></div>
+  </div>
+</div>
+
+<!-- ════ NEW COLUMN ════ -->
+<div class="col-wrap">
+  <div class="col-header col-new">
+    <span style="font-size:20px">➕</span>
+    <span class="col-title">ยังไม่มีในระบบ</span>
+    <span class="col-count">9 คน</span>
+    <div class="col-bulk">
+      <div class="select-all-wrap">
+        <input type="checkbox" id="selectAll" checked onchange="toggleSelectAll(this.checked)">
+        <label for="selectAll">เลือกทั้งหมด</label>
+      </div>
+      <button class="btn btn-amber btn-sm" id="addSelectedBtnCol">➕ เพิ่มที่เลือก (9)</button>
+    </div>
+  </div>
+
+  <!-- Achara — NEW, starts EXPANDED -->
+  <div class="card new-card expanded" id="card-achara"
+       data-person="Achara Sanguansatjapong" data-email="Achara.Sanguansatjapong@krungsri.com"
+       data-entity="KS" data-type="new">
+    <div class="card-compact-view" style="display:none">
+      <div class="card-compact" onclick="toggleCard('achara')">
+        <input type="checkbox" class="c-checkbox new-checkbox" checked onclick="event.stopPropagation();updateCount()">
+        <div class="c-avatar av-new">?</div>
+        <div class="c-info">
+          <div class="c-name" style="color:#FDE68A">Achara Sanguansatjapong</div>
+          <div class="c-sub">Achara.Sanguansatjapong@krungsri.com · KS <span style="color:#60A5FA;font-size:10px">[🔧 auto]</span></div>
+        </div>
+        <div class="c-right">
+          <span class="badge badge-new">➕ ใหม่</span>
+          <button class="expand-btn">▼ ขยาย</button>
+        </div>
+      </div>
+    </div>
+    <div class="card-detail-view" style="display:block">
+      <div class="card-expanded-header" onclick="toggleCard('achara')">
+        <input type="checkbox" class="ceh-checkbox new-checkbox" checked onclick="event.stopPropagation();toggleSkip('achara',this.checked)">
+        <div class="ceh-avatar av-new" style="font-size:18px">?</div>
+        <div class="ceh-info">
+          <div class="ceh-name" style="color:#FDE68A">Achara Sanguansatjapong</div>
+          <div class="ceh-email">Achara.Sanguansatjapong@krungsri.com · KS <span style="color:#60A5FA;font-size:10px">[🔧 auto-derived]</span></div>
+        </div>
+        <div class="ceh-right">
+          <span class="badge badge-new">➕ ใหม่</span>
+          <span class="edit-indicator">✏️ กรอกข้อมูล</span>
+          <button class="collapse-btn" onclick="event.stopPropagation();toggleCard('achara')">▲ ยุบ</button>
+        </div>
+      </div>
+      <div class="field-grid">
+        <div class="field-row field-row-4">
+          <div class="fld"><label>ชื่อจริง (Eng)</label><input class="f-input" type="text" value="Achara Sanguansatjapong"></div>
+          <div class="fld"><label>ชื่อเล่น</label><input class="f-input" type="text" placeholder="ชื่อเล่น..."></div>
+          <div class="fld"><label>Entity</label><input class="f-input" type="text" value="KS"></div>
+          <div class="fld"><label>Main Role</label><input class="f-input" type="text" placeholder="เช่น Developer, BA..."></div>
+        </div>
+        <div class="field-row field-row-2">
+          <div class="fld"><label>Team</label><input class="f-input" type="text" placeholder="เช่น Digital Banking IT..."></div>
+          <div class="fld"><label>Sub-team</label><input class="f-input" type="text" placeholder="Sub-team..."></div>
+        </div>
+        <div class="fld">
+          <label>Email</label>
+          <div class="f-derived-wrap">
+            <input class="f-input" type="email" value="Achara.Sanguansatjapong@krungsri.com">
+            <span class="derived-tag">🔧 auto-derived</span>
+          </div>
+        </div>
+        <div class="field-sep"></div>
+        <div class="fld"><label>หมายเหตุสั้น</label><input class="f-input" type="text" placeholder="หมายเหตุ 1 บรรทัด..."></div>
+        <div class="fld"><label>บันทึกส่วนตัว</label><textarea class="f-input f-textarea" placeholder="บันทึกส่วนตัว..."></textarea></div>
+        <div class="fld"><label>Work Notes</label><textarea class="f-input f-textarea short" placeholder="Work notes..."></textarea></div>
+        <div class="fld"><label>Quick Notes about Team</label><textarea class="f-input f-textarea short" placeholder="Quick notes เกี่ยวกับทีม..."></textarea></div>
+        <div class="field-sep"></div>
+        <div class="fld">
+          <label>โปรเจค</label>
+          <div class="project-chips">
+            <button class="chip-add-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>เพิ่ม Project</button>
+          </div>
+        </div>
+        <div class="fld">
+          <label>Systems</label>
+          <div class="system-chips">
+            <button class="chip-add-btn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>เพิ่ม System</button>
+          </div>
+        </div>
+        <div class="field-sep"></div>
+        <div class="fld">
+          <div class="atm-label-row"><label>Associated to Meeting</label><span class="atm-new-badge">✨ auto-appended</span></div>
+          <textarea class="atm-textarea" rows="2" style="color:#34D399">2026.04.30(Thu) 10:00 - 11:00 >> [QAD]Internal Digital channel Sync up & Dependencies project alignment.</textarea>
+        </div>
+      </div>
+      <div class="card-actions-row">
+        <button class="btn btn-ghost btn-sm" onclick="toggleCard('achara')">▲ ยุบ</button>
+        <button class="btn btn-ghost btn-sm">ข้าม</button>
+        <button class="btn btn-amber btn-sm">➕ บันทึก Contact ใหม่</button>
+        <button class="btn btn-green btn-sm">ถัดไป →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8 New contacts — compact with checkbox, expand on click -->
+  <div class="card new-card" id="card-ananya"    data-person="Ananya Phetcharat"      data-email="Ananya.Phetcharat@krungsri.com"      data-entity="KS" data-type="new"><div class="card-compact-view"><div class="card-compact" onclick="toggleCard('ananya')"><input type="checkbox" class="c-checkbox new-checkbox" checked onclick="event.stopPropagation();updateCount()"><div class="c-avatar av-new">?</div><div class="c-info"><div class="c-name" style="color:#FDE68A">Ananya Phetcharat</div><div class="c-sub">Ananya.Phetcharat@krungsri.com · KS <span style="color:#60A5FA;font-size:10px">[🔧 auto]</span></div></div><div class="c-right"><span class="badge badge-new">➕ ใหม่</span><button class="expand-btn">▼ ขยาย</button></div></div></div><div class="card-detail-view"></div></div>
+
+  <div class="card new-card" id="card-apirak"    data-person="Apirak Kampeera"         data-email="Apirak.Kampeera@krungsri.com"         data-entity="KS" data-type="new"><div class="card-compact-view"><div class="card-compact" onclick="toggleCard('apirak')"><input type="checkbox" class="c-checkbox new-checkbox" checked onclick="event.stopPropagation();updateCount()"><div class="c-avatar av-new">?</div><div class="c-info"><div class="c-name" style="color:#FDE68A">Apirak Kampeera</div><div class="c-sub">Apirak.Kampeera@krungsri.com · KS</div></div><div class="c-right"><span class="badge badge-new">➕ ใหม่</span><button class="expand-btn">▼ ขยาย</button></div></div></div><div class="card-detail-view"></div></div>
+
+  <div class="card new-card" id="card-apirom"    data-person="Apirom Nantichai"        data-email="Apirom.Nantichai@krungsri.com"        data-entity="KS" data-type="new"><div class="card-compact-view"><div class="card-compact" onclick="toggleCard('apirom')"><input type="checkbox" class="c-checkbox new-checkbox" checked onclick="event.stopPropagation();updateCount()"><div class="c-avatar av-new">?</div><div class="c-info"><div class="c-name" style="color:#FDE68A">Apirom Nantichai</div><div class="c-sub">Apirom.Nantichai@krungsri.com · KS</div></div><div class="c-right"><span class="badge badge-new">➕ ใหม่</span><button class="expand-btn">▼ ขยาย</button></div></div></div><div class="card-detail-view"></div></div>
+
+  <div class="card new-card" id="card-channapa"  data-person="Channapa Madaeng"        data-email="Channapa.Madaeng@krungsri.com"        data-entity="KS" data-type="new"><div class="card-compact-view"><div class="card-compact" onclick="toggleCard('channapa')"><input type="checkbox" class="c-checkbox new-checkbox" checked onclick="event.stopPropagation();updateCount()"><div class="c-avatar av-new">?</div><div class="c-info"><div class="c-name" style="color:#FDE68A">Channapa Madaeng</div><div class="c-sub">Channapa.Madaeng@krungsri.com · KS</div></div><div class="c-right"><span class="badge badge-new">➕ ใหม่</span><button class="expand-btn">▼ ขยาย</button></div></div></div><div class="card-detail-view"></div></div>
+
+  <div class="card new-card" id="card-donnapa"   data-person="Donnapa Malison"         data-email="Donnapa.Malison@krungsri.com"         data-entity="KS" data-type="new"><div class="card-compact-view"><div class="card-compact" onclick="toggleCard('donnapa')"><input type="checkbox" class="c-checkbox new-checkbox" checked onclick="event.stopPropagation();updateCount()"><div class="c-avatar av-new">?</div><div class="c-info"><div class="c-name" style="color:#FDE68A">Donnapa Malison</div><div class="c-sub">Donnapa.Malison@krungsri.com · KS</div></div><div class="c-right"><span class="badge badge-new">➕ ใหม่</span><button class="expand-btn">▼ ขยาย</button></div></div></div><div class="card-detail-view"></div></div>
+
+  <div class="card new-card" id="card-farida"    data-person="Farida Pholterm"         data-email="Farida.Pholterm@krungsri.com"         data-entity="KS" data-type="new"><div class="card-compact-view"><div class="card-compact" onclick="toggleCard('farida')"><input type="checkbox" class="c-checkbox new-checkbox" checked onclick="event.stopPropagation();updateCount()"><div class="c-avatar av-new">?</div><div class="c-info"><div class="c-name" style="color:#FDE68A">Farida Pholterm</div><div class="c-sub">Farida.Pholterm@krungsri.com · KS</div></div><div class="c-right"><span class="badge badge-new">➕ ใหม่</span><button class="expand-btn">▼ ขยาย</button></div></div></div><div class="card-detail-view"></div></div>
+
+  <div class="card new-card" id="card-surisa"    data-person="Surisa Suwantappha"      data-email="Surisa.Suwantappha@krungsri.com"      data-entity="KS" data-type="new"><div class="card-compact-view"><div class="card-compact" onclick="toggleCard('surisa')"><input type="checkbox" class="c-checkbox new-checkbox" checked onclick="event.stopPropagation();updateCount()"><div class="c-avatar av-new">?</div><div class="c-info"><div class="c-name" style="color:#FDE68A">Surisa Suwantappha</div><div class="c-sub">Surisa.Suwantappha@krungsri.com · KS</div></div><div class="c-right"><span class="badge badge-new">➕ ใหม่</span><button class="expand-btn">▼ ขยาย</button></div></div></div><div class="card-detail-view"></div></div>
+
+  <div class="card new-card" id="card-thanet"    data-person="Thanet Luengsoomboon"    data-email="Thanet.Luengsoomboon@krungsri.com"    data-entity="KS" data-type="new"><div class="card-compact-view"><div class="card-compact" onclick="toggleCard('thanet')"><input type="checkbox" class="c-checkbox new-checkbox" checked onclick="event.stopPropagation();updateCount()"><div class="c-avatar av-new">?</div><div class="c-info"><div class="c-name" style="color:#FDE68A">Thanet Luengsoomboon</div><div class="c-sub">Thanet.Luengsoomboon@krungsri.com · KS</div></div><div class="c-right"><span class="badge badge-new">➕ ใหม่</span><button class="expand-btn">▼ ขยาย</button></div></div></div><div class="card-detail-view"></div></div>
+</div>
+
+</div><!-- /kanban-grid -->
+
+<!-- Group Mail -->
+<div class="group-section" style="max-width:640px; margin-top:20px">
+  <div class="group-section-header">
+    <span style="font-size:18px">👥</span>
+    <span class="group-section-title">Group Mail</span>
+    <span class="group-count">1 รายการ</span>
+  </div>
+  <div class="card group-card" id="card-bayqa"
+       data-person="BAY_QA_Architect" data-email="BAY_QA_Architect@krungsri.com"
+       data-entity="KS" data-type="group">
+    <div class="card-compact-view">
+      <div class="card-compact" onclick="toggleCard('bayqa')">
+        <div class="c-avatar av-group" style="font-size:11px">GRP</div>
+        <div class="c-info">
+          <div class="c-name" style="color:#E9D5FF">BAY_QA_Architect</div>
+          <div class="c-sub">BAY_QA_Architect@krungsri.com · KS · Group Mail <span style="color:#60A5FA;font-size:10px">[🔧 auto]</span></div>
+        </div>
+        <div class="c-right">
+          <span class="badge badge-group">👥 Group</span>
+          <button class="expand-btn">▼ ขยาย</button>
+        </div>
+      </div>
+    </div>
+    <div class="card-detail-view"></div>
+  </div>
+</div>
+
+</div><!-- /kanban-wrap -->
+
+<!-- ══ BOTTOM BAR ══ -->
+<div class="bottom-bar">
+  <div class="bottom-summary">
+    ผู้เข้าร่วม <strong>14</strong> คน &nbsp;·&nbsp;
+    พบในระบบ <strong class="green">4</strong> &nbsp;·&nbsp;
+    ยังไม่มี <strong class="amber" id="bottomNew">9</strong> &nbsp;·&nbsp;
+    Group <strong class="purple">1</strong>
+  </div>
+  <div style="margin-left:auto; display:flex; gap:8px;">
+    <button class="btn btn-ghost">📤 Export รายงาน</button>
+    <button class="btn btn-ghost">📝 Note ทุกคน (14)</button>
+    <button class="btn btn-amber" id="addSelectedBtnBot">➕ เพิ่มที่เลือก (9)</button>
+    <button class="btn btn-indigo">💾 บันทึกทั้งหมด</button>
+  </div>
+</div>
+
+<!-- ══ JAVASCRIPT ══ -->
+<script>
+const ATM_LINE = '2026.04.30(Thu) 10:00 - 11:00 >> [QAD]Internal Digital channel Sync up & Dependencies project alignment.';
+
+/* ── Paste toggle ── */
+function togglePaste() {
+  document.getElementById('pasteSection').classList.toggle('open');
+}
+
+/* ── Card expand / collapse ── */
+function toggleCard(id) {
+  const card = document.getElementById('card-' + id);
+  if (!card) return;
+  const compactView = card.querySelector('.card-compact-view');
+  const detailView  = card.querySelector('.card-detail-view');
+  const isExpanded  = card.classList.contains('expanded');
+
+  if (isExpanded) {
+    detailView.style.display  = 'none';
+    compactView.style.display = 'flex';
+    card.classList.remove('expanded');
+  } else {
+    if (!detailView.innerHTML.trim()) {
+      detailView.innerHTML = buildDetailHTML(card);
+    }
+    detailView.style.display  = 'block';
+    compactView.style.display = 'none';
+    card.classList.add('expanded');
+  }
+}
+
+/* ── Generate detail HTML for any card ── */
+function buildDetailHTML(card) {
+  const name   = card.dataset.person  || '';
+  const email  = card.dataset.email   || '';
+  const entity = card.dataset.entity  || 'KS';
+  const cid    = card.dataset.id      || '';
+  const team   = card.dataset.team    || '';
+  const type   = card.dataset.type    || 'new';  // found | new | group
+  const id     = card.id.replace('card-', '');
+  const initials = name.split(' ').map(w => w[0] || '').join('').slice(0,2).toUpperCase();
+
+  const isGroup = (type === 'group');
+  const isFound = (type === 'found');
+  const avatarClass = isFound ? 'av-found' : isGroup ? 'av-group' : 'av-new';
+  const avatarText  = isFound ? initials : isGroup ? 'GRP' : '?';
+  const nameStyle   = isFound ? '' : 'color:#FDE68A';
+  const badgeHTML   = isFound
+    ? `<span class="badge badge-found">✓ พบ</span>`
+    : isGroup
+    ? `<span class="badge badge-group">👥 Group</span>`
+    : `<span class="badge badge-new">➕ ใหม่</span>`;
+  const editLabel   = isFound ? 'แก้ไขได้เลย' : isGroup ? 'แก้ไขได้เลย' : 'กรอกข้อมูล';
+  const idPill      = cid ? `<span class="pill p-blue">${cid}</span>` : '';
+  const teamStr     = team ? ` · ${team}` : '';
+  const checkboxHTML = !isFound
+    ? `<input type="checkbox" class="ceh-checkbox new-checkbox" checked onclick="event.stopPropagation();toggleSkip('${id}',this.checked)">`
+    : '';
+
+  const actionBtns = isFound
+    ? `<button class="btn btn-ghost btn-sm">🔗 เปิดหน้า Contact</button>
+       <button class="btn btn-ghost btn-sm" onclick="toggleCard('${id}')">▲ ยุบ</button>
+       <button class="btn btn-indigo btn-sm">💾 บันทึก</button>
+       <button class="btn btn-green btn-sm">ถัดไป →</button>`
+    : isGroup
+    ? `<button class="btn btn-ghost btn-sm" onclick="toggleCard('${id}')">▲ ยุบ</button>
+       <button class="btn btn-ghost btn-sm">บันทึกเป็น Group Contact</button>`
+    : `<button class="btn btn-ghost btn-sm" onclick="toggleCard('${id}')">▲ ยุบ</button>
+       <button class="btn btn-ghost btn-sm">ข้าม</button>
+       <button class="btn btn-amber btn-sm">➕ บันทึก Contact ใหม่</button>
+       <button class="btn btn-green btn-sm">ถัดไป →</button>`;
+
+  const atm = isFound
+    ? `(previous meetings...)\n${ATM_LINE}`
+    : ATM_LINE;
+  const atmStyle = isFound ? '' : 'style="color:#34D399"';
+
+  const fieldSection = !isGroup ? `
+    <div class="field-row field-row-4">
+      <div class="fld"><label>ชื่อจริง (Eng)</label><input class="f-input" type="text" value="${name}"></div>
+      <div class="fld"><label>ชื่อเล่น</label><input class="f-input" type="text" placeholder="ชื่อเล่น..."></div>
+      <div class="fld"><label>Entity</label><input class="f-input" type="text" value="${entity}"></div>
+      <div class="fld"><label>Main Role</label><input class="f-input" type="text" placeholder="เช่น Developer, BA..."></div>
+    </div>
+    <div class="field-row field-row-2">
+      <div class="fld"><label>Team</label><input class="f-input" type="text" value="${team}" placeholder="Team..."></div>
+      <div class="fld"><label>Sub-team</label><input class="f-input" type="text" placeholder="Sub-team..."></div>
+    </div>
+    <div class="fld">
+      <label>Email</label>
+      <div class="f-derived-wrap">
+        <input class="f-input" type="email" value="${email}">
+        <span class="derived-tag">🔧 auto-derived</span>
+      </div>
+    </div>
+    <div class="field-sep"></div>
+    <div class="fld"><label>หมายเหตุสั้น</label><input class="f-input" type="text" placeholder="หมายเหตุ 1 บรรทัด..."></div>
+    <div class="fld"><label>บันทึกส่วนตัว</label><textarea class="f-input f-textarea" placeholder="บันทึกส่วนตัว..."></textarea></div>
+    <div class="fld"><label>Work Notes</label><textarea class="f-input f-textarea short" placeholder="Work notes..."></textarea></div>
+    <div class="fld"><label>Quick Notes about Team</label><textarea class="f-input f-textarea short" placeholder="Quick notes เกี่ยวกับทีม..."></textarea></div>
+    <div class="field-sep"></div>
+    <div class="fld">
+      <label>โปรเจค</label>
+      <div class="project-chips">
+        <button class="chip-add-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>เพิ่ม Project</button>
+      </div>
+    </div>
+    <div class="fld">
+      <label>Systems</label>
+      <div class="system-chips">
+        <button class="chip-add-btn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>เพิ่ม System</button>
+      </div>
+    </div>
+    <div class="field-sep"></div>` : `
+    <div class="field-row field-row-2">
+      <div class="fld"><label>Group Name</label><input class="f-input" type="text" value="${name}"></div>
+      <div class="fld"><label>Entity</label><input class="f-input" type="text" value="${entity}"></div>
+    </div>
+    <div class="fld">
+      <label>Email (Group)</label>
+      <div class="f-derived-wrap">
+        <input class="f-input" type="email" value="${email}">
+        <span class="derived-tag">🔧 auto</span>
+      </div>
+    </div>
+    <div class="fld"><label>คำอธิบาย</label><input class="f-input" type="text" placeholder="คำอธิบาย group mail นี้..."></div>
+    <div class="field-sep"></div>`;
+
+  return `
+    <div class="card-expanded-header" onclick="toggleCard('${id}')">
+      ${checkboxHTML}
+      <div class="ceh-avatar ${avatarClass}" style="${isGroup||isFound?'':'font-size:18px'}">${avatarText}</div>
+      <div class="ceh-info">
+        <div class="ceh-name" style="${nameStyle}">${name}</div>
+        <div class="ceh-email">${email} · ${entity}${idPill ? ' · ' + idPill : ''}${teamStr}</div>
+      </div>
+      <div class="ceh-right">
+        ${badgeHTML}
+        <span class="edit-indicator">✏️ ${editLabel}</span>
+        <button class="collapse-btn" onclick="event.stopPropagation();toggleCard('${id}')">▲ ยุบ</button>
+      </div>
+    </div>
+    <div class="field-grid">
+      ${fieldSection}
+      <div class="fld">
+        <div class="atm-label-row"><label>Associated to Meeting</label><span class="atm-new-badge">✨ auto-appended</span></div>
+        <textarea class="atm-textarea" rows="2" ${atmStyle}>${atm}</textarea>
+      </div>
+    </div>
+    <div class="card-actions-row">${actionBtns}</div>`;
+}
+
+/* ── Toggle skip (uncheck = dim card) ── */
+function toggleSkip(id, checked) {
+  const card = document.getElementById('card-' + id);
+  if (card) card.classList.toggle('skipped', !checked);
+  updateCount();
+}
+
+/* ── Select all ── */
+function toggleSelectAll(checked) {
+  document.querySelectorAll('.new-checkbox').forEach(cb => {
+    cb.checked = checked;
+    const card = cb.closest('.card');
+    if (card) card.classList.toggle('skipped', !checked);
+  });
+  updateCount();
+}
+
+/* ── Update selected count ── */
+function updateCount() {
+  const count = document.querySelectorAll('.new-checkbox:checked').length;
+  const label = `➕ เพิ่มที่เลือก (${count})`;
+  ['addSelectedBtn','addSelectedBtnCol','addSelectedBtnBot'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = label;
+  });
+  const bottomNew = document.getElementById('bottomNew');
+  if (bottomNew) bottomNew.textContent = document.querySelectorAll('.new-checkbox').length;
+  // Update select-all state
+  const total   = document.querySelectorAll('.new-checkbox').length;
+  const selectAllCb = document.getElementById('selectAll');
+  if (selectAllCb) {
+    selectAllCb.indeterminate = count > 0 && count < total;
+    selectAllCb.checked = count === total;
+  }
+}
+
+/* ── Search ── */
+let searchMatches = [];
+let searchIdx = 0;
+
+function onSearch(q) {
+  const query = q.trim().toLowerCase();
+  document.querySelectorAll('.card.search-highlight').forEach(c => c.classList.remove('search-highlight'));
+  searchMatches = [];
+  const countEl = document.getElementById('searchCount');
+
+  if (!query) {
+    countEl.textContent = '— / 14';
+    countEl.style.color = '#334155';
+    return;
+  }
+
+  document.querySelectorAll('.card[data-person]').forEach(card => {
+    if (card.dataset.person.toLowerCase().includes(query)) {
+      searchMatches.push(card);
+      card.classList.add('search-highlight');
+    }
+  });
+
+  if (searchMatches.length === 0) {
+    countEl.textContent = 'ไม่พบ';
+    countEl.style.color = '#FC8181';
+    return;
+  }
+
+  countEl.style.color = '#34D399';
+  searchIdx = 0;
+  scrollToMatch(0);
+  countEl.textContent = `1 / ${searchMatches.length}`;
+}
+
+function scrollToMatch(idx) {
+  if (searchMatches.length === 0) return;
+  const card = searchMatches[idx];
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  // Flash re-trigger
+  card.classList.remove('search-highlight');
+  void card.offsetWidth;
+  card.classList.add('search-highlight');
+}
+
+function navSearch(dir) {
+  if (searchMatches.length === 0) return;
+  searchIdx = (searchIdx + dir + searchMatches.length) % searchMatches.length;
+  scrollToMatch(searchIdx);
+  document.getElementById('searchCount').textContent = `${searchIdx + 1} / ${searchMatches.length}`;
+}
+
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  document.querySelectorAll('.card.search-highlight').forEach(c => c.classList.remove('search-highlight'));
+  searchMatches = [];
+  document.getElementById('searchCount').textContent = '— / 14';
+  document.getElementById('searchCount').style.color = '#334155';
+}
+
+// init
+updateCount();
+</script>
+</body>
+</html>

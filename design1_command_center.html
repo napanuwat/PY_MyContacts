@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design 1: Command Center — MyContacts</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --cobra: #3B82F6; --atlas: #10B981; --nexus: #F59E0B; --phoenix: #EF4444;
+      --t-core: #6366F1; --t-digital: #0EA5E9; --t-settlement: #14B8A6;
+      --t-bizops: #8B5CF6; --t-pmo: #F97316; --t-senior: #BE185D; --t-vendor: #6B7280;
+    }
+    body { font-family: 'Inter', 'Sarabun', sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #F1F5F9; }
+
+    /* Top Nav Bar */
+    .topbar {
+      display: flex; align-items: center; height: 52px;
+      background: #0F172A; padding: 0 20px; gap: 16px; flex-shrink: 0;
+      border-bottom: 1px solid #1E293B;
+    }
+    .logo { font-size: 16px; font-weight: 700; color: #60A5FA; letter-spacing: -0.5px; margin-right: 8px; }
+    .topbar-label {
+      font-size: 11px; color: #64748B; border: 1px solid #1E3A5F;
+      background: rgba(99,102,241,0.1); color: #93C5FD;
+      padding: 3px 10px; border-radius: 20px; font-weight: 500;
+    }
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .btn { padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; display: flex; align-items: center; gap: 6px; }
+    .btn-primary { background: #3B82F6; color: white; }
+    .btn-ghost { background: rgba(255,255,255,0.06); color: #94A3B8; border: 1px solid #334155; }
+    .avatar { width: 30px; height: 30px; border-radius: 50%; background: #4338CA; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: white; }
+
+    /* Main Layout */
+    .main { display: flex; flex: 1; overflow: hidden; }
+
+    /* Left Sidebar */
+    .sidebar {
+      width: 220px; background: #0F172A; border-right: 1px solid #1E293B;
+      display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0;
+    }
+    .sidebar-section { padding: 16px 12px 8px; }
+    .sidebar-title { font-size: 10px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 6px; padding: 0 4px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 7px;
+      font-size: 13px; color: #94A3B8; cursor: pointer; margin-bottom: 1px;
+      transition: all 0.15s; font-family: 'Sarabun', sans-serif;
+    }
+    .nav-item:hover { background: rgba(255,255,255,0.05); color: #E2E8F0; }
+    .nav-item.active { background: rgba(59,130,246,0.15); color: #60A5FA; }
+    .nav-icon { width: 16px; text-align: center; font-size: 14px; }
+    .nav-count { margin-left: auto; font-size: 11px; background: rgba(255,255,255,0.08); padding: 1px 7px; border-radius: 10px; color: #64748B; }
+
+    .proj-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .team-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+    .sidebar-divider { height: 1px; background: #1E293B; margin: 6px 12px; }
+
+    /* Middle List */
+    .contact-list {
+      width: 320px; background: white; border-right: 1px solid #E2E8F0;
+      display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;
+    }
+    .list-header { padding: 14px 16px 10px; border-bottom: 1px solid #F1F5F9; background: white; }
+    .list-title { font-size: 15px; font-weight: 700; color: #1E293B; margin-bottom: 8px; }
+    .search-box {
+      display: flex; align-items: center; gap: 8px; background: #F8FAFC;
+      border: 1.5px solid #E2E8F0; border-radius: 9px; padding: 7px 12px;
+    }
+    .search-box:focus-within { border-color: #3B82F6; }
+    .search-icon { color: #94A3B8; font-size: 14px; }
+    .search-input { border: none; background: none; font-size: 13px; color: #1E293B; outline: none; flex: 1; font-family: 'Sarabun', sans-serif; }
+    .search-input::placeholder { color: #94A3B8; }
+    .filter-row { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .filter-chip {
+      font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; cursor: pointer;
+      background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0;
+    }
+    .filter-chip.active { background: rgba(59,130,246,0.1); color: #3B82F6; border-color: rgba(59,130,246,0.3); }
+
+    .list-body { overflow-y: auto; flex: 1; }
+    .contact-row {
+      display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+      border-bottom: 1px solid #F8FAFC; cursor: pointer; transition: background 0.1s;
+    }
+    .contact-row:hover { background: #F8FAFC; }
+    .contact-row.selected { background: #EFF6FF; border-left: 3px solid #3B82F6; }
+    .contact-row.selected .contact-name { color: #1E40AF; }
+    .contact-avatar {
+      width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center;
+      justify-content: center; font-size: 14px; font-weight: 700; color: white; flex-shrink: 0;
+    }
+    .contact-info { flex: 1; min-width: 0; }
+    .contact-name { font-size: 13px; font-weight: 600; color: #1E293B; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'Sarabun', sans-serif; }
+    .contact-meta { font-size: 11px; color: #94A3B8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'Sarabun', sans-serif; }
+    .contact-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+    .proj-badge {
+      font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; color: white;
+    }
+
+    /* Right Detail Panel */
+    .detail-panel { flex: 1; background: white; display: flex; flex-direction: column; overflow: hidden; }
+    .detail-header {
+      padding: 24px 28px 16px; border-bottom: 1px solid #F1F5F9;
+      display: flex; align-items: flex-start; gap: 16px;
+    }
+    .detail-avatar {
+      width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center;
+      justify-content: center; font-size: 24px; font-weight: 700; color: white; flex-shrink: 0;
+    }
+    .detail-name-block { flex: 1; }
+    .detail-fullname { font-size: 22px; font-weight: 700; color: #1E293B; font-family: 'Sarabun', sans-serif; }
+    .detail-nickname { font-size: 14px; color: #64748B; margin-bottom: 6px; font-family: 'Sarabun', sans-serif; }
+    .detail-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .role-tag {
+      font-size: 12px; padding: 3px 10px; border-radius: 6px; font-weight: 500;
+      background: rgba(99,102,241,0.1); color: #6366F1; border: 1px solid rgba(99,102,241,0.2);
+    }
+    .team-tag {
+      font-size: 12px; padding: 3px 10px; border-radius: 6px; font-weight: 500; color: white;
+    }
+    .detail-actions { display: flex; gap: 8px; }
+    .action-btn {
+      padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 500;
+      border: 1px solid #E2E8F0; background: white; color: #64748B; cursor: pointer;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .action-btn:hover { background: #F8FAFC; }
+    .action-btn.primary { background: #3B82F6; color: white; border-color: #3B82F6; }
+
+    /* Tabs */
+    .tabs { display: flex; padding: 0 28px; border-bottom: 1px solid #F1F5F9; }
+    .tab {
+      padding: 12px 16px; font-size: 13px; font-weight: 500; color: #94A3B8;
+      border-bottom: 2px solid transparent; cursor: pointer; font-family: 'Sarabun', sans-serif;
+    }
+    .tab.active { color: #3B82F6; border-bottom-color: #3B82F6; }
+
+    /* Detail Content */
+    .detail-content { flex: 1; overflow-y: auto; padding: 20px 28px; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .info-item label { font-size: 11px; color: #94A3B8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; display: block; margin-bottom: 4px; }
+    .info-item .val { font-size: 13px; color: #1E293B; font-family: 'Sarabun', sans-serif; }
+    .info-item .val a { color: #3B82F6; text-decoration: none; }
+
+    .section-heading { font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+    .section-heading::after { content: ''; flex: 1; height: 1px; background: #F1F5F9; }
+
+    .project-card {
+      background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px;
+      padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px;
+    }
+    .project-color-bar { width: 4px; height: 40px; border-radius: 2px; flex-shrink: 0; }
+    .project-info { flex: 1; }
+    .project-name { font-size: 13px; font-weight: 700; color: #1E293B; margin-bottom: 3px; font-family: 'Sarabun', sans-serif; }
+    .project-desc { font-size: 11px; color: #64748B; font-family: 'Sarabun', sans-serif; }
+    .role-pill {
+      font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px;
+    }
+    .role-main { background: rgba(239,68,68,0.1); color: #EF4444; border: 1px solid rgba(239,68,68,0.2); }
+    .role-support { background: rgba(100,116,139,0.1); color: #64748B; border: 1px solid #E2E8F0; }
+    .role-pm { background: rgba(245,158,11,0.1); color: #F59E0B; border: 1px solid rgba(245,158,11,0.2); }
+    .role-it { background: rgba(16,185,129,0.1); color: #10B981; border: 1px solid rgba(16,185,129,0.2); }
+
+    .note-item { background: #FFFBEB; border-left: 3px solid #F59E0B; padding: 10px 14px; border-radius: 0 8px 8px 0; margin-bottom: 8px; }
+    .note-date { font-size: 10px; color: #94A3B8; margin-bottom: 4px; }
+    .note-text { font-size: 13px; color: #1E293B; line-height: 1.6; font-family: 'Sarabun', sans-serif; }
+    .note-add { display: flex; gap: 8px; margin-top: 12px; }
+    .note-input {
+      flex: 1; border: 1.5px solid #E2E8F0; border-radius: 8px; padding: 8px 12px;
+      font-size: 13px; color: #1E293B; outline: none; font-family: 'Sarabun', sans-serif;
+    }
+    .note-input:focus { border-color: #3B82F6; }
+    .note-input::placeholder { color: #94A3B8; }
+
+    .annotation {
+      position: fixed; bottom: 24px; right: 24px; background: #1E293B; border: 1px solid #334155;
+      border-radius: 12px; padding: 12px 16px; max-width: 280px; z-index: 100;
+    }
+    .annotation-title { font-size: 11px; font-weight: 700; color: #60A5FA; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .annotation-text { font-size: 12px; color: #94A3B8; line-height: 1.5; font-family: 'Sarabun', sans-serif; }
+    .back-link { color: #64748B; font-size: 12px; text-decoration: none; display: flex; align-items: center; gap: 4px; }
+    .back-link:hover { color: #94A3B8; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Nav -->
+  <div class="topbar">
+    <a href="index.html" class="back-link">← กลับ</a>
+    <div class="logo">MyContacts</div>
+    <span class="topbar-label">Design 1 · Command Center</span>
+    <div class="topbar-right">
+      <button class="btn btn-ghost">⬇ Export Excel</button>
+      <button class="btn btn-primary">+ เพิ่ม Contact</button>
+      <div class="avatar">TM</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- Left Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">ดูทั้งหมด</div>
+        <div class="nav-item active">
+          <span class="nav-icon">👥</span> ทุก Contact
+          <span class="nav-count">10</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">⭐</span> สำคัญ
+          <span class="nav-count">3</span>
+        </div>
+        <div class="nav-item">
+          <span class="nav-icon">🕐</span> เพิ่งเพิ่ม
+        </div>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">กรองตามโปรเจค</div>
+        <div class="nav-item active">
+          <div class="proj-dot" style="background:var(--cobra)"></div>
+          COBRA - Core Banking
+          <span class="nav-count">4</span>
+        </div>
+        <div class="nav-item">
+          <div class="proj-dot" style="background:var(--atlas)"></div>
+          ATLAS - Digital Banking
+          <span class="nav-count">5</span>
+        </div>
+        <div class="nav-item">
+          <div class="proj-dot" style="background:var(--nexus)"></div>
+          NEXUS - Settlement
+          <span class="nav-count">3</span>
+        </div>
+        <div class="nav-item">
+          <div class="proj-dot" style="background:var(--phoenix)"></div>
+          PHOENIX - Mobile App
+          <span class="nav-count">4</span>
+        </div>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">กรองตามทีม</div>
+        <div class="nav-item">
+          <div class="team-dot" style="background:var(--t-core)"></div>
+          Core Banking IT
+          <span class="nav-count">2</span>
+        </div>
+        <div class="nav-item">
+          <div class="team-dot" style="background:var(--t-digital)"></div>
+          Digital Banking IT
+          <span class="nav-count">2</span>
+        </div>
+        <div class="nav-item">
+          <div class="team-dot" style="background:var(--t-settlement)"></div>
+          Settlement IT
+          <span class="nav-count">1</span>
+        </div>
+        <div class="nav-item">
+          <div class="team-dot" style="background:var(--t-bizops)"></div>
+          Business Operations
+          <span class="nav-count">2</span>
+        </div>
+        <div class="nav-item">
+          <div class="team-dot" style="background:var(--t-pmo)"></div>
+          PMO
+          <span class="nav-count">1</span>
+        </div>
+        <div class="nav-item">
+          <div class="team-dot" style="background:var(--t-senior)"></div>
+          Senior Management
+          <span class="nav-count">1</span>
+        </div>
+        <div class="nav-item">
+          <div class="team-dot" style="background:var(--t-vendor)"></div>
+          Vendor
+          <span class="nav-count">2</span>
+        </div>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">กรองตาม Role</div>
+        <div class="nav-item">
+          <span style="font-size:10px;background:rgba(239,68,68,0.2);color:#EF4444;padding:2px 6px;border-radius:4px">Main</span>
+          Main Impact
+        </div>
+        <div class="nav-item">
+          <span style="font-size:10px;background:rgba(100,116,139,0.2);color:#94A3B8;padding:2px 6px;border-radius:4px">S</span>
+          Supporter
+        </div>
+        <div class="nav-item">
+          <span style="font-size:10px;background:rgba(245,158,11,0.2);color:#F59E0B;padding:2px 6px;border-radius:4px">PM</span>
+          Project Manager
+        </div>
+      </div>
+    </div>
+
+    <!-- Middle: Contact List -->
+    <div class="contact-list">
+      <div class="list-header">
+        <div class="list-title">COBRA Project · 4 คน</div>
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input class="search-input" type="text" placeholder="ค้นหาชื่อ, ทีม, อีเมล...">
+        </div>
+        <div class="filter-row">
+          <span class="filter-chip active">ทั้งหมด</span>
+          <span class="filter-chip">Main Impact</span>
+          <span class="filter-chip">IT</span>
+          <span class="filter-chip">PM</span>
+          <span class="filter-chip">เรียง A-Z ▾</span>
+        </div>
+      </div>
+
+      <div class="list-body">
+        <!-- Contact 1 - Selected -->
+        <div class="contact-row selected">
+          <div class="contact-avatar" style="background:var(--t-core)">ช</div>
+          <div class="contact-info">
+            <div class="contact-name">สมชาย มีสุข (ชาย)</div>
+            <div class="contact-meta">QA Lead · Core Banking IT</div>
+          </div>
+          <div class="contact-badges">
+            <span class="proj-badge" style="background:var(--cobra)">COBRA</span>
+            <span class="proj-badge" style="background:var(--nexus)">NEXUS</span>
+          </div>
+        </div>
+
+        <!-- Contact 2 -->
+        <div class="contact-row">
+          <div class="contact-avatar" style="background:var(--t-pmo)">อั้</div>
+          <div class="contact-info">
+            <div class="contact-name">อนันต์ ใจดี (อั้น)</div>
+            <div class="contact-meta">Project Manager · PMO</div>
+          </div>
+          <div class="contact-badges">
+            <span class="proj-badge" style="background:var(--cobra)">COBRA</span>
+            <span class="proj-badge" style="background:var(--atlas)">ATLAS</span>
+          </div>
+        </div>
+
+        <!-- Contact 3 -->
+        <div class="contact-row">
+          <div class="contact-avatar" style="background:var(--t-vendor)">SC</div>
+          <div class="contact-info">
+            <div class="contact-name">Sarah Chen</div>
+            <div class="contact-meta">Tech Architect · Vendor: ABC Systems</div>
+          </div>
+          <div class="contact-badges">
+            <span class="proj-badge" style="background:var(--nexus)">NEXUS</span>
+            <span class="proj-badge" style="background:var(--cobra)">COBRA</span>
+          </div>
+        </div>
+
+        <!-- Contact 4 -->
+        <div class="contact-row">
+          <div class="contact-avatar" style="background:var(--t-core)">ป้</div>
+          <div class="contact-info">
+            <div class="contact-name">ประภาส รักดี (ป้อม)</div>
+            <div class="contact-meta">Developer · Core Banking IT</div>
+          </div>
+          <div class="contact-badges">
+            <span class="proj-badge" style="background:var(--cobra)">COBRA</span>
+          </div>
+        </div>
+
+        <div style="padding:10px 14px;font-size:11px;color:#94A3B8;text-align:center;border-top:1px solid #F1F5F9">
+          — ดูทุก Contact (10 คน) —
+        </div>
+
+        <!-- more contacts dimmed -->
+        <div class="contact-row" style="opacity:0.4">
+          <div class="contact-avatar" style="background:var(--t-digital)">แน</div>
+          <div class="contact-info">
+            <div class="contact-name">นภาพร วงศ์ดี (แนน)</div>
+            <div class="contact-meta">Business Analyst · Digital Banking IT</div>
+          </div>
+          <div class="contact-badges">
+            <span class="proj-badge" style="background:var(--atlas)">ATLAS</span>
+          </div>
+        </div>
+        <div class="contact-row" style="opacity:0.4">
+          <div class="contact-avatar" style="background:var(--t-bizops)">หนิ</div>
+          <div class="contact-info">
+            <div class="contact-name">วรรณา ทองคำ (หนิง)</div>
+            <div class="contact-meta">Business Analyst · Business Operations</div>
+          </div>
+          <div class="contact-badges">
+            <span class="proj-badge" style="background:var(--phoenix)">PHOENIX</span>
+          </div>
+        </div>
+        <div class="contact-row" style="opacity:0.4">
+          <div class="contact-avatar" style="background:var(--t-senior)">กิ๊</div>
+          <div class="contact-info">
+            <div class="contact-name">กิตติ ศิริโชค (กิ๊ต)</div>
+            <div class="contact-meta">Program Director · Senior Management</div>
+          </div>
+          <div class="contact-badges">
+            <span class="proj-badge" style="background:#475569">ALL</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Detail Panel -->
+    <div class="detail-panel">
+      <div class="detail-header">
+        <div class="detail-avatar" style="background:var(--t-core)">ช</div>
+        <div class="detail-name-block">
+          <div class="detail-fullname">สมชาย มีสุข</div>
+          <div class="detail-nickname">ชื่อเล่น: ชาย · Somchai Meesuk</div>
+          <div class="detail-title-row">
+            <span class="role-tag">QA Lead</span>
+            <span class="team-tag" style="background:var(--t-core)">Core Banking IT</span>
+          </div>
+        </div>
+        <div class="detail-actions">
+          <button class="action-btn">✏️ แก้ไข</button>
+          <button class="action-btn">⭐ สำคัญ</button>
+          <button class="action-btn" style="color:#EF4444">🗑</button>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active">📋 ข้อมูล</div>
+        <div class="tab">🗂️ โปรเจค (2)</div>
+        <div class="tab">📝 บันทึก (3)</div>
+      </div>
+
+      <div class="detail-content">
+        <!-- Info Tab Content (active) -->
+        <div class="section-heading">ข้อมูลติดต่อ</div>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>📧 Email</label>
+            <div class="val"><a href="#">somchai.m@company.co.th</a></div>
+          </div>
+          <div class="info-item">
+            <label>📱 โทรศัพท์</label>
+            <div class="val">081-234-5678</div>
+          </div>
+          <div class="info-item">
+            <label>💬 Line</label>
+            <div class="val">@cha_somchai</div>
+          </div>
+          <div class="info-item">
+            <label>🏢 ทีม</label>
+            <div class="val">Core Banking IT</div>
+          </div>
+          <div class="info-item">
+            <label>👤 Direct Report ถึง</label>
+            <div class="val">นาย กฤษณ์ สมบูรณ์</div>
+          </div>
+          <div class="info-item">
+            <label>📌 ตำแหน่ง</label>
+            <div class="val">QA Lead / Senior QA Engineer</div>
+          </div>
+        </div>
+
+        <div class="section-heading">โปรเจคที่เกี่ยวข้อง</div>
+        <div class="project-card">
+          <div class="project-color-bar" style="background:var(--cobra)"></div>
+          <div class="project-info">
+            <div class="project-name">🔵 COBRA — Core Banking Migration</div>
+            <div class="project-desc">รับผิดชอบหลัก ดูแล Test Strategy และ Execution Plan ทั้งหมด</div>
+          </div>
+          <span class="role-pill role-main">Main Impact</span>
+        </div>
+        <div class="project-card">
+          <div class="project-color-bar" style="background:var(--nexus)"></div>
+          <div class="project-info">
+            <div class="project-name">🟡 NEXUS — Settlement System</div>
+            <div class="project-desc">ช่วยสนับสนุนการทดสอบ Integration ระหว่างระบบ</div>
+          </div>
+          <span class="role-pill role-support">Supporter</span>
+        </div>
+
+        <div class="section-heading" style="margin-top:20px">บันทึกส่วนตัว</div>
+        <div class="note-item">
+          <div class="note-date">14 เม.ย. 2026 · หลังประชุม Weekly QA</div>
+          <div class="note-text">คุยเรื่อง Regression Test Plan สำหรับ Sprint 12 — ขอให้เตรียม Smoke Test ก่อน 20 เม.ย. ชายเชี่ยวชาญเรื่อง UAT Banking เป็นพิเศษ ถามเขาก่อนเลย</div>
+        </div>
+        <div class="note-item">
+          <div class="note-date">2 เม.ย. 2026 · ประชุม COBRA Kickoff</div>
+          <div class="note-text">ชายรับปาก QA Plan ภายใน 5 วันทำการ ติดตามผ่าน Line ได้เลย ตอบเร็วมาก</div>
+        </div>
+        <div class="note-add">
+          <input class="note-input" type="text" placeholder="+ เพิ่มบันทึกใหม่...">
+          <button class="btn btn-primary" style="padding:8px 14px">บันทึก</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Annotation -->
+  <div class="annotation">
+    <div class="annotation-title">Design 1 · Command Center</div>
+    <div class="annotation-text">
+      <strong style="color:#E2E8F0">Mental Model:</strong> "ฉันจัดการ Contact เหมือนจัดการ Email — Scan รายชื่อ แล้วคลิกดู Detail"<br><br>
+      <strong style="color:#E2E8F0">Flow หลัก:</strong> Filter ซ้าย → เลือก Contact กลาง → ดู/แก้ข้อมูล ขวา<br><br>
+      เหมาะกับ Power User ที่ใช้งานบ่อยและต้องการดูข้อมูลหลายอย่างพร้อมกัน
+    </div>
+  </div>
+
+</body>
+</html>

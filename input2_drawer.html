@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Form 2: Right Drawer — MyContacts</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter','Sarabun',sans-serif;background:#F1F5F9;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+    .topbar{display:flex;align-items:center;height:48px;background:#0F172A;padding:0 20px;gap:12px;border-bottom:1px solid #1E293B;flex-shrink:0;z-index:5}
+    .back-link{color:#475569;font-size:12px;text-decoration:none}.logo{font-size:14px;font-weight:700;color:#60A5FA}
+    .label-tag{font-size:11px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#A5B4FC;padding:2px 9px;border-radius:12px;font-weight:500}
+    .nav-links{margin-left:auto;display:flex;gap:8px}
+    .nav-link{color:#60A5FA;font-size:12px;text-decoration:none;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);padding:4px 10px;border-radius:6px}
+
+    /* Main app area (dimmed) */
+    .app-bg{flex:1;display:flex;overflow:hidden;position:relative}
+    /* Simulated main app */
+    .sim-app{flex:1;display:flex;overflow:hidden;opacity:0.35;filter:blur(1px);pointer-events:none}
+    .sim-sidebar{width:180px;background:#0F172A}
+    .sim-list{width:260px;background:white;border-right:1px solid #E2E8F0;padding:12px}
+    .sim-list-item{height:38px;background:#F8FAFC;border-radius:7px;margin-bottom:6px;display:flex;align-items:center;padding:0 10px;gap:8px}
+    .sim-avatar{width:24px;height:24px;border-radius:7px}
+    .sim-text{flex:1;height:8px;background:#E2E8F0;border-radius:3px}
+    .sim-list-item.sel{background:#EFF6FF;border-left:3px solid #3B82F6}
+    .sim-detail{flex:1;background:white;padding:20px}
+    .sim-name{height:20px;background:#E2E8F0;border-radius:4px;width:50%;margin-bottom:8px}
+    .sim-sub{height:10px;background:#F1F5F9;border-radius:4px;width:35%;margin-bottom:16px}
+    .sim-row{height:8px;background:#F1F5F9;border-radius:3px;margin-bottom:6px}
+
+    /* Overlay dim */
+    .overlay-dim{position:absolute;inset:0;background:rgba(15,23,42,0.35);z-index:10}
+
+    /* Drawer */
+    .drawer{position:absolute;top:0;right:0;bottom:0;width:400px;background:white;box-shadow:-12px 0 40px rgba(0,0,0,0.2);z-index:20;display:flex;flex-direction:column;animation:slideIn 0.25s ease-out}
+    @keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+    .drawer-header{padding:18px 20px 14px;border-bottom:1px solid #F1F5F9;display:flex;align-items:center;gap:10px;flex-shrink:0}
+    .drawer-mode-toggle{display:flex;background:#F1F5F9;border-radius:8px;padding:3px;gap:2px}
+    .dmt-btn{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:none;color:#64748B}
+    .dmt-btn.active{background:white;color:#1E293B;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+    .d-close{width:30px;height:30px;border-radius:7px;border:1px solid #E2E8F0;background:white;cursor:pointer;font-size:15px;color:#94A3B8;display:flex;align-items:center;justify-content:center;margin-left:auto}
+
+    /* Drawer person header */
+    .drawer-person{display:flex;align-items:center;gap:10px;padding:12px 20px;background:#F8FAFC;border-bottom:1px solid #F1F5F9;flex-shrink:0}
+    .dp-av{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:white;flex-shrink:0}
+    .dp-n{font-size:14px;font-weight:700;color:#1E293B;font-family:'Sarabun',sans-serif}
+    .dp-s{font-size:11px;color:#94A3B8;font-family:'Sarabun',sans-serif}
+
+    .drawer-body{flex:1;overflow-y:auto;padding:16px 20px}
+    .form-group{margin-bottom:14px}
+    label{font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:4px}
+    input,select,textarea{width:100%;border:1.5px solid #E2E8F0;border-radius:8px;padding:8px 11px;font-size:13px;font-family:'Sarabun',sans-serif;color:#1E293B;outline:none;transition:border-color 0.15s}
+    input:focus,select:focus,textarea:focus{border-color:#3B82F6;box-shadow:0 0 0 3px rgba(59,130,246,0.08)}
+    input.has-val{border-color:#E2E8F0}
+    input::placeholder{color:#CBD5E1}
+    textarea{resize:none;min-height:60px;line-height:1.5}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .sec-h{font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1px;margin:18px 0 10px;display:flex;align-items:center;gap:8px}
+    .sec-h::after{content:'';flex:1;height:1px;background:#F1F5F9}
+
+    /* project tag in drawer */
+    .proj-tag{display:flex;align-items:center;gap:7px;padding:7px 10px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;margin-bottom:6px}
+    .proj-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+    .proj-tag select{flex:1;border:none;background:transparent;font-size:12px;padding:0;font-family:'Sarabun',sans-serif;color:#1E293B;outline:none}
+    .proj-tag-role select{flex:1;border:none;background:transparent;font-size:12px;padding:0;color:#64748B;outline:none}
+    .sep{width:1px;height:14px;background:#E2E8F0;flex-shrink:0}
+    .del-btn{width:20px;height:20px;border:none;background:none;color:#CBD5E1;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;border-radius:4px}
+    .del-btn:hover{color:#EF4444;background:#FEF2F2}
+    .add-proj{display:flex;align-items:center;gap:5px;font-size:11px;color:#94A3B8;cursor:pointer;padding:6px 0;font-family:'Sarabun',sans-serif}
+    .add-proj:hover{color:#3B82F6}
+
+    /* changed field indicator */
+    .changed{border-color:#F59E0B !important;background:#FFFBEB}
+    .changed-dot{width:6px;height:6px;border-radius:50%;background:#F59E0B;display:inline-block;margin-right:4px}
+
+    .drawer-footer{padding:12px 20px;border-top:1px solid #F1F5F9;display:flex;gap:8px;flex-shrink:0;background:#FAFAFA}
+    .btn{padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;flex:1;text-align:center}
+    .btn-cancel{background:white;border:1px solid #E2E8F0;color:#64748B;flex:0 0 auto;padding:8px 16px}
+    .btn-save{background:#3B82F6;color:white}
+    .btn-save:hover{background:#2563EB}
+    .change-hint{font-size:10px;color:#F59E0B;display:flex;align-items:center;gap:4px;font-family:'Sarabun',sans-serif}
+
+    .annot{position:fixed;bottom:16px;left:16px;background:#1E293B;border:1px solid #334155;border-radius:10px;padding:10px 14px;max-width:240px;z-index:30}
+    .annot-title{font-size:10px;font-weight:700;color:#60A5FA;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+    .annot-text{font-size:11px;color:#64748B;line-height:1.5;font-family:'Sarabun',sans-serif}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="input_index.html" class="back-link">← กลับ</a>
+    <div class="logo">MyContacts</div>
+    <span class="label-tag">Form 2 · Right Drawer</span>
+    <div class="nav-links">
+      <a href="input1_modal.html" class="nav-link">← Modal</a>
+      <a href="input3_wizard.html" class="nav-link">Wizard →</a>
+    </div>
+  </div>
+
+  <div class="app-bg">
+    <!-- Simulated background app -->
+    <div class="sim-app">
+      <div class="sim-sidebar"></div>
+      <div class="sim-list">
+        <div style="height:8px;background:#E2E8F0;border-radius:3px;width:50%;margin-bottom:10px"></div>
+        <div class="sim-list-item"><div class="sim-avatar" style="background:#6366F1"></div><div class="sim-text"></div></div>
+        <div class="sim-list-item sel"><div class="sim-avatar" style="background:#6366F1"></div><div class="sim-text" style="background:#BFDBFE"></div></div>
+        <div class="sim-list-item"><div class="sim-avatar" style="background:#6B7280"></div><div class="sim-text"></div></div>
+        <div class="sim-list-item"><div class="sim-avatar" style="background:#F97316"></div><div class="sim-text"></div></div>
+        <div class="sim-list-item"><div class="sim-avatar" style="background:#0EA5E9"></div><div class="sim-text"></div></div>
+      </div>
+      <div class="sim-detail">
+        <div class="sim-name"></div><div class="sim-sub"></div>
+        <div class="sim-row"></div><div class="sim-row" style="width:80%"></div><div class="sim-row" style="width:60%"></div>
+      </div>
+    </div>
+
+    <div class="overlay-dim"></div>
+
+    <!-- Drawer -->
+    <div class="drawer">
+      <div class="drawer-header">
+        <div class="drawer-mode-toggle">
+          <button class="dmt-btn">+ เพิ่มใหม่</button>
+          <button class="dmt-btn active">✏️ แก้ไข</button>
+        </div>
+        <button class="d-close">×</button>
+      </div>
+
+      <!-- Person context -->
+      <div class="drawer-person">
+        <div class="dp-av" style="background:#6366F1">ช</div>
+        <div>
+          <div class="dp-n">สมชาย มีสุข (ชาย)</div>
+          <div class="dp-s">QA Lead · Core Banking IT</div>
+        </div>
+        <div style="margin-left:auto;font-size:10px;color:#F59E0B;display:flex;align-items:center;gap:4px">
+          <span class="changed-dot"></span>มีการเปลี่ยนแปลง
+        </div>
+      </div>
+
+      <div class="drawer-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>ชื่อ (ไทย) *</label>
+            <input type="text" value="สมชาย มีสุข" class="has-val">
+          </div>
+          <div class="form-group">
+            <label>ชื่อเล่น</label>
+            <input type="text" value="ชาย" class="has-val">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Name (English)</label>
+          <input type="text" value="Somchai Meesuk" class="has-val">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>ทีม *</label>
+            <select><option selected>Core Banking IT</option><option>Digital Banking IT</option><option>PMO</option><option>Business Operations</option><option>Vendor</option></select>
+          </div>
+          <div class="form-group">
+            <label>ตำแหน่ง</label>
+            <input type="text" value="QA Lead" class="has-val">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Direct Report ถึง</label>
+          <input type="text" value="นาย กฤษณ์ สมบูรณ์" class="has-val">
+        </div>
+
+        <div class="sec-h">ติดต่อ</div>
+        <div class="form-group">
+          <label>Email (หลัก)</label>
+          <input type="email" value="somchai.m@company.co.th" class="has-val changed">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>โทรศัพท์</label>
+            <input type="text" value="081-234-5678" class="has-val">
+          </div>
+          <div class="form-group">
+            <label>Line ID</label>
+            <input type="text" value="@cha_somchai" class="has-val">
+          </div>
+        </div>
+
+        <div class="sec-h">โปรเจค</div>
+        <div class="proj-tag">
+          <div class="proj-dot" style="background:#3B82F6"></div>
+          <select><option selected>COBRA - Core Banking</option><option>ATLAS</option><option>NEXUS</option><option>PHOENIX</option></select>
+          <div class="sep"></div>
+          <div class="proj-tag-role"><select><option selected>Main Impact</option><option>Supporter</option><option>PM</option></select></div>
+          <button class="del-btn">×</button>
+        </div>
+        <div class="proj-tag">
+          <div class="proj-dot" style="background:#F59E0B"></div>
+          <select><option>COBRA</option><option>ATLAS</option><option selected>NEXUS - Settlement</option><option>PHOENIX</option></select>
+          <div class="sep"></div>
+          <div class="proj-tag-role"><select><option>Main Impact</option><option selected>Supporter</option><option>PM</option></select></div>
+          <button class="del-btn">×</button>
+        </div>
+        <div class="add-proj">+ เพิ่มโปรเจค</div>
+
+        <div class="sec-h">บันทึก (General Note)</div>
+        <div class="form-group">
+          <textarea>เชี่ยวชาญ UAT Banking เป็นพิเศษ ถามเขาก่อนเลยเรื่อง Test Strategy ตอบ Line เร็วมาก</textarea>
+        </div>
+      </div>
+
+      <div class="drawer-footer">
+        <div class="change-hint"><span class="changed-dot"></span>Email เปลี่ยนแปลง</div>
+        <button class="btn btn-cancel">ยกเลิก</button>
+        <button class="btn btn-save">💾 บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="annot">
+    <div class="annot-title">Form 2 · Right Drawer</div>
+    <div class="annot-text">Drawer เลื่อนมาจากขวา รายการ Contact ยังมองเห็นอยู่ด้านหลัง Field สีเหลือง = มีการเปลี่ยนแปลง ยังไม่ได้ Save</div>
+  </div>
+</body>
+</html>

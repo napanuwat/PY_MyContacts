@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<!-- v1.0 | Design 5: Data Table — Power user, spreadsheet-like, dense information -->
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design 5 — Data Table</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Sarabun', 'Inter', sans-serif; background: #0F172A; display: flex; height: 100vh; overflow: hidden; font-size: 14px; }
+
+/* Sidebar (narrow) */
+.sidebar { width: 52px; background: #0F172A; border-right: 1px solid #1E293B; display: flex; flex-direction: column; align-items: center; padding: 12px 0; gap: 8px; flex-shrink: 0; }
+.s-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #475569; transition: all 0.15s; }
+.s-icon:hover { background: #1E293B; color: #94A3B8; }
+.s-icon.active { background: #312E81; color: #A5B4FC; }
+.s-logo { font-size: 11px; font-weight: 800; color: #6366F1; margin-bottom: 8px; letter-spacing: -0.5px; }
+
+/* Main */
+.main { flex: 1; display: flex; flex-direction: column; background: #F8FAFC; overflow: hidden; }
+
+/* Topbar */
+.topbar { background: #fff; border-bottom: 1px solid #E2E8F0; padding: 0 24px; display: flex; align-items: center; gap: 0; height: 52px; }
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.page-title { font-size: 15px; font-weight: 700; color: #1E293B; }
+.page-meta { font-size: 12px; color: #94A3B8; background: #F1F5F9; padding: 3px 10px; border-radius: 20px; }
+.topbar-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.btn { padding: 7px 14px; border-radius: 7px; border: none; cursor: pointer; font-size: 12px; font-family: inherit; font-weight: 500; display: flex; align-items: center; gap: 6px; transition: all 0.15s; }
+.btn-ghost { background: #fff; border: 1px solid #E2E8F0; color: #64748B; }
+.btn-ghost:hover { background: #F8FAFC; }
+.btn-primary { background: #6366F1; color: #fff; }
+.btn-primary:hover { background: #4F46E5; }
+.btn-success { background: #10B981; color: #fff; }
+.btn-amber { background: #F59E0B; color: #fff; }
+.topbar-divider { width: 1px; height: 24px; background: #E2E8F0; margin: 0 8px; }
+
+/* Paste strip */
+.paste-strip { background: #fff; border-bottom: 2px solid #E2E8F0; overflow: hidden; transition: all 0.3s; }
+.paste-strip.collapsed { max-height: 44px; }
+.paste-strip.expanded { max-height: 200px; }
+.paste-header { padding: 10px 24px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.paste-toggle-icon { color: #6366F1; transition: transform 0.2s; }
+.collapsed .paste-toggle-icon { transform: rotate(-90deg); }
+.paste-header-label { font-size: 13px; font-weight: 600; color: #1E293B; }
+.paste-header-meta { font-size: 12px; color: #94A3B8; font-family: monospace; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.paste-header-stats { display: flex; gap: 10px; }
+.pstat { font-size: 12px; font-weight: 600; }
+.ps-total { color: #6366F1; }
+.ps-found { color: #10B981; }
+.ps-new { color: #F59E0B; }
+.paste-body { padding: 0 24px 12px; display: flex; gap: 12px; }
+.paste-textarea { flex: 1; min-height: 80px; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px; font-size: 13px; font-family: 'Sarabun', monospace; color: #1E293B; resize: none; outline: none; background: #FAFBFC; }
+.paste-textarea:focus { border-color: #6366F1; }
+.paste-side { display: flex; flex-direction: column; gap: 8px; }
+.paste-side .btn { width: 110px; justify-content: center; }
+
+/* Filter/toolbar row */
+.toolbar { padding: 10px 24px; background: #F8FAFC; border-bottom: 1px solid #E2E8F0; display: flex; align-items: center; gap: 10px; }
+.filter-btn { padding: 5px 12px; border-radius: 20px; border: 1.5px solid #E2E8F0; background: #fff; font-size: 12px; color: #64748B; cursor: pointer; font-family: inherit; font-weight: 500; transition: all 0.15s; }
+.filter-btn:hover { border-color: #6366F1; color: #6366F1; }
+.filter-btn.active { background: #EEF2FF; border-color: #6366F1; color: #6366F1; font-weight: 600; }
+.toolbar-sep { width: 1px; height: 20px; background: #E2E8F0; }
+.bulk-action { font-size: 12px; color: #64748B; display: flex; align-items: center; gap: 6px; }
+.bulk-action strong { color: #1E293B; }
+.toolbar-right { margin-left: auto; display: flex; gap: 8px; }
+
+/* Table */
+.table-wrap { flex: 1; overflow: auto; padding: 0; }
+table { width: 100%; border-collapse: collapse; }
+thead { position: sticky; top: 0; z-index: 10; }
+th { background: #F1F5F9; padding: 9px 14px; text-align: left; font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; letter-spacing: 0.6px; border-bottom: 2px solid #E2E8F0; white-space: nowrap; }
+th.sort-active { color: #6366F1; }
+th.sort-active::after { content: ' ↑'; }
+th:first-child { width: 40px; text-align: center; }
+td { padding: 0; border-bottom: 1px solid #F1F5F9; vertical-align: middle; }
+tr:hover td { background: #F8FAFC; }
+tr.row-found:hover td { background: #F0FDF9; }
+tr.row-new:hover td { background: #FFFBEB; }
+tr.row-selected td { background: #EEF2FF !important; }
+tr.row-expanded td { background: #F8FAFC; }
+tr.row-expanded:hover td { background: #F1F5F9; }
+
+/* TD inner wrappers */
+.td-inner { padding: 10px 14px; display: flex; align-items: center; gap: 8px; }
+.td-plain { padding: 10px 14px; }
+
+/* Checkbox col */
+.td-check { width: 40px; text-align: center; padding: 10px 14px; }
+.chk { width: 16px; height: 16px; border: 2px solid #CBD5E1; border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.chk.on { background: #6366F1; border-color: #6366F1; }
+.chk.on::after { content: '✓'; color: #fff; font-size: 10px; font-weight: 700; }
+
+/* Name col */
+.name-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px; flex-shrink: 0; }
+.av-i { background: #EEF2FF; color: #6366F1; }
+.av-g { background: #D1FAE5; color: #065F46; }
+.av-a { background: #FEF3C7; color: #D97706; }
+.av-n { background: #F1F5F9; color: #94A3B8; border: 1.5px dashed #CBD5E1; }
+.name-text { font-size: 13px; font-weight: 600; color: #1E293B; }
+.name-id { font-size: 11px; color: #94A3B8; margin-top: 1px; }
+
+/* Status badge */
+.status-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
+.sb-found { background: #D1FAE5; color: #065F46; }
+.sb-new { background: #FEF3C7; color: #92400E; }
+.sb-similar { background: #E0E7FF; color: #3730A3; }
+
+/* Inline editing */
+.inline-input { border: 1px solid #E2E8F0; border-radius: 5px; padding: 4px 8px; font-size: 12px; font-family: inherit; color: #1E293B; outline: none; background: #fff; width: 100%; }
+.inline-input:focus { border-color: #6366F1; }
+.inline-select { border: 1px solid #E2E8F0; border-radius: 5px; padding: 4px 8px; font-size: 12px; font-family: inherit; color: #1E293B; outline: none; background: #fff; width: 100%; }
+
+/* Pills */
+.pill { font-size: 10px; padding: 2px 7px; border-radius: 8px; font-weight: 600; }
+.p-blue { background: #DBEAFE; color: #1D4ED8; }
+.p-green { background: #D1FAE5; color: #065F46; }
+.p-amber { background: #FEF3C7; color: #92400E; }
+.p-red { background: #FEE2E2; color: #991B1B; }
+
+/* Action buttons */
+.act-btn { font-size: 11px; padding: 4px 9px; border-radius: 5px; border: none; cursor: pointer; font-family: inherit; font-weight: 500; transition: all 0.12s; white-space: nowrap; }
+.act-view { background: #F1F5F9; color: #64748B; }
+.act-view:hover { background: #E2E8F0; }
+.act-note { background: #EEF2FF; color: #6366F1; }
+.act-note:hover { background: #C7D2FE; }
+.act-edit { background: #F1F5F9; color: #64748B; }
+.act-edit:hover { background: #E2E8F0; }
+.act-add { background: #FEF3C7; color: #92400E; }
+.act-add:hover { background: #FDE68A; }
+.act-skip { background: #F8FAFC; color: #94A3B8; border: 1px solid #E2E8F0; }
+
+/* Expand row */
+tr.expand-row td { padding: 0; background: #F1F5F9 !important; }
+.expand-content { padding: 12px 24px 14px 80px; display: flex; gap: 24px; flex-wrap: wrap; }
+.exp-section { flex: 1; min-width: 200px; }
+.exp-label { font-size: 10px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.exp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 16px; }
+.ef label { font-size: 10px; color: #94A3B8; display: block; margin-bottom: 1px; }
+.ef span { font-size: 12px; color: #1E293B; font-weight: 500; }
+.exp-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.exp-btn { font-size: 12px; padding: 6px 14px; border-radius: 7px; border: none; cursor: pointer; font-family: inherit; font-weight: 500; }
+.exp-primary { background: #6366F1; color: #fff; }
+.exp-ghost { background: #fff; border: 1px solid #E2E8F0; color: #64748B; }
+
+/* New form row */
+tr.new-form-row td { padding: 0; background: #FFFBEB !important; border-bottom: 2px solid #FDE68A; }
+.new-form-content { padding: 12px 24px 14px 80px; }
+.nfc-title { font-size: 12px; font-weight: 600; color: #92400E; margin-bottom: 10px; }
+.nfc-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 10px; }
+.nfc-field label { font-size: 10px; font-weight: 600; color: #78350F; display: block; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.3px; }
+.nfc-actions { display: flex; gap: 8px; }
+.nfc-btn { font-size: 12px; padding: 7px 16px; border-radius: 7px; border: none; cursor: pointer; font-family: inherit; font-weight: 500; }
+.nfc-add { background: #F59E0B; color: #fff; }
+.nfc-skip { background: #fff; border: 1px solid #E2E8F0; color: #64748B; }
+
+/* Footer summary bar */
+.footer-bar { background: #fff; border-top: 2px solid #E2E8F0; padding: 10px 24px; display: flex; align-items: center; gap: 16px; }
+.footer-stat { font-size: 13px; color: #64748B; display: flex; align-items: center; gap: 6px; }
+.footer-stat .val { font-weight: 700; color: #1E293B; font-size: 15px; }
+.footer-stat .val.green { color: #10B981; }
+.footer-stat .val.amber { color: #F59E0B; }
+.footer-divider { width: 1px; height: 20px; background: #E2E8F0; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- Narrow sidebar -->
+<div class="sidebar">
+  <div class="s-logo">MC</div>
+  <div class="s-icon" title="รายชื่อ">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+  </div>
+  <div class="s-icon active" title="ตรวจสอบประชุม">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+  </div>
+  <div class="s-icon" title="Sync">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.01"/></svg>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="page-title">ตรวจสอบรายชื่อผู้เข้าประชุม</div>
+      <div class="page-meta">COBRA Kickoff · 29 เม.ย. 2026</div>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2z"/></svg>
+        ประวัติ
+      </button>
+      <div class="topbar-divider"></div>
+      <button class="btn btn-ghost">📤 Export</button>
+      <button class="btn btn-success">📝 Note ทุกคน</button>
+      <button class="btn btn-amber">➕ เพิ่มทั้ง 3 คนใหม่</button>
+    </div>
+  </div>
+
+  <!-- Paste strip (collapsed) -->
+  <div class="paste-strip collapsed" id="pasteStrip">
+    <div class="paste-header" onclick="togglePaste()">
+      <svg class="paste-toggle-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      <span class="paste-header-label">📋 รายชื่อที่วาง</span>
+      <span class="paste-header-meta">สมชาย วงษ์ศิลป์, วรรณา ประสพโชค, อรุณี สุขสันต์, นิตยา รักไทย, มานะ พงษ์สุข, วิชาญ ศรีเมือง, สุดาพร ทองดี</span>
+      <div class="paste-header-stats">
+        <span class="pstat ps-total">7 คน</span>
+        <span class="pstat ps-found">✅ 4 พบ</span>
+        <span class="pstat ps-new">➕ 3 ใหม่</span>
+      </div>
+    </div>
+    <div class="paste-body">
+      <textarea class="paste-textarea">สมชาย วงษ์ศิลป์
+วรรณา ประสพโชค
+อรุณี สุขสันต์
+นิตยา รักไทย
+มานะ พงษ์สุข
+วิชาญ ศรีเมือง
+สุดาพร ทองดี</textarea>
+      <div class="paste-side">
+        <button class="btn btn-primary">🔍 ค้นหาใหม่</button>
+        <button class="btn btn-ghost">ล้าง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <button class="filter-btn active">ทั้งหมด (7)</button>
+    <button class="filter-btn">✅ พบในระบบ (4)</button>
+    <button class="filter-btn">➕ ยังไม่มี (3)</button>
+    <div class="toolbar-sep"></div>
+    <div class="bulk-action">เลือกแล้ว <strong>5</strong> คน ·</div>
+    <button class="btn btn-ghost" style="font-size:11px; padding:5px 10px;">📝 Note ที่เลือก</button>
+    <button class="btn btn-ghost" style="font-size:11px; padding:5px 10px;">➕ เพิ่มที่เลือก</button>
+    <div class="toolbar-right">
+      <span style="font-size:12px; color:#94A3B8;">ค้นหาเพิ่ม:</span>
+      <input type="text" placeholder="กรองใน table..." style="border:1px solid #E2E8F0; border-radius:6px; padding:5px 10px; font-size:12px; font-family:inherit; outline:none; width:160px;">
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th><div class="chk on"></div></th>
+          <th>#</th>
+          <th>ชื่อจาก List</th>
+          <th class="sort-active">สถานะ</th>
+          <th>ชื่อในระบบ / รายละเอียด</th>
+          <th>ทีม</th>
+          <th>อีเมล</th>
+          <th>โปรเจค</th>
+          <th style="text-align:center">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <!-- Row 1: FOUND, expanded -->
+        <tr class="row-found row-selected row-expanded">
+          <td class="td-check"><div class="chk on"></div></td>
+          <td class="td-plain" style="color:#94A3B8; font-size:12px; text-align:center">1</td>
+          <td>
+            <div class="td-inner">
+              <div class="name-avatar av-i">สช</div>
+              <div>
+                <div class="name-text">สมชาย วงษ์ศิลป์</div>
+                <div class="name-id">จาก List บรรทัด 1</div>
+              </div>
+            </div>
+          </td>
+          <td class="td-plain"><span class="status-badge sb-found">✓ พบ (100%)</span></td>
+          <td>
+            <div class="td-inner">
+              <span style="font-size:12px; font-weight:600; color:#1E293B;">สมชาย วงษ์ศิลป์</span>
+              <span style="font-size:11px; color:#94A3B8;">C001</span>
+            </div>
+          </td>
+          <td class="td-plain" style="font-size:12px; color:#475569;">Core Banking IT</td>
+          <td class="td-plain" style="font-size:12px; color:#475569;">somchai@bank.th</td>
+          <td>
+            <div class="td-inner" style="gap:4px">
+              <span class="pill p-blue">COBRA</span>
+              <span class="pill p-green">ATLAS</span>
+            </div>
+          </td>
+          <td>
+            <div class="td-inner" style="justify-content:center; gap:4px">
+              <button class="act-btn act-note">📝 Note</button>
+              <button class="act-btn act-edit">✏️ แก้</button>
+              <button class="act-btn act-view">👁</button>
+            </div>
+          </td>
+        </tr>
+        <!-- Expand row 1 -->
+        <tr class="expand-row">
+          <td colspan="9">
+            <div class="expand-content">
+              <div class="exp-section">
+                <div class="exp-label">ข้อมูล Contact</div>
+                <div class="exp-grid">
+                  <div class="ef"><label>ID</label><span>C001</span></div>
+                  <div class="ef"><label>ตำแหน่ง</label><span>หัวหน้าทีม IT</span></div>
+                  <div class="ef"><label>Direct Report</label><span>อรุณี สุขสันต์</span></div>
+                  <div class="ef"><label>โทรศัพท์</label><span>081-234-5678</span></div>
+                  <div class="ef"><label>Line ID</label><span>@somchai</span></div>
+                  <div class="ef"><label>Note ล่าสุด</label><span>14 เม.ย. 2026</span></div>
+                </div>
+                <div class="exp-actions">
+                  <button class="exp-btn exp-primary">📝 เพิ่ม Note ประชุมนี้</button>
+                  <button class="exp-btn exp-ghost">✏️ แก้ไขข้อมูล</button>
+                  <button class="exp-btn exp-ghost">🔗 เปิดหน้า Contact</button>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Row 2: FOUND -->
+        <tr class="row-found row-selected">
+          <td class="td-check"><div class="chk on"></div></td>
+          <td class="td-plain" style="color:#94A3B8; font-size:12px; text-align:center">2</td>
+          <td>
+            <div class="td-inner">
+              <div class="name-avatar av-g">วร</div>
+              <div><div class="name-text">วรรณา ประสพโชค</div></div>
+            </div>
+          </td>
+          <td class="td-plain"><span class="status-badge sb-found">✓ พบ (100%)</span></td>
+          <td>
+            <div class="td-inner">
+              <span style="font-size:12px; font-weight:600; color:#1E293B;">วรรณา ประสพโชค</span>
+              <span style="font-size:11px; color:#94A3B8;">C002</span>
+            </div>
+          </td>
+          <td class="td-plain" style="font-size:12px; color:#475569;">Digital Banking IT</td>
+          <td class="td-plain" style="font-size:12px; color:#475569;">wannapa@bank.th</td>
+          <td><div class="td-inner" style="gap:4px"><span class="pill p-green">ATLAS</span></div></td>
+          <td><div class="td-inner" style="justify-content:center; gap:4px">
+            <button class="act-btn act-note">📝 Note</button>
+            <button class="act-btn act-edit">✏️ แก้</button>
+            <button class="act-btn act-view">👁</button>
+          </div></td>
+        </tr>
+
+        <!-- Row 3: FOUND -->
+        <tr class="row-found row-selected">
+          <td class="td-check"><div class="chk on"></div></td>
+          <td class="td-plain" style="color:#94A3B8; font-size:12px; text-align:center">3</td>
+          <td>
+            <div class="td-inner">
+              <div class="name-avatar av-i">อร</div>
+              <div><div class="name-text">อรุณี สุขสันต์</div></div>
+            </div>
+          </td>
+          <td class="td-plain"><span class="status-badge sb-found">✓ พบ (100%)</span></td>
+          <td>
+            <div class="td-inner">
+              <span style="font-size:12px; font-weight:600; color:#1E293B;">อรุณี สุขสันต์</span>
+              <span style="font-size:11px; color:#94A3B8;">C005</span>
+            </div>
+          </td>
+          <td class="td-plain" style="font-size:12px; color:#475569;">Senior Management</td>
+          <td class="td-plain" style="font-size:12px; color:#475569;">arunee@bank.th</td>
+          <td><div class="td-inner" style="gap:4px"><span class="pill p-red">PHOENIX</span></div></td>
+          <td><div class="td-inner" style="justify-content:center; gap:4px">
+            <button class="act-btn act-note">📝 Note</button>
+            <button class="act-btn act-edit">✏️ แก้</button>
+            <button class="act-btn act-view">👁</button>
+          </div></td>
+        </tr>
+
+        <!-- Row 4: FOUND -->
+        <tr class="row-found row-selected">
+          <td class="td-check"><div class="chk on"></div></td>
+          <td class="td-plain" style="color:#94A3B8; font-size:12px; text-align:center">4</td>
+          <td>
+            <div class="td-inner">
+              <div class="name-avatar av-a">นต</div>
+              <div><div class="name-text">นิตยา รักไทย</div></div>
+            </div>
+          </td>
+          <td class="td-plain"><span class="status-badge sb-found">✓ พบ (100%)</span></td>
+          <td>
+            <div class="td-inner">
+              <span style="font-size:12px; font-weight:600; color:#1E293B;">นิตยา รักไทย</span>
+              <span style="font-size:11px; color:#94A3B8;">C004</span>
+            </div>
+          </td>
+          <td class="td-plain" style="font-size:12px; color:#475569;">PMO</td>
+          <td class="td-plain" style="font-size:12px; color:#475569;">nittaya@bank.th</td>
+          <td><div class="td-inner" style="gap:4px"><span class="pill p-amber">NEXUS</span></div></td>
+          <td><div class="td-inner" style="justify-content:center; gap:4px">
+            <button class="act-btn act-note">📝 Note</button>
+            <button class="act-btn act-edit">✏️ แก้</button>
+            <button class="act-btn act-view">👁</button>
+          </div></td>
+        </tr>
+
+        <!-- Row 5: NEW, with inline form expanded -->
+        <tr class="row-new row-selected row-expanded" style="background:#FFFDF5">
+          <td class="td-check"><div class="chk on" style="border-color:#F59E0B; background:#F59E0B;"></div></td>
+          <td class="td-plain" style="color:#94A3B8; font-size:12px; text-align:center">5</td>
+          <td>
+            <div class="td-inner">
+              <div class="name-avatar av-n">มน</div>
+              <div><div class="name-text" style="color:#92400E">มานะ พงษ์สุข</div></div>
+            </div>
+          </td>
+          <td class="td-plain"><span class="status-badge sb-new">➕ ไม่พบ</span></td>
+          <td class="td-plain" style="font-size:12px; color:#CBD5E1;">—</td>
+          <td>
+            <div style="padding:8px 14px">
+              <select class="inline-select"><option>-- เลือกทีม --</option><option>Core Banking IT</option><option>PMO</option><option>Vendor</option></select>
+            </div>
+          </td>
+          <td>
+            <div style="padding:8px 14px">
+              <input class="inline-input" type="email" placeholder="email@bank.th">
+            </div>
+          </td>
+          <td class="td-plain" style="color:#CBD5E1;">—</td>
+          <td><div class="td-inner" style="justify-content:center; gap:4px">
+            <button class="act-btn act-add">➕ บันทึก</button>
+            <button class="act-btn act-skip">ข้าม</button>
+          </div></td>
+        </tr>
+        <!-- New form row 5 -->
+        <tr class="new-form-row">
+          <td colspan="9">
+            <div class="new-form-content">
+              <div class="nfc-title">กรอกข้อมูลเพิ่มเติม สำหรับ "มานะ พงษ์สุข" (optional)</div>
+              <div class="nfc-grid">
+                <div class="nfc-field"><label>ชื่อเล่น</label><input class="inline-input" type="text" placeholder="เช่น มาน, โจ"></div>
+                <div class="nfc-field"><label>ตำแหน่ง</label><input class="inline-input" type="text" placeholder="Developer, PM..."></div>
+                <div class="nfc-field"><label>โทรศัพท์</label><input class="inline-input" type="text" placeholder="0xx-xxx-xxxx"></div>
+                <div class="nfc-field"><label>Line ID</label><input class="inline-input" type="text" placeholder="@lineid"></div>
+                <div class="nfc-field"><label>หมายเหตุ</label><input class="inline-input" type="text" placeholder="หมายเหตุสั้น"></div>
+              </div>
+              <div class="nfc-actions">
+                <button class="nfc-btn nfc-add">➕ เพิ่ม Contact นี้</button>
+                <button class="nfc-btn nfc-skip">ข้าม</button>
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Row 6: NEW -->
+        <tr class="row-new" style="background:#FFFDF5">
+          <td class="td-check"><div class="chk"></div></td>
+          <td class="td-plain" style="color:#94A3B8; font-size:12px; text-align:center">6</td>
+          <td>
+            <div class="td-inner">
+              <div class="name-avatar av-n">วช</div>
+              <div><div class="name-text" style="color:#92400E">วิชาญ ศรีเมือง</div></div>
+            </div>
+          </td>
+          <td class="td-plain"><span class="status-badge sb-new">➕ ไม่พบ</span></td>
+          <td class="td-plain" style="font-size:12px; color:#CBD5E1;">—</td>
+          <td><div style="padding:8px 14px"><select class="inline-select"><option>-- เลือกทีม --</option><option>Core Banking IT</option><option>PMO</option></select></div></td>
+          <td><div style="padding:8px 14px"><input class="inline-input" type="email" placeholder="email@bank.th"></div></td>
+          <td class="td-plain" style="color:#CBD5E1;">—</td>
+          <td><div class="td-inner" style="justify-content:center; gap:4px">
+            <button class="act-btn act-add">➕ เพิ่ม</button>
+            <button class="act-btn act-skip">ข้าม</button>
+          </div></td>
+        </tr>
+
+        <!-- Row 7: NEW -->
+        <tr class="row-new" style="background:#FFFDF5">
+          <td class="td-check"><div class="chk"></div></td>
+          <td class="td-plain" style="color:#94A3B8; font-size:12px; text-align:center">7</td>
+          <td>
+            <div class="td-inner">
+              <div class="name-avatar av-n">สด</div>
+              <div><div class="name-text" style="color:#92400E">สุดาพร ทองดี</div></div>
+            </div>
+          </td>
+          <td class="td-plain"><span class="status-badge sb-new">➕ ไม่พบ</span></td>
+          <td class="td-plain" style="font-size:12px; color:#CBD5E1;">—</td>
+          <td><div style="padding:8px 14px"><select class="inline-select"><option>-- เลือกทีม --</option><option>Core Banking IT</option><option>PMO</option></select></div></td>
+          <td><div style="padding:8px 14px"><input class="inline-input" type="email" placeholder="email@bank.th"></div></td>
+          <td class="td-plain" style="color:#CBD5E1;">—</td>
+          <td><div class="td-inner" style="justify-content:center; gap:4px">
+            <button class="act-btn act-add">➕ เพิ่ม</button>
+            <button class="act-btn act-skip">ข้าม</button>
+          </div></td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Footer summary -->
+  <div class="footer-bar">
+    <div class="footer-stat">ทั้งหมด <span class="val">7</span> คน</div>
+    <div class="footer-divider"></div>
+    <div class="footer-stat">พบในระบบ <span class="val green">4</span></div>
+    <div class="footer-divider"></div>
+    <div class="footer-stat">ยังไม่มี <span class="val amber">3</span></div>
+    <div class="footer-divider"></div>
+    <div class="footer-stat">เลือกแล้ว <span class="val">5</span></div>
+    <div style="margin-left:auto; display:flex; gap:8px;">
+      <button class="btn btn-ghost">📤 Export CSV</button>
+      <button class="btn btn-primary">✅ บันทึกทั้งหมด (5 รายการ)</button>
+    </div>
+  </div>
+</div>
+
+<!-- Label -->
+<div style="position:fixed; bottom:16px; right:16px; background:#fff; border:1px solid #E2E8F0; border-radius:10px; padding:8px 14px; font-size:12px; color:#64748B; box-shadow:0 2px 8px rgba(0,0,0,0.08); z-index:100;">
+  <strong style="color:#6366F1">Design 5 — Data Table</strong> &nbsp;·&nbsp; Power user, inline edit, compact, filter/sort
+</div>
+
+<script>
+function togglePaste() {
+  const strip = document.getElementById('pasteStrip');
+  strip.classList.toggle('collapsed');
+  strip.classList.toggle('expanded');
+}
+</script>
+</body>
+</html>

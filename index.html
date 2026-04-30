@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyContacts — Design Options</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', 'Sarabun', sans-serif;
+      background: #0F172A;
+      color: #E2E8F0;
+      min-height: 100vh;
+      padding: 48px 32px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+    .header h1 {
+      font-size: 42px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #60A5FA, #A78BFA, #F472B6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+      letter-spacing: -1px;
+    }
+    .header p {
+      font-size: 17px;
+      color: #94A3B8;
+      max-width: 620px;
+      margin: 0 auto;
+      line-height: 1.7;
+      font-family: 'Sarabun', sans-serif;
+    }
+    .tag {
+      display: inline-block;
+      background: rgba(99,102,241,0.2);
+      border: 1px solid rgba(99,102,241,0.4);
+      color: #A5B4FC;
+      font-size: 12px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+      font-weight: 500;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      max-width: 1200px;
+      margin: 0 auto 40px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #1E293B;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: #60A5FA;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+    .card-preview {
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 56px;
+      position: relative;
+      overflow: hidden;
+    }
+    .card-preview::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent 50%, rgba(30,41,59,0.8));
+    }
+    .d1 { background: linear-gradient(135deg, #1E3A5F 0%, #1E3A8A 100%); }
+    .d2 { background: linear-gradient(135deg, #3B0764 0%, #4C1D95 100%); }
+    .d3 { background: linear-gradient(135deg, #0C1445 0%, #0F172A 100%); }
+    .d4 { background: linear-gradient(135deg, #0F2027 0%, #1E293B 100%); }
+    .d5 { background: linear-gradient(135deg, #3D1A08 0%, #431407 100%); }
+
+    .mini-ui {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      font-size: 10px;
+      opacity: 0.8;
+      z-index: 1;
+    }
+    .mini-sidebar {
+      width: 55px;
+      background: rgba(0,0,0,0.3);
+      padding: 6px 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .mini-item {
+      height: 6px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 2px;
+    }
+    .mini-item.active {
+      background: rgba(99,102,241,0.7);
+    }
+    .mini-list {
+      width: 70px;
+      background: rgba(0,0,0,0.15);
+      padding: 6px 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .mini-row {
+      height: 18px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      padding: 0 4px;
+      gap: 3px;
+    }
+    .mini-row.selected {
+      background: rgba(99,102,241,0.3);
+    }
+    .mini-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .mini-line {
+      height: 3px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 2px;
+      flex: 1;
+    }
+    .mini-detail {
+      flex: 1;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .mini-title {
+      height: 8px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 2px;
+      width: 70%;
+    }
+    .mini-sub {
+      height: 5px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 2px;
+      width: 50%;
+    }
+    .mini-badge {
+      height: 10px;
+      width: 30px;
+      border-radius: 10px;
+    }
+
+    .card-body {
+      padding: 20px 20px 24px;
+    }
+    .design-num {
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748B;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 6px;
+    }
+    .design-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: #F1F5F9;
+      margin-bottom: 6px;
+    }
+    .design-sub {
+      font-size: 13px;
+      color: #64748B;
+      margin-bottom: 12px;
+      font-style: italic;
+    }
+    .design-desc {
+      font-size: 14px;
+      color: #94A3B8;
+      line-height: 1.65;
+      font-family: 'Sarabun', sans-serif;
+      margin-bottom: 16px;
+    }
+    .tags-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .badge {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+    .badge-blue { background: rgba(59,130,246,0.2); color: #93C5FD; border: 1px solid rgba(59,130,246,0.3); }
+    .badge-purple { background: rgba(139,92,246,0.2); color: #C4B5FD; border: 1px solid rgba(139,92,246,0.3); }
+    .badge-green { background: rgba(16,185,129,0.2); color: #6EE7B7; border: 1px solid rgba(16,185,129,0.3); }
+    .badge-amber { background: rgba(245,158,11,0.2); color: #FCD34D; border: 1px solid rgba(245,158,11,0.3); }
+    .badge-red { background: rgba(239,68,68,0.2); color: #FCA5A5; border: 1px solid rgba(239,68,68,0.3); }
+    .badge-gray { background: rgba(100,116,139,0.2); color: #CBD5E1; border: 1px solid rgba(100,116,139,0.3); }
+
+    .pros-cons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .pros, .cons {
+      background: rgba(0,0,0,0.2);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .pros-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #4ADE80;
+      margin-bottom: 6px;
+    }
+    .cons-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #F87171;
+      margin-bottom: 6px;
+    }
+    .pros-item, .cons-item {
+      font-size: 12px;
+      color: #94A3B8;
+      font-family: 'Sarabun', sans-serif;
+      line-height: 1.5;
+      padding-left: 12px;
+      position: relative;
+    }
+    .pros-item::before { content: '✓ '; color: #4ADE80; position: absolute; left: 0; }
+    .cons-item::before { content: '✗ '; color: #F87171; position: absolute; left: 0; }
+
+    .btn-open {
+      display: block;
+      text-align: center;
+      background: linear-gradient(135deg, #3B82F6, #6366F1);
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 10px;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    .btn-open:hover { opacity: 0.85; }
+
+    .footer {
+      text-align: center;
+      margin-top: 60px;
+      color: #475569;
+      font-size: 13px;
+    }
+    .footer span { color: #6366F1; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="tag">MyContacts · UX/UI Design Options</div>
+    <h1>เลือกแบบที่ใช่สำหรับคุณ</h1>
+    <p>5 แนวคิดการออกแบบที่แตกต่างกันอย่างสิ้นเชิง ทั้ง Layout, Mental Model และ Workflow เพื่อให้คุณตัดสินใจได้ว่าแบบไหนเหมาะกับการทำงานของคุณมากที่สุด</p>
+  </div>
+
+  <div class="grid">
+    <!-- Design 1 -->
+    <a href="design1_command_center.html" class="card">
+      <div class="card-preview d1">
+        <div class="mini-ui">
+          <div class="mini-sidebar">
+            <div class="mini-item" style="width:40px;height:4px;background:rgba(255,255,255,0.3)"></div>
+            <div style="height:8px"></div>
+            <div class="mini-item active" style="width:45px;height:5px"></div>
+            <div class="mini-item" style="width:38px;height:5px"></div>
+            <div class="mini-item" style="width:42px;height:5px"></div>
+            <div style="height:8px"></div>
+            <div class="mini-item" style="width:20px;height:3px"></div>
+            <div class="mini-item" style="width:44px;height:5px;background:rgba(59,130,246,0.6)"></div>
+            <div class="mini-item" style="width:44px;height:5px"></div>
+            <div class="mini-item" style="width:44px;height:5px"></div>
+            <div class="mini-item" style="width:44px;height:5px"></div>
+          </div>
+          <div class="mini-list">
+            <div style="height:10px;background:rgba(255,255,255,0.15);border-radius:3px;margin-bottom:4px"></div>
+            <div class="mini-row selected">
+              <div class="mini-dot" style="background:#3B82F6"></div>
+              <div class="mini-line"></div>
+            </div>
+            <div class="mini-row">
+              <div class="mini-dot" style="background:#10B981"></div>
+              <div class="mini-line"></div>
+            </div>
+            <div class="mini-row">
+              <div class="mini-dot" style="background:#F59E0B"></div>
+              <div class="mini-line"></div>
+            </div>
+            <div class="mini-row">
+              <div class="mini-dot" style="background:#EF4444"></div>
+              <div class="mini-line"></div>
+            </div>
+            <div class="mini-row">
+              <div class="mini-dot" style="background:#8B5CF6"></div>
+              <div class="mini-line"></div>
+            </div>
+          </div>
+          <div class="mini-detail">
+            <div class="mini-title"></div>
+            <div class="mini-sub"></div>
+            <div style="height:8px"></div>
+            <div style="display:flex;gap:4px;margin-bottom:6px">
+              <div class="mini-badge" style="background:rgba(59,130,246,0.5)"></div>
+              <div class="mini-badge" style="background:rgba(245,158,11,0.5)"></div>
+            </div>
+            <div style="height:3px;background:rgba(255,255,255,0.1);border-radius:2px;width:90%;margin-bottom:3px"></div>
+            <div style="height:3px;background:rgba(255,255,255,0.1);border-radius:2px;width:70%;margin-bottom:3px"></div>
+            <div style="height:3px;background:rgba(255,255,255,0.1);border-radius:2px;width:80%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="design-num">Design 01</div>
+        <div class="design-name">Command Center</div>
+        <div class="design-sub">3-Column CRM · เน้น Data Density</div>
+        <div class="design-desc">Layout 3 คอลัมน์คลาสสิก: Sidebar กรอง → รายชื่อ → Detail Panel พร้อม Tabs แบบ HubSpot/Linear ให้ข้อมูลครบในหน้าเดียว ไม่ต้องเปลี่ยนหน้า</div>
+        <div class="tags-row">
+          <span class="badge badge-blue">Power User</span>
+          <span class="badge badge-gray">Data Dense</span>
+          <span class="badge badge-purple">Filter-First</span>
+        </div>
+        <div class="pros-cons">
+          <div class="pros">
+            <div class="pros-title">จุดแข็ง</div>
+            <div class="pros-item">เห็นข้อมูลครบ</div>
+            <div class="pros-item">Filter ยืดหยุ่น</div>
+            <div class="pros-item">ใช้งานเร็ว</div>
+          </div>
+          <div class="cons">
+            <div class="cons-title">จุดอ่อน</div>
+            <div class="cons-item">หน้าจอแน่น</div>
+            <div class="cons-item">เรียนรู้นาน</div>
+          </div>
+        </div>
+        <div class="btn-open">ดู Mock Screen →</div>
+      </div>
+    </a>
+
+    <!-- Design 2 -->
+    <a href="design2_meeting_board.html" class="card">
+      <div class="card-preview d2">
+        <div class="mini-ui" style="flex-direction:column;">
+          <div style="display:flex;gap:6px;padding:8px 8px 4px;background:rgba(0,0,0,0.3)">
+            <div style="height:18px;width:50px;background:rgba(139,92,246,0.6);border-radius:4px"></div>
+            <div style="height:18px;width:40px;background:rgba(255,255,255,0.1);border-radius:4px"></div>
+            <div style="height:18px;width:45px;background:rgba(255,255,255,0.1);border-radius:4px"></div>
+            <div style="height:18px;width:38px;background:rgba(255,255,255,0.1);border-radius:4px"></div>
+          </div>
+          <div style="display:flex;gap:6px;padding:6px;flex:1">
+            <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+              <div style="height:10px;background:rgba(139,92,246,0.4);border-radius:3px;font-size:8px;display:flex;align-items:center;padding:0 4px;color:rgba(255,255,255,0.6)">Main Impact</div>
+              <div style="height:28px;background:rgba(255,255,255,0.08);border-radius:4px;padding:3px 4px">
+                <div style="height:4px;background:rgba(255,255,255,0.3);border-radius:2px;width:70%;margin-bottom:2px"></div>
+                <div style="height:3px;background:rgba(255,255,255,0.1);border-radius:2px;width:50%"></div>
+              </div>
+              <div style="height:28px;background:rgba(255,255,255,0.08);border-radius:4px;padding:3px 4px">
+                <div style="height:4px;background:rgba(255,255,255,0.3);border-radius:2px;width:60%;margin-bottom:2px"></div>
+                <div style="height:3px;background:rgba(255,255,255,0.1);border-radius:2px;width:40%"></div>
+              </div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+              <div style="height:10px;background:rgba(59,130,246,0.4);border-radius:3px"></div>
+              <div style="height:28px;background:rgba(255,255,255,0.08);border-radius:4px"></div>
+              <div style="height:28px;background:rgba(255,255,255,0.08);border-radius:4px"></div>
+              <div style="height:28px;background:rgba(255,255,255,0.08);border-radius:4px"></div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+              <div style="height:10px;background:rgba(16,185,129,0.4);border-radius:3px"></div>
+              <div style="height:28px;background:rgba(255,255,255,0.08);border-radius:4px"></div>
+              <div style="height:28px;background:rgba(255,255,255,0.08);border-radius:4px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="design-num">Design 02</div>
+        <div class="design-name">Meeting Board</div>
+        <div class="design-sub">Project-Centric · Role Grouping</div>
+        <div class="design-desc">เริ่มจาก Project/Meeting ก่อน แล้วค่อยดูว่าใครอยู่ใน role ไหน เหมาะมากสำหรับการเตรียมก่อนประชุม หรือดูว่าคนนี้อยู่โปรเจคอะไรบ้าง</div>
+        <div class="tags-row">
+          <span class="badge badge-purple">Meeting Prep</span>
+          <span class="badge badge-blue">Project-First</span>
+          <span class="badge badge-green">Role View</span>
+        </div>
+        <div class="pros-cons">
+          <div class="pros">
+            <div class="pros-title">จุดแข็ง</div>
+            <div class="pros-item">เห็นภาพรวม Project</div>
+            <div class="pros-item">เตรียมประชุมง่าย</div>
+            <div class="pros-item">Visual ชัดเจน</div>
+          </div>
+          <div class="cons">
+            <div class="cons-title">จุดอ่อน</div>
+            <div class="cons-item">ค้นคนยากกว่า</div>
+            <div class="cons-item">Cards กิน space</div>
+          </div>
+        </div>
+        <div class="btn-open">ดู Mock Screen →</div>
+      </div>
+    </a>
+
+    <!-- Design 3 -->
+    <a href="design3_network.html" class="card">
+      <div class="card-preview d3">
+        <div class="mini-ui" style="position:relative">
+          <svg width="100%" height="100%" style="position:absolute;inset:0">
+            <!-- Nodes -->
+            <circle cx="80" cy="90" r="14" fill="#6366F1" opacity="0.9"/>
+            <circle cx="160" cy="50" r="10" fill="#0EA5E9" opacity="0.9"/>
+            <circle cx="220" cy="110" r="12" fill="#10B981" opacity="0.9"/>
+            <circle cx="140" cy="140" r="16" fill="#8B5CF6" opacity="0.9"/>
+            <circle cx="280" cy="60" r="10" fill="#6B7280" opacity="0.9"/>
+            <circle cx="300" cy="130" r="11" fill="#0EA5E9" opacity="0.9"/>
+            <circle cx="200" cy="80" r="8" fill="#F59E0B" opacity="0.9"/>
+            <!-- Edges -->
+            <line x1="80" y1="90" x2="160" y2="50" stroke="#6366F1" stroke-width="1" opacity="0.4"/>
+            <line x1="80" y1="90" x2="140" y2="140" stroke="#6366F1" stroke-width="2" opacity="0.6"/>
+            <line x1="160" y1="50" x2="220" y2="110" stroke="#0EA5E9" stroke-width="1" opacity="0.4"/>
+            <line x1="220" y1="110" x2="140" y2="140" stroke="#10B981" stroke-width="1.5" opacity="0.5"/>
+            <line x1="220" y1="110" x2="300" y2="130" stroke="#10B981" stroke-width="1" opacity="0.4"/>
+            <line x1="280" y1="60" x2="300" y2="130" stroke="#6B7280" stroke-width="1" opacity="0.4"/>
+            <line x1="200" y1="80" x2="140" y2="140" stroke="#F59E0B" stroke-width="1" opacity="0.4"/>
+            <!-- Project node (square) -->
+            <rect x="60" y="40" width="28" height="18" rx="4" fill="#3B82F6" opacity="0.5"/>
+            <rect x="230" y="150" width="32" height="18" rx="4" fill="#EF4444" opacity="0.5"/>
+          </svg>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="design-num">Design 03</div>
+        <div class="design-name">Relationship Galaxy</div>
+        <div class="design-sub">Network Graph · Visual Exploration</div>
+        <div class="design-desc">มองเห็น "ความสัมพันธ์" ระหว่างคนและโปรเจค แบบ node-graph คนที่เชื่อมหลายโปรเจคจะเห็นชัดมาก เหมาะสำหรับการวิเคราะห์ dependency</div>
+        <div class="tags-row">
+          <span class="badge badge-purple">Visual</span>
+          <span class="badge badge-blue">Relationship</span>
+          <span class="badge badge-amber">Exploration</span>
+        </div>
+        <div class="pros-cons">
+          <div class="pros">
+            <div class="pros-title">จุดแข็ง</div>
+            <div class="pros-item">เห็น dependency</div>
+            <div class="pros-item">จำ visual ได้</div>
+            <div class="pros-item">แปลกใหม่</div>
+          </div>
+          <div class="cons">
+            <div class="cons-title">จุดอ่อน</div>
+            <div class="cons-item">คนเยอะ ยุ่งเหยิง</div>
+            <div class="cons-item">ค้นหาช้ากว่า</div>
+          </div>
+        </div>
+        <div class="btn-open">ดู Mock Screen →</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="grid-2">
+    <!-- Design 4 -->
+    <a href="design4_quick_find.html" class="card">
+      <div class="card-preview d4">
+        <div class="mini-ui" style="flex-direction:column;align-items:center;justify-content:flex-start;padding:16px 12px">
+          <div style="width:100%;height:22px;background:rgba(255,255,255,0.1);border-radius:6px;display:flex;align-items:center;padding:0 8px;margin-bottom:12px;border:1px solid rgba(99,102,241,0.5)">
+            <div style="width:6px;height:6px;border-radius:50%;background:rgba(99,102,241,0.8);margin-right:4px"></div>
+            <div style="height:3px;background:rgba(255,255,255,0.2);border-radius:2px;width:60%"></div>
+          </div>
+          <div style="display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap">
+            <div style="height:14px;width:36px;background:rgba(59,130,246,0.3);border-radius:10px"></div>
+            <div style="height:14px;width:42px;background:rgba(139,92,246,0.3);border-radius:10px"></div>
+            <div style="height:14px;width:30px;background:rgba(16,185,129,0.3);border-radius:10px"></div>
+          </div>
+          <div style="width:100%;background:rgba(255,255,255,0.06);border-radius:6px;padding:6px 8px;border:1px solid rgba(99,102,241,0.3)">
+            <div style="display:flex;align-items:center;gap:4px;margin-bottom:4px">
+              <div style="width:14px;height:14px;border-radius:50%;background:#6366F1"></div>
+              <div style="height:4px;background:rgba(255,255,255,0.3);border-radius:2px;width:60%"></div>
+            </div>
+            <div style="height:3px;background:rgba(255,255,255,0.1);border-radius:2px;margin-bottom:2px;width:80%"></div>
+            <div style="display:flex;gap:3px">
+              <div style="height:10px;width:30px;background:rgba(59,130,246,0.4);border-radius:3px"></div>
+              <div style="height:10px;width:30px;background:rgba(245,158,11,0.4);border-radius:3px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="design-num">Design 04</div>
+        <div class="design-name">Quick Find</div>
+        <div class="design-sub">Search-First · Meeting Mode</div>
+        <div class="design-desc">ออกแบบมาเพื่อการค้นหาที่เร็วที่สุด หน้าจอว่างเกือบหมด มีแค่ช่องค้นหาขนาดใหญ่ พิมพ์ชื่อ → เห็นข้อมูลครบทันที มี "Meeting Mode" สำหรับเปิดระหว่างประชุม</div>
+        <div class="tags-row">
+          <span class="badge badge-blue">Search-First</span>
+          <span class="badge badge-green">Meeting Mode</span>
+          <span class="badge badge-gray">Minimal UI</span>
+        </div>
+        <div class="pros-cons">
+          <div class="pros">
+            <div class="pros-title">จุดแข็ง</div>
+            <div class="pros-item">เร็วที่สุด</div>
+            <div class="pros-item">Simple มาก</div>
+            <div class="pros-item">Meeting Mode</div>
+          </div>
+          <div class="cons">
+            <div class="cons-title">จุดอ่อน</div>
+            <div class="cons-item">Browse ไม่ได้</div>
+            <div class="cons-item">ต้องจำชื่อบ้าง</div>
+          </div>
+        </div>
+        <div class="btn-open">ดู Mock Screen →</div>
+      </div>
+    </a>
+
+    <!-- Design 5 -->
+    <a href="design5_notebook.html" class="card">
+      <div class="card-preview d5">
+        <div class="mini-ui">
+          <div style="width:65px;background:rgba(0,0,0,0.3);padding:6px 5px;display:flex;flex-direction:column;gap:3px">
+            <div style="height:8px;background:rgba(255,255,255,0.15);border-radius:2px;width:40px"></div>
+            <div style="height:3px"></div>
+            <div style="height:5px;background:rgba(239,68,68,0.4);border-radius:2px;width:45px"></div>
+            <div style="padding-left:6px;display:flex;flex-direction:column;gap:2px">
+              <div style="height:4px;background:rgba(255,255,255,0.1);border-radius:2px;width:35px"></div>
+              <div style="height:4px;background:rgba(255,255,255,0.2);border-radius:2px;width:35px"></div>
+            </div>
+            <div style="height:5px;background:rgba(16,185,129,0.4);border-radius:2px;width:45px"></div>
+            <div style="padding-left:6px;display:flex;flex-direction:column;gap:2px">
+              <div style="height:4px;background:rgba(255,255,255,0.15);border-radius:2px;width:35px"></div>
+              <div style="height:4px;background:rgba(255,255,255,0.1);border-radius:2px;width:35px"></div>
+            </div>
+          </div>
+          <div style="flex:1;background:rgba(255,200,150,0.05);padding:8px">
+            <div style="display:flex;align-items:center;gap:4px;margin-bottom:4px">
+              <div style="width:18px;height:18px;border-radius:50%;background:#F97316"></div>
+              <div>
+                <div style="height:5px;background:rgba(255,255,255,0.35);border-radius:2px;width:50px;margin-bottom:2px"></div>
+                <div style="height:3px;background:rgba(255,255,255,0.15);border-radius:2px;width:35px"></div>
+              </div>
+            </div>
+            <div style="height:1px;background:rgba(255,255,255,0.08);margin:4px 0"></div>
+            <div style="height:3px;background:rgba(255,255,255,0.1);border-radius:2px;margin-bottom:2px"></div>
+            <div style="height:3px;background:rgba(255,255,255,0.08);border-radius:2px;margin-bottom:2px;width:80%"></div>
+            <div style="height:1px;background:rgba(255,255,255,0.08);margin:4px 0"></div>
+            <div style="height:3px;background:rgba(255,255,255,0.08);border-radius:2px;margin-bottom:2px"></div>
+            <div style="height:3px;background:rgba(255,255,255,0.06);border-radius:2px;margin-bottom:2px;width:70%"></div>
+            <div style="height:3px;background:rgba(255,255,255,0.06);border-radius:2px;margin-bottom:2px;width:90%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="design-num">Design 05</div>
+        <div class="design-name">People Notebook</div>
+        <div class="design-sub">Wiki-Style · Rich Notes · Timeline</div>
+        <div class="design-desc">แต่ละคนมี "หน้า" เป็นของตัวเอง คล้าย Notion/Confluence ใส่ข้อมูลลึก บันทึก Note แบบ Timeline ไว้ว่าคุยเรื่องอะไรวันไหน ดีสำหรับคนที่เน้น Context ของแต่ละคน</div>
+        <div class="tags-row">
+          <span class="badge badge-red">Rich Notes</span>
+          <span class="badge badge-amber">Timeline</span>
+          <span class="badge badge-purple">Wiki-Style</span>
+        </div>
+        <div class="pros-cons">
+          <div class="pros">
+            <div class="pros-title">จุดแข็ง</div>
+            <div class="pros-item">Notes ละเอียด</div>
+            <div class="pros-item">History ครบ</div>
+            <div class="pros-item">Editable ง่าย</div>
+          </div>
+          <div class="cons">
+            <div class="cons-title">จุดอ่อน</div>
+            <div class="cons-item">View overview ยาก</div>
+            <div class="cons-item">ต้อง maintain</div>
+          </div>
+        </div>
+        <div class="btn-open">ดู Mock Screen →</div>
+      </div>
+    </a>
+  </div>
+
+  <!-- Excel Design Section -->
+  <div style="max-width:1200px;margin:40px auto 0;padding:0 32px">
+    <div style="height:1px;background:rgba(255,255,255,0.06);margin-bottom:32px"></div>
+    <div style="font-size:12px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px">Platform เพิ่มเติม</div>
+    <a href="design_excel.html" style="display:flex;align-items:center;gap:20px;background:#1E293B;border:1px solid #334155;border-radius:14px;padding:20px 24px;text-decoration:none;color:inherit;transition:border-color 0.2s,box-shadow 0.2s" onmouseover="this.style.borderColor='#4ADE80';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)'" onmouseout="this.style.borderColor='#334155';this.style.boxShadow='none'">
+      <div style="font-size:40px">📗</div>
+      <div style="flex:1">
+        <div style="font-size:18px;font-weight:700;color:#F1F5F9;margin-bottom:4px">Excel Design & Sync Workflow</div>
+        <div style="font-size:13px;color:#64748B;font-family:'Sarabun',sans-serif;line-height:1.6">ออกแบบ Excel file ที่ใช้งานได้จริง (5 Sheets) พร้อม Sync Workflow 2 แบบ: OneDrive File-Based (ง่าย) และ API-Based (Two-way) รวมถึง Column Spec ครบถ้วนและ VBA Macro ตัวอย่าง</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;flex-shrink:0;max-width:220px">
+        <span style="font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(74,222,128,0.1);color:#4ADE80;border:1px solid rgba(74,222,128,0.2);font-weight:500">5 Sheets</span>
+        <span style="font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(59,130,246,0.1);color:#60A5FA;border:1px solid rgba(59,130,246,0.2);font-weight:500">OneDrive Sync</span>
+        <span style="font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(245,158,11,0.1);color:#FCD34D;border:1px solid rgba(245,158,11,0.2);font-weight:500">VBA Macro</span>
+        <span style="font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(139,92,246,0.1);color:#C4B5FD;border:1px solid rgba(139,92,246,0.2);font-weight:500">API Sync</span>
+      </div>
+      <div style="color:#475569;font-size:20px;margin-left:8px">→</div>
+    </a>
+  </div>
+
+  <div class="footer" style="margin-top:40px">
+    <p>MyContacts · Personal Contact Manager for QA Test Manager · <span>5 Design Concepts + Excel</span></p>
+    <p style="margin-top:8px">สร้างด้วย Claude Code · 2026</p>
+  </div>
+</body>
+</html>

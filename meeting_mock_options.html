@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyContacts - Meeting Import UX Options</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --ink:#0f172a;--panel:#fff;--line:#e2e8f0;--soft:#f8fafc;--muted:#64748b;
+      --blue:#3b82f6;--indigo:#6366f1;--green:#10b981;--amber:#f59e0b;--red:#ef4444;
+      --violet:#8b5cf6;--cyan:#06b6d4;--slate:#1e293b;
+    }
+    body{font-family:'Inter','Sarabun',sans-serif;background:#eef2f7;color:var(--ink);height:100vh;overflow:hidden;font-size:13px}
+    .app{height:100vh;display:flex;flex-direction:column}
+    .topbar{height:54px;background:#0f172a;color:#cbd5e1;display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0}
+    .logo{font-size:16px;font-weight:800;color:#60a5fa;letter-spacing:-.5px}
+    .logo span{color:#a5b4fc}
+    .tabs{display:flex;gap:3px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);padding:3px;border-radius:9px;margin-left:8px}
+    .tab{border:0;background:transparent;color:#94a3b8;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+    .tab.active{background:#1e293b;color:#fff}
+    .topnote{margin-left:auto;color:#64748b;font-size:12px;font-family:'Sarabun',sans-serif}
+    .shell{flex:1;display:flex;min-height:0}
+    .sidebar{width:210px;background:#0f172a;border-right:1px solid #1e293b;padding:14px 10px;color:#64748b;flex-shrink:0}
+    .sb-title{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:#334155;margin:8px 4px 6px}
+    .nav{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:12px;color:#64748b}
+    .nav.active{background:rgba(99,102,241,.16);color:#a5b4fc}
+    .dot{width:8px;height:8px;border-radius:50%;background:#64748b;flex-shrink:0}
+    .nav.active .dot{background:#818cf8}
+    .content{flex:1;min-width:0;overflow:auto;padding:18px}
+    .option{display:none;min-height:calc(100vh - 90px)}
+    .option.active{display:block}
+    .option-head{display:flex;align-items:flex-start;gap:16px;margin-bottom:14px}
+    .option-title{font-size:18px;font-weight:800;letter-spacing:-.3px}
+    .option-sub{font-family:'Sarabun',sans-serif;color:var(--muted);margin-top:3px;line-height:1.5}
+    .flow{margin-left:auto;background:white;border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-width:350px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+    .flow-title{font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:#475569;margin-bottom:6px}
+    .flow-steps{display:flex;gap:5px;align-items:center;flex-wrap:wrap;font-family:'Sarabun',sans-serif}
+    .flow-step{background:#f1f5f9;border:1px solid #e2e8f0;color:#334155;padding:4px 8px;border-radius:999px;font-size:11px}
+    .arrow{color:#cbd5e1}
+    .screen{background:white;border:1px solid var(--line);border-radius:8px;min-height:620px;overflow:hidden;box-shadow:0 10px 28px rgba(15,23,42,.08)}
+    .btn{border:0;border-radius:7px;padding:8px 12px;font-family:inherit;font-weight:700;font-size:12px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;white-space:nowrap}
+    .btn.primary{background:var(--indigo);color:white}
+    .btn.blue{background:var(--blue);color:white}
+    .btn.green{background:var(--green);color:white}
+    .btn.light{background:#f8fafc;border:1px solid var(--line);color:#475569}
+    .btn.warn{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa}
+    .badge{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:700}
+    .b-green{background:#dcfce7;color:#047857}.b-amber{background:#fef3c7;color:#b45309}.b-blue{background:#dbeafe;color:#1d4ed8}.b-red{background:#fee2e2;color:#b91c1c}.b-gray{background:#f1f5f9;color:#475569}.b-violet{background:#ede9fe;color:#6d28d9}
+    textarea{font-family:'Sarabun',sans-serif}
+    table{border-collapse:collapse;width:100%}
+    th{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:#64748b;text-align:left;background:#f8fafc;border-bottom:1px solid var(--line);padding:9px}
+    td{border-bottom:1px solid #f1f5f9;padding:9px;vertical-align:top;font-family:'Sarabun',sans-serif}
+
+    /* Option 1 */
+    .split{height:620px;display:grid;grid-template-columns:390px 1fr}
+    .paste-panel{border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0}
+    .panel-h{padding:16px;border-bottom:1px solid var(--line)}
+    .panel-h h3{font-size:14px;margin-bottom:4px}
+    .panel-h p{font-family:'Sarabun',sans-serif;color:#64748b;line-height:1.45}
+    .form-row{display:grid;grid-template-columns:1fr 120px;gap:8px;padding:12px 16px;border-bottom:1px solid #f1f5f9}
+    .input{border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-family:'Sarabun',sans-serif;font-size:13px;outline:none}
+    .pastebox{flex:1;margin:14px 16px;border:2px dashed #cbd5e1;border-radius:8px;background:#f8fafc;padding:12px;resize:none;font-size:13px;line-height:1.65;min-height:0}
+    .stats{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--line);background:#f8fafc}
+    .stat{flex:1;background:white;border:1px solid var(--line);border-radius:8px;padding:8px;text-align:center}
+    .stat strong{display:block;font-size:22px;line-height:1}
+    .stat span{font-family:'Sarabun',sans-serif;color:#64748b;font-size:11px}
+    .review{display:flex;flex-direction:column;min-width:0}
+    .review-top{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+    .review-title{font-size:14px;font-weight:800}
+    .review-tools{margin-left:auto;display:flex;gap:6px}
+    .match-row{display:grid;grid-template-columns:34px 1.2fr .9fr .9fr .9fr 120px;gap:10px;align-items:center;padding:11px 16px;border-bottom:1px solid #f1f5f9}
+    .avatar{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;background:#6366f1}
+    .name{font-weight:700;font-family:'Sarabun',sans-serif}
+    .mini{font-size:11px;color:#64748b;font-family:'Sarabun',sans-serif;margin-top:2px}
+    .diff{background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:5px 7px;color:#9a3412;font-size:11px}
+
+    /* Option 2 */
+    .wizard{height:620px;display:grid;grid-template-columns:240px 1fr}
+    .steps{background:#f8fafc;border-right:1px solid var(--line);padding:18px}
+    .wstep{display:flex;gap:10px;margin-bottom:18px;color:#94a3b8}
+    .wstep-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:white;border:1px solid var(--line);font-weight:800}
+    .wstep.active{color:#0f172a}.wstep.active .wstep-num{background:#6366f1;color:white;border-color:#6366f1}
+    .wstep.done .wstep-num{background:#dcfce7;color:#047857;border-color:#bbf7d0}
+    .wstep-text{font-family:'Sarabun',sans-serif;font-weight:700;padding-top:4px}
+    .wizard-main{padding:22px;overflow:auto}
+    .dropzone{border:2px dashed #cbd5e1;border-radius:8px;background:#f8fafc;min-height:150px;padding:18px;font-family:'Sarabun',sans-serif;line-height:1.6;color:#475569}
+    .map-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
+    .map-card{border:1px solid var(--line);border-radius:8px;overflow:hidden}
+    .map-card label{display:block;background:#f8fafc;border-bottom:1px solid var(--line);padding:8px 10px;font-size:11px;font-weight:800;color:#475569}
+    .map-card select{width:100%;border:0;padding:10px;font-family:'Sarabun',sans-serif;outline:none}
+    .preview-grid{border:1px solid var(--line);border-radius:8px;overflow:hidden}
+    .wizard-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+
+    /* Option 3 */
+    .command{height:620px;background:#0f172a;color:#cbd5e1;display:grid;grid-template-rows:auto 1fr}
+    .cmd-head{padding:18px;border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:10px}
+    .cmd-input{flex:1;background:#111c31;border:1px solid #26364f;color:#e2e8f0;border-radius:8px;padding:12px 14px;font-family:'Sarabun',sans-serif;font-size:14px}
+    .cmd-body{display:grid;grid-template-columns:1fr 320px;min-height:0}
+    .cmd-results{padding:14px;overflow:auto}
+    .cmd-card{background:#111827;border:1px solid #26364f;border-radius:8px;margin-bottom:8px;padding:10px;display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:start}
+    .cmd-card .avatar{width:28px;height:28px;border-radius:7px}
+    .cmd-name{color:white;font-weight:800;font-family:'Sarabun',sans-serif}
+    .cmd-side{border-left:1px solid #1e293b;background:#0b1220;padding:14px;overflow:auto}
+    .cmd-side h3{color:white;font-size:14px;margin-bottom:8px}
+    .cmd-kpi{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+    .cmd-kpi div{background:#111827;border:1px solid #26364f;border-radius:8px;padding:10px;text-align:center}
+    .cmd-kpi strong{display:block;color:white;font-size:22px}
+    .cmd-kpi span{font-family:'Sarabun',sans-serif;color:#64748b;font-size:11px}
+    .cmd-action{width:100%;margin-top:8px;justify-content:center}
+
+    /* Option 4 */
+    .kanban{height:620px;display:grid;grid-template-rows:auto 1fr;background:#f8fafc}
+    .kanban-head{padding:14px 16px;background:white;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center}
+    .cols{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:14px;min-height:0;overflow:auto}
+    .col{background:white;border:1px solid var(--line);border-radius:8px;display:flex;flex-direction:column;min-height:0}
+    .col-h{padding:12px;border-bottom:1px solid var(--line);font-weight:800;display:flex;align-items:center;gap:6px}
+    .col-body{padding:10px;overflow:auto}
+    .person-card{border:1px solid #e2e8f0;border-radius:8px;padding:10px;margin-bottom:8px;background:#fff}
+    .person-top{display:flex;gap:8px;align-items:center;margin-bottom:7px}
+    .checks{display:flex;flex-direction:column;gap:5px;font-family:'Sarabun',sans-serif;font-size:11px;color:#64748b}
+    .check{display:flex;align-items:center;gap:5px}
+    .tick{width:14px;height:14px;border-radius:50%;background:#dcfce7;color:#047857;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800}
+    .warnmark{background:#fef3c7;color:#b45309}
+
+    /* Option 5 */
+    .crm{height:620px;display:grid;grid-template-columns:300px 1fr 360px}
+    .agenda{border-right:1px solid var(--line);background:#f8fafc;display:flex;flex-direction:column}
+    .agenda-list{padding:10px;overflow:auto}
+    .agenda-item{background:white;border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:8px}
+    .agenda-item.active{border-color:#93c5fd;box-shadow:0 0 0 2px #dbeafe}
+    .compare{overflow:auto}
+    .compare-head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+    .confidence{height:7px;background:#e2e8f0;border-radius:99px;overflow:hidden;margin-top:6px}
+    .confidence span{display:block;height:100%;background:#10b981}
+    .detail-pane{border-left:1px solid var(--line);background:#fff;display:flex;flex-direction:column}
+    .profile{padding:18px;border-bottom:1px solid var(--line)}
+    .bigav{width:52px;height:52px;border-radius:14px;background:#6366f1;color:white;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;margin-bottom:10px}
+    .field-list{padding:14px 18px;overflow:auto}
+    .field{display:grid;grid-template-columns:90px 1fr;gap:8px;border-bottom:1px solid #f1f5f9;padding:8px 0;font-family:'Sarabun',sans-serif}
+    .field label{color:#94a3b8;font-size:11px;text-transform:uppercase;font-family:'Inter',sans-serif;font-weight:800}
+    .pane-actions{margin-top:auto;border-top:1px solid var(--line);padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .note-callout{margin:12px 18px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;border-radius:8px;padding:10px;font-family:'Sarabun',sans-serif;line-height:1.45}
+
+    .recommend{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px}
+    .rec{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:10px}
+    .rec h4{font-size:12px;margin-bottom:5px}.rec p{font-family:'Sarabun',sans-serif;color:#64748b;line-height:1.45}
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="logo">My<span>Contacts</span></div>
+    <div class="tabs">
+      <button class="tab active" data-tab="o1">1 Quick Scan</button>
+      <button class="tab" data-tab="o2">2 Wizard</button>
+      <button class="tab" data-tab="o3">3 Command</button>
+      <button class="tab" data-tab="o4">4 Triage Board</button>
+      <button class="tab" data-tab="o5">5 Profile Merge</button>
+    </div>
+    <div class="topnote">Mock UX for paste meeting attendee list, match, update, and add</div>
+  </div>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="sb-title">Main</div>
+      <div class="nav"><span class="dot"></span>Contacts</div>
+      <div class="nav"><span class="dot"></span>Excel View</div>
+      <div class="nav active"><span class="dot"></span>Meeting Import</div>
+      <div class="sb-title">Master Data</div>
+      <div class="nav"><span class="dot"></span>Projects</div>
+      <div class="nav"><span class="dot"></span>Roles</div>
+      <div class="nav"><span class="dot"></span>Tags</div>
+    </aside>
+    <main class="content">
+      <section class="option active" id="o1">
+        <div class="option-head">
+          <div>
+            <div class="option-title">Option 1: Quick Scan Split Panel</div>
+            <div class="option-sub">เหมาะกับงานเร็ว: paste รายชื่อทางซ้าย แล้วเห็นผล match/update/add ทางขวาทันที</div>
+          </div>
+          <div class="flow"><div class="flow-title">Flow</div><div class="flow-steps"><span class="flow-step">Paste</span><span class="arrow">></span><span class="flow-step">Auto match</span><span class="arrow">></span><span class="flow-step">Review diff</span><span class="arrow">></span><span class="flow-step">Apply selected</span></div></div>
+        </div>
+        <div class="screen split">
+          <div class="paste-panel">
+            <div class="panel-h"><h3>Meeting attendee list</h3><p>Paste จาก Teams, Outlook, Excel หรือรายชื่อที่คั่นด้วย comma/บรรทัดใหม่</p></div>
+            <div class="form-row"><input class="input" value="Weekly Core Banking Sync"><input class="input" value="29 Apr 2026"></div>
+            <textarea class="pastebox">สมชาย ใจดี - Core Banking
+Napat R. <napat@bank.co.th>
+Jane Wong, Vendor PM, 089-123-4567
+Krit S. - Settlement
+Mary Liu mary.liu@vendor.com</textarea>
+            <div class="stats">
+              <div class="stat"><strong>5</strong><span>ทั้งหมด</span></div>
+              <div class="stat"><strong style="color:#059669">3</strong><span>มีแล้ว</span></div>
+              <div class="stat"><strong style="color:#d97706">2</strong><span>คนใหม่</span></div>
+            </div>
+            <div style="padding:12px 16px;display:flex;gap:8px;border-top:1px solid var(--line)"><button class="btn light">Preview parse</button><button class="btn primary" style="flex:1;justify-content:center">Apply 5 selected</button></div>
+          </div>
+          <div class="review">
+            <div class="review-top"><div class="review-title">Matched contacts</div><span class="badge b-green">3 found</span><span class="badge b-amber">2 new</span><div class="review-tools"><button class="btn light">Filter</button><button class="btn light">Undo preview</button></div></div>
+            <div class="match-row"><div class="avatar">ส</div><div><div class="name">สมชาย ใจดี</div><div class="mini">Core Banking Team</div></div><span class="badge b-green">Existing</span><div>phone: 081-222-3333<br><span class="mini">email missing</span></div><div class="diff">เพิ่ม project note: Weekly Core Banking Sync</div><button class="btn light">Update</button></div>
+            <div class="match-row"><div class="avatar" style="background:#0ea5e9">NR</div><div><div class="name">Napat R.</div><div class="mini">napat@bank.co.th</div></div><span class="badge b-green">Existing</span><div>role: BA<br>systems: CBS</div><div class="diff">ชื่ออังกฤษตรง, เพิ่ม meeting tag</div><button class="btn light">Update</button></div>
+            <div class="match-row"><div class="avatar" style="background:#f59e0b">JW</div><div><div class="name">Jane Wong</div><div class="mini">Vendor PM</div></div><span class="badge b-amber">New</span><div>phone: 089-123-4567<br><span class="mini">email unknown</span></div><div class="mini">พร้อมสร้าง contact ใหม่</div><button class="btn warn">Add</button></div>
+            <div class="match-row"><div class="avatar" style="background:#10b981">K</div><div><div class="name">Krit S.</div><div class="mini">Settlement</div></div><span class="badge b-blue">Possible match</span><div>Krit Saitong<br><span class="mini">confidence 82%</span></div><div class="diff">ต้อง confirm ก่อน update</div><button class="btn light">Compare</button></div>
+            <div class="match-row"><div class="avatar" style="background:#8b5cf6">ML</div><div><div class="name">Mary Liu</div><div class="mini">mary.liu@vendor.com</div></div><span class="badge b-amber">New</span><div>Vendor<br><span class="mini">no phone</span></div><div class="mini">แนะนำ tag: Vendor, Meeting</div><button class="btn warn">Add</button></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="option" id="o2">
+        <div class="option-head">
+          <div><div class="option-title">Option 2: Guided Wizard</div><div class="option-sub">เหมาะกับข้อมูลสกปรกหรือผู้ใช้ที่อยากมั่นใจ: แยก parse, map field, review, commit เป็นขั้นตอน</div></div>
+          <div class="flow"><div class="flow-title">Flow</div><div class="flow-steps"><span class="flow-step">1 Paste</span><span class="arrow">></span><span class="flow-step">2 Map fields</span><span class="arrow">></span><span class="flow-step">3 Resolve duplicates</span><span class="arrow">></span><span class="flow-step">4 Commit</span></div></div>
+        </div>
+        <div class="screen wizard">
+          <div class="steps">
+            <div class="wstep done"><div class="wstep-num">1</div><div class="wstep-text">Paste list</div></div>
+            <div class="wstep active"><div class="wstep-num">2</div><div class="wstep-text">Map fields</div></div>
+            <div class="wstep"><div class="wstep-num">3</div><div class="wstep-text">Resolve</div></div>
+            <div class="wstep"><div class="wstep-num">4</div><div class="wstep-text">Save</div></div>
+          </div>
+          <div class="wizard-main">
+            <h2 style="font-size:18px;margin-bottom:6px">Confirm detected columns</h2>
+            <p style="font-family:'Sarabun',sans-serif;color:#64748b;margin-bottom:14px">ระบบเดาว่าแต่ละส่วนคืออะไร ปรับ mapping ก่อน match กับ contact จริง</p>
+            <div class="dropzone">Detected 5 rows, 4 columns<br>Column A: สมชาย ใจดี / Napat R. / Jane Wong<br>Column B: Core Banking / napat@bank.co.th / Vendor PM<br>Column C: 089-123-4567 / mary.liu@vendor.com<br>Column D: note from copied attendee source</div>
+            <div class="map-grid">
+              <div class="map-card"><label>Column A</label><select><option>Name</option></select></div>
+              <div class="map-card"><label>Column B</label><select><option>Team / Email mixed</option></select></div>
+              <div class="map-card"><label>Column C</label><select><option>Phone / Email mixed</option></select></div>
+              <div class="map-card"><label>Column D</label><select><option>Note</option></select></div>
+            </div>
+            <div class="preview-grid">
+              <table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Team</th><th>Parse issue</th></tr></thead><tbody>
+                <tr><td>สมชาย ใจดี</td><td>-</td><td>-</td><td>Core Banking</td><td><span class="badge b-gray">Clean</span></td></tr>
+                <tr><td>Napat R.</td><td>napat@bank.co.th</td><td>-</td><td>-</td><td><span class="badge b-gray">Clean</span></td></tr>
+                <tr><td>Jane Wong</td><td>-</td><td>089-123-4567</td><td>Vendor PM</td><td><span class="badge b-amber">Role in team field</span></td></tr>
+              </tbody></table>
+            </div>
+            <div class="recommend">
+              <div class="rec"><h4>แนะนำเพิ่ม</h4><p>Save mapping preset สำหรับรูปแบบรายชื่อจาก Teams/Outlook</p></div>
+              <div class="rec"><h4>ลด error</h4><p>แสดง rows ที่ parse ไม่มั่นใจไว้ก่อน commit</p></div>
+              <div class="rec"><h4>เหมาะกับ</h4><p>รายการยาวและมีข้อมูลหลาย format ปนกัน</p></div>
+            </div>
+            <div class="wizard-actions"><button class="btn light">Back</button><button class="btn primary">Next: Resolve matches</button></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="option" id="o3">
+        <div class="option-head">
+          <div><div class="option-title">Option 3: Command Center</div><div class="option-sub">เหมาะกับ power user: paste ใน command area, ใช้ keyboard เลือก action เป็น batch ได้เร็ว</div></div>
+          <div class="flow"><div class="flow-title">Flow</div><div class="flow-steps"><span class="flow-step">Paste command</span><span class="arrow">></span><span class="flow-step">Smart search</span><span class="arrow">></span><span class="flow-step">Keyboard triage</span><span class="arrow">></span><span class="flow-step">Batch commit</span></div></div>
+        </div>
+        <div class="screen command">
+          <div class="cmd-head"><input class="cmd-input" value="Paste attendee list or type: import meeting weekly core banking"><button class="btn blue">Run match</button></div>
+          <div class="cmd-body">
+            <div class="cmd-results">
+              <div class="cmd-card"><div class="avatar">ส</div><div><div class="cmd-name">สมชาย ใจดี</div><div class="mini">Exact Thai name match. Existing contact has phone, no email.</div></div><span class="badge b-green">U update</span></div>
+              <div class="cmd-card"><div class="avatar" style="background:#0ea5e9">NR</div><div><div class="cmd-name">Napat R.</div><div class="mini">Email exact match. Add meeting note and tag.</div></div><span class="badge b-green">U update</span></div>
+              <div class="cmd-card"><div class="avatar" style="background:#f59e0b">JW</div><div><div class="cmd-name">Jane Wong</div><div class="mini">No email match, no name match. Candidate new vendor.</div></div><span class="badge b-amber">A add</span></div>
+              <div class="cmd-card"><div class="avatar" style="background:#10b981">K</div><div><div class="cmd-name">Krit S.</div><div class="mini">Possible: Krit Saitong, Krit S., K. Saitong. Needs one selection.</div></div><span class="badge b-blue">C compare</span></div>
+              <div class="cmd-card"><div class="avatar" style="background:#8b5cf6">ML</div><div><div class="cmd-name">Mary Liu</div><div class="mini">Email domain vendor.com. Suggest Vendor tag.</div></div><span class="badge b-amber">A add</span></div>
+            </div>
+            <div class="cmd-side">
+              <h3>Batch plan</h3>
+              <div class="cmd-kpi"><div><strong>2</strong><span>update</span></div><div><strong>2</strong><span>add</span></div><div><strong>1</strong><span>compare</span></div><div><strong>0</strong><span>skip</span></div></div>
+              <p style="font-family:'Sarabun',sans-serif;color:#94a3b8;line-height:1.55">Keyboard actions: U update, A add, C compare, S skip. เหมาะกับคนที่จัดการรายชื่อบ่อยและไม่อยากคลิกหลายรอบ</p>
+              <button class="btn green cmd-action">Commit ready actions</button>
+              <button class="btn light cmd-action">Export unresolved</button>
+              <button class="btn light cmd-action">Save as meeting note</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="option" id="o4">
+        <div class="option-head">
+          <div><div class="option-title">Option 4: Triage Board</div><div class="option-sub">เหมาะกับ workflow แบบตรวจทีละกลุ่ม: แยกคนเป็นคอลัมน์ Existing, Update, Needs Review, New</div></div>
+          <div class="flow"><div class="flow-title">Flow</div><div class="flow-steps"><span class="flow-step">Paste</span><span class="arrow">></span><span class="flow-step">Auto bucket</span><span class="arrow">></span><span class="flow-step">Drag/approve</span><span class="arrow">></span><span class="flow-step">Save per bucket</span></div></div>
+        </div>
+        <div class="screen kanban">
+          <div class="kanban-head"><button class="btn light">Paste new list</button><span class="badge b-green">Existing 2</span><span class="badge b-blue">Update 1</span><span class="badge b-red">Review 1</span><span class="badge b-amber">New 1</span><button class="btn primary" style="margin-left:auto">Save approved buckets</button></div>
+          <div class="cols">
+            <div class="col"><div class="col-h"><span class="badge b-green">Existing</span></div><div class="col-body">
+              <div class="person-card"><div class="person-top"><div class="avatar">ส</div><div><div class="name">สมชาย ใจดี</div><div class="mini">No changes needed</div></div></div><div class="checks"><div class="check"><span class="tick">✓</span>Name exact</div><div class="check"><span class="tick">✓</span>Team known</div></div></div>
+              <div class="person-card"><div class="person-top"><div class="avatar" style="background:#0ea5e9">NR</div><div><div class="name">Napat R.</div><div class="mini">Email exact</div></div></div><div class="checks"><div class="check"><span class="tick">✓</span>Email exact</div></div></div>
+            </div></div>
+            <div class="col"><div class="col-h"><span class="badge b-blue">Update Suggested</span></div><div class="col-body">
+              <div class="person-card"><div class="person-top"><div class="avatar" style="background:#10b981">KS</div><div><div class="name">Krit Saitong</div><div class="mini">Add project context</div></div></div><div class="checks"><div class="check"><span class="tick">✓</span>Existing contact</div><div class="check"><span class="tick warnmark">!</span>New system: Settlement</div></div><button class="btn light" style="width:100%;justify-content:center;margin-top:8px">Approve update</button></div>
+            </div></div>
+            <div class="col"><div class="col-h"><span class="badge b-red">Needs Review</span></div><div class="col-body">
+              <div class="person-card"><div class="person-top"><div class="avatar" style="background:#ef4444">K</div><div><div class="name">Krit S.</div><div class="mini">3 possible matches</div></div></div><div class="checks"><div class="check"><span class="tick warnmark">!</span>Low confidence 72%</div><div class="check"><span class="tick warnmark">!</span>No email</div></div><button class="btn warn" style="width:100%;justify-content:center;margin-top:8px">Resolve</button></div>
+            </div></div>
+            <div class="col"><div class="col-h"><span class="badge b-amber">New Contacts</span></div><div class="col-body">
+              <div class="person-card"><div class="person-top"><div class="avatar" style="background:#f59e0b">JW</div><div><div class="name">Jane Wong</div><div class="mini">Vendor PM</div></div></div><div class="checks"><div class="check"><span class="tick">✓</span>Phone detected</div><div class="check"><span class="tick warnmark">!</span>Email missing</div></div><button class="btn warn" style="width:100%;justify-content:center;margin-top:8px">Create contact</button></div>
+            </div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="option" id="o5">
+        <div class="option-head">
+          <div><div class="option-title">Option 5: Profile Merge Review</div><div class="option-sub">เหมาะกับข้อมูลสำคัญ: เลือก attendee จากซ้าย ดู evidence กลาง และแก้ profile ก่อน save ทางขวา</div></div>
+          <div class="flow"><div class="flow-title">Flow</div><div class="flow-steps"><span class="flow-step">Paste</span><span class="arrow">></span><span class="flow-step">Select person</span><span class="arrow">></span><span class="flow-step">Compare evidence</span><span class="arrow">></span><span class="flow-step">Edit profile</span><span class="arrow">></span><span class="flow-step">Save</span></div></div>
+        </div>
+        <div class="screen crm">
+          <div class="agenda">
+            <div class="panel-h"><h3>Attendees</h3><p>เลือกคนเพื่อดูข้อมูลที่พบและแก้ก่อนอัปเดต</p></div>
+            <div class="agenda-list">
+              <div class="agenda-item active"><div class="name">Krit S.</div><div class="mini">Possible match, needs decision</div><div class="confidence"><span style="width:72%"></span></div></div>
+              <div class="agenda-item"><div class="name">สมชาย ใจดี</div><div class="mini">Existing, ready update</div><div class="confidence"><span style="width:98%"></span></div></div>
+              <div class="agenda-item"><div class="name">Jane Wong</div><div class="mini">New contact</div><div class="confidence"><span style="width:54%;background:#f59e0b"></span></div></div>
+              <div class="agenda-item"><div class="name">Mary Liu</div><div class="mini">New vendor contact</div><div class="confidence"><span style="width:70%;background:#f59e0b"></span></div></div>
+            </div>
+          </div>
+          <div class="compare">
+            <div class="compare-head"><div class="review-title">Evidence for Krit S.</div><span class="badge b-red">Needs review</span><button class="btn light" style="margin-left:auto">Skip</button></div>
+            <table><thead><tr><th>Candidate</th><th>Why matched</th><th>Existing data</th><th>Suggested action</th></tr></thead><tbody>
+              <tr><td><strong>Krit Saitong</strong><br><span class="mini">Settlement Lead</span></td><td>Name initial + team word<br><span class="mini">confidence 72%</span></td><td>krit.s@bank.co.th<br>Systems: DWH, Settlement</td><td><span class="badge b-blue">Update meeting tag</span></td></tr>
+              <tr><td><strong>Krittapong S.</strong><br><span class="mini">Vendor</span></td><td>Nickname similar<br><span class="mini">confidence 48%</span></td><td>phone: 086-999-0000</td><td><span class="badge b-gray">Probably no</span></td></tr>
+              <tr><td><strong>Create new Krit S.</strong></td><td>No exact email</td><td>-</td><td><span class="badge b-amber">Add new</span></td></tr>
+            </tbody></table>
+            <div class="note-callout">ฟีเจอร์ที่ควรมีในแบบนี้: audit trail ว่า update มาจาก meeting ไหน, confidence score, และปุ่ม restore/undo หลัง commit</div>
+          </div>
+          <div class="detail-pane">
+            <div class="profile"><div class="bigav">KS</div><div class="option-title">Krit Saitong</div><div class="mini">Selected match from existing contacts</div></div>
+            <div class="field-list">
+              <div class="field"><label>Name TH</label><div>กฤต สายทอง</div></div>
+              <div class="field"><label>Name EN</label><div>Krit Saitong</div></div>
+              <div class="field"><label>Email</label><div>krit.s@bank.co.th</div></div>
+              <div class="field"><label>Phone</label><div>081-444-2222</div></div>
+              <div class="field"><label>Team</label><div>Settlement</div></div>
+              <div class="field"><label>Tags</label><div><span class="badge b-violet">Meeting</span> <span class="badge b-blue">Core Sync</span></div></div>
+              <div class="field"><label>Note</label><div>พบใน Weekly Core Banking Sync, 29 Apr 2026</div></div>
+            </div>
+            <div class="pane-actions"><button class="btn light">Choose different</button><button class="btn primary">Save update</button></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<script>
+  document.querySelectorAll('.tab').forEach((tab)=>{
+    tab.addEventListener('click',()=>{
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      document.querySelectorAll('.option').forEach(o=>o.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(tab.dataset.tab).classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>

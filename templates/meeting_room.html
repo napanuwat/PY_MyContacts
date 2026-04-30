@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<!-- v1.1 | Meeting Room — Theme-aware (reads mcMRConfig from localStorage) -->
+<!-- v1.0 | Meeting Room — Dynamic (connected to real API) -->
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meeting Room — MyContacts</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  /* ── Meeting Room CSS Variables (defaults = dark theme) — overridden by JS on load ── */
+  --mr-page-bg:#0F172A; --mr-nav-bg:#1E293B; --mr-nav-bdr:#334155;
+  --mr-card-bg:#1E293B; --mr-card-deep:#162032; --mr-card-act-bg:#0F172A;
+  --mr-bdr:#334155; --mr-bdr-soft:#1E293B;
+  --mr-paste-bg:#162032; --mr-paste-bdr:#1E3A5F;
+  --mr-accent:#6366F1; --mr-accent-d:#4F46E5; --mr-accent-soft:rgba(99,102,241,.08);
+  --mr-text-h:#E2E8F0; --mr-text-b:#94A3B8; --mr-text-m:#475569; --mr-text-s:#64748B; --mr-text-bright:#CBD5E1;
+  --mr-inp-c:#CBD5E1; --mr-inp-ph:#2D3F55;
+  --mr-inp-hbg:rgba(255,255,255,.04); --mr-inp-hbdr:#475569;
+  --mr-inp-fbg:rgba(99,102,241,.08);  --mr-inp-fbdr:#6366F1;
+  --mr-atm-bg:#0F172A; --mr-atm-bdr:#334155; --mr-atm-c:#64748B;
+  --mr-snav-bg:#334155; --mr-card-hover:rgba(255,255,255,.02);
+}
+body { font-family:'Sarabun','Inter',sans-serif; background:var(--mr-page-bg); color:var(--mr-text-b); font-size:14px; min-height:100vh; display:flex; flex-direction:column; }
+
+/* ── Nav ── */
+.nav { position:sticky; top:0; z-index:200; background:var(--mr-nav-bg); border-bottom:1px solid var(--mr-nav-bdr); padding:0 24px; height:52px; display:flex; align-items:center; gap:14px; flex-shrink:0; }
+.nav-logo { font-size:15px; font-weight:800; color:var(--mr-text-h); text-decoration:none; }
+.nav-logo span { color:var(--mr-accent); }
+.nav-sep { width:1px; height:20px; background:var(--mr-nav-bdr); }
+.nav-crumb { font-size:13px; color:var(--mr-text-m); display:flex; align-items:center; gap:6px; }
+.nav-crumb strong { color:var(--mr-text-h); }
+.nav-actions { margin-left:auto; display:flex; gap:8px; }
+
+/* ── Buttons ── */
+.btn { padding:7px 14px; border-radius:8px; border:none; cursor:pointer; font-size:12px; font-family:inherit; font-weight:600; display:inline-flex; align-items:center; gap:6px; transition:all .15s; white-space:nowrap; }
+.btn-ghost  { background:transparent; border:1px solid var(--mr-bdr); color:var(--mr-text-b); }
+.btn-ghost:hover  { border-color:var(--mr-text-m); color:var(--mr-text-h); }
+.btn-indigo { background:var(--mr-accent); color:#fff; }
+.btn-indigo:hover { background:var(--mr-accent-d); }
+.btn-green  { background:#10B981; color:#fff; } .btn-green:hover  { background:#059669; }
+.btn-amber  { background:#F59E0B; color:#1A1A1A; } .btn-amber:hover  { background:#D97706; }
+.btn-red    { background:#EF4444; color:#fff; }   .btn-red:hover    { background:#DC2626; }
+.btn-sm { padding:5px 10px; font-size:11px; border-radius:6px; }
+.btn:disabled { opacity:.45; cursor:not-allowed; }
+
+/* ── Paste Strip ── */
+.paste-section { background:var(--mr-paste-bg); border-bottom:2px solid var(--mr-paste-bdr); }
+.paste-header { padding:10px 24px; display:flex; align-items:center; gap:12px; cursor:pointer; user-select:none; }
+.paste-chevron { color:var(--mr-accent); transition:transform .2s; flex-shrink:0; }
+.paste-section.open .paste-chevron { transform:rotate(180deg); }
+.paste-title  { font-size:13px; font-weight:600; color:var(--mr-text-h); flex-shrink:0; }
+.paste-preview { flex:1; font-size:11px; color:var(--mr-text-m); font-family:monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.parse-stats { display:flex; gap:10px; flex-shrink:0; }
+.ps { font-size:12px; font-weight:600; }
+.ps-total { color:var(--mr-text-b); } .ps-found { color:#34D399; } .ps-new { color:#FCD34D; } .ps-group { color:#C084FC; }
+.paste-body { padding:12px 24px 16px; display:none; }
+.paste-section.open .paste-body { display:flex; gap:12px; }
+.paste-area { flex:1; background:var(--mr-atm-bg); border:1px solid var(--mr-bdr); border-radius:8px; padding:12px; font-size:12px; font-family:monospace; color:var(--mr-text-b); line-height:1.8; min-height:180px; resize:vertical; outline:none; }
+.paste-area:focus { border-color:var(--mr-accent); color:var(--mr-text-bright); }
+.paste-sidebar { display:flex; flex-direction:column; gap:8px; width:120px; flex-shrink:0; }
+.parse-hint { font-size:11px; color:var(--mr-text-m); line-height:1.6; }
+
+/* ── Meeting Meta ── */
+.meeting-meta { margin:0 24px; padding:14px 20px; background:linear-gradient(135deg,var(--mr-nav-bg),var(--mr-card-deep)); border:1px solid var(--mr-paste-bdr); border-top:none; border-bottom:2px solid var(--mr-bdr); display:flex; align-items:flex-start; gap:16px; }
+.meeting-icon { width:44px; height:44px; border-radius:10px; background:linear-gradient(135deg,var(--mr-accent-d),var(--mr-accent)); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+.meeting-info { flex:1; min-width:0; }
+.meeting-subject { font-size:14px; font-weight:700; color:var(--mr-text-h); margin-bottom:3px; line-height:1.3; }
+.meeting-datetime { font-size:12px; color:var(--mr-text-s); margin-bottom:8px; }
+.meeting-tags { display:flex; flex-wrap:wrap; gap:6px; }
+.mtag { font-size:11px; font-weight:600; padding:2px 10px; border-radius:20px; }
+.mtag-total { background:var(--mr-bdr-soft); color:var(--mr-text-b); border:1px solid var(--mr-bdr); }
+.mtag-found { background:#064E3B; color:#34D399; border:1px solid #065F46; }
+.mtag-new   { background:#451A03; color:#FCD34D; border:1px solid #78350F; }
+.mtag-group { background:#2D1B69; color:#C084FC; border:1px solid #4C1D95; }
+
+/* ── Search Bar ── */
+.search-bar { margin:0 24px; padding:10px 16px; background:var(--mr-nav-bg); border:1px solid var(--mr-bdr); border-top:none; display:flex; align-items:center; gap:10px; }
+.search-icon-wrap { color:var(--mr-text-m); flex-shrink:0; }
+.search-input { flex:1; background:transparent; border:none; outline:none; font-size:14px; font-family:inherit; color:var(--mr-text-h); }
+.search-input::placeholder { color:var(--mr-inp-ph); }
+.search-count { font-size:12px; font-weight:600; min-width:80px; text-align:right; flex-shrink:0; }
+.search-nav { display:flex; gap:4px; }
+.search-nav-btn { background:var(--mr-snav-bg); border:none; color:var(--mr-text-b); border-radius:5px; width:26px; height:26px; cursor:pointer; font-size:12px; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+.search-nav-btn:hover { background:var(--mr-text-m); color:var(--mr-text-h); }
+.search-clear { background:none; border:none; color:var(--mr-text-m); cursor:pointer; font-size:16px; line-height:1; padding:0 4px; }
+.search-clear:hover { color:#FC8181; }
+
+/* ── Kanban ── */
+.kanban-wrap { flex:1; padding:20px 24px 100px; overflow-y:auto; }
+.kanban-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+.col-wrap { display:flex; flex-direction:column; gap:10px; }
+.col-header { padding:12px 16px; border-radius:10px; display:flex; align-items:center; gap:10px; }
+.col-found { background:linear-gradient(135deg,#064E3B,#065F46); }
+.col-new   { background:linear-gradient(135deg,#451A03,#78350F); }
+.col-title { font-size:15px; font-weight:700; }
+.col-found .col-title { color:#A7F3D0; } .col-new .col-title { color:#FDE68A; }
+.col-count { font-size:12px; font-weight:600; padding:2px 10px; border-radius:20px; }
+.col-found .col-count { background:rgba(16,185,129,.3); color:#A7F3D0; }
+.col-new   .col-count { background:rgba(245,158,11,.3);  color:#FDE68A; }
+.col-bulk  { margin-left:auto; display:flex; align-items:center; gap:8px; }
+
+/* ── Select All ── */
+.select-all-wrap { display:flex; align-items:center; gap:6px; cursor:pointer; }
+.select-all-wrap input { width:14px; height:14px; cursor:pointer; accent-color:#F59E0B; }
+.select-all-wrap label { font-size:11px; color:#FDE68A; cursor:pointer; font-weight:600; }
+
+/* ── Card (shared) ── */
+.card { background:var(--mr-card-bg); border-radius:10px; border:1px solid var(--mr-bdr); overflow:hidden; transition:border-color .2s, box-shadow .2s; }
+.card.found-card { border-left:3px solid #10B981; }
+.card.new-card   { border-left:3px solid #F59E0B; border-left-style:dashed; }
+.card.group-card { border-left:3px solid #8B5CF6; }
+.card.expanded   { border-color:var(--mr-accent); border-left-style:solid; }
+.card.skipped    { opacity:.45; }
+.card.search-highlight { border-color:#FCD34D !important; box-shadow:0 0 0 2px rgba(252,211,77,.35); animation:hlPulse .5s ease-out; }
+@keyframes hlPulse { 0%{box-shadow:0 0 0 0 rgba(252,211,77,.5)} 60%{box-shadow:0 0 0 8px rgba(252,211,77,.15)} 100%{box-shadow:0 0 0 2px rgba(252,211,77,.25)} }
+
+/* ── Compact view ── */
+.card-compact-view { display:flex; }
+.card-compact { flex:1; padding:10px 14px; display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
+.card-compact:hover { background:var(--mr-card-hover); }
+.c-checkbox { width:16px; height:16px; cursor:pointer; accent-color:#F59E0B; flex-shrink:0; }
+.c-avatar { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:11px; flex-shrink:0; }
+.av-found { background:linear-gradient(135deg,#065F46,#10B981); color:#fff; }
+.av-new   { background:var(--mr-card-bg); border:2px dashed var(--mr-text-m); color:var(--mr-text-s); font-size:14px; }
+.av-group { background:linear-gradient(135deg,#4C1D95,#7C3AED); color:#fff; }
+.c-info   { flex:1; min-width:0; }
+.c-name   { font-size:13px; font-weight:600; color:var(--mr-text-h); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.c-sub    { font-size:11px; color:var(--mr-text-m); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.c-right  { flex-shrink:0; display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+.badge { font-size:10px; font-weight:700; padding:2px 8px; border-radius:10px; }
+.badge-found { background:#064E3B; color:#34D399; }
+.badge-new   { background:#451A03; color:#FCD34D; }
+.badge-group { background:#2D1B69; color:#C084FC; }
+.expand-btn  { font-size:10px; color:var(--mr-text-m); background:none; border:none; cursor:pointer; font-family:inherit; padding:2px 4px; transition:color .15s; }
+.expand-btn:hover { color:var(--mr-accent); }
+
+/* ── Detail view ── */
+.card-detail-view { display:none; }
+.card-expanded-header { padding:12px 16px; background:var(--mr-card-deep); border-bottom:1px solid var(--mr-bdr); display:flex; align-items:center; gap:12px; cursor:pointer; user-select:none; }
+.ceh-avatar { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex-shrink:0; }
+.ceh-info  { flex:1; min-width:0; }
+.ceh-name  { font-size:14px; font-weight:700; color:var(--mr-text-h); margin-bottom:2px; }
+.ceh-email { font-size:11px; color:var(--mr-text-m); }
+.ceh-right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0; }
+.collapse-btn { font-size:10px; color:var(--mr-text-m); background:none; border:none; cursor:pointer; font-family:inherit; }
+.collapse-btn:hover { color:#FC8181; }
+
+/* ── Field Grid ── */
+.field-grid { padding:14px 16px; background:var(--mr-card-deep); display:flex; flex-direction:column; gap:12px; }
+.field-row   { display:grid; gap:10px; }
+.field-row-1 { grid-template-columns:1fr; }
+.field-row-2 { grid-template-columns:1fr 1fr; }
+.field-row-3 { grid-template-columns:1fr 1fr 1fr; }
+.field-sep   { height:1px; background:var(--mr-card-bg); }
+.fld { display:flex; flex-direction:column; gap:3px; }
+.fld label { font-size:10px; font-weight:700; color:var(--mr-text-m); text-transform:uppercase; letter-spacing:.5px; }
+.f-input {
+  background:transparent; border:none; border-bottom:1.5px solid transparent;
+  color:var(--mr-inp-c); font-family:'Sarabun','Inter',sans-serif; font-size:13px;
+  padding:4px 4px 3px; width:100%; outline:none; transition:all .15s; border-radius:3px 3px 0 0;
+}
+.f-input::placeholder { color:var(--mr-inp-ph); }
+.f-input:hover  { background:var(--mr-inp-hbg); border-bottom-color:var(--mr-inp-hbdr); cursor:text; }
+.f-input:focus  { background:var(--mr-inp-fbg); border-bottom-color:var(--mr-inp-fbdr); color:var(--mr-text-h); }
+.f-textarea     { resize:vertical; min-height:50px; line-height:1.6; }
+.f-textarea.short { min-height:36px; }
+
+/* Email derived */
+.f-derived-wrap { display:flex; align-items:flex-end; gap:6px; }
+.f-derived-wrap .f-input { flex:1; }
+.derived-tag { font-size:9px; font-weight:700; padding:2px 6px; border-radius:4px; background:var(--mr-paste-bg); color:var(--mr-accent); white-space:nowrap; flex-shrink:0; margin-bottom:3px; }
+
+/* Associated to Meeting */
+.atm-label-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:3px; }
+.atm-new-badge { font-size:9px; font-weight:700; padding:1px 6px; border-radius:4px; background:#064E3B; color:#34D399; }
+.atm-textarea { background:var(--mr-atm-bg); border:1px solid var(--mr-atm-bdr); border-radius:6px; padding:8px 10px; color:var(--mr-atm-c); font-family:monospace; font-size:11px; line-height:1.7; width:100%; min-height:64px; resize:vertical; outline:none; transition:all .15s; }
+.atm-textarea:hover { border-color:var(--mr-inp-hbdr); }
+.atm-textarea:focus { border-color:var(--mr-accent); color:var(--mr-text-b); }
+.atm-new-line { color:#34D399 !important; }
+
+/* Card actions */
+.card-actions-row { padding:10px 16px; background:var(--mr-card-act-bg); border-top:1px solid var(--mr-bdr-soft); display:flex; gap:8px; justify-content:flex-end; align-items:center; }
+.save-indicator { font-size:11px; color:var(--mr-text-m); margin-right:auto; }
+.save-indicator.saving  { color:#F59E0B; }
+.save-indicator.saved   { color:#34D399; }
+.save-indicator.error   { color:#FC8181; }
+
+/* Group section */
+.group-section { margin-top:20px; }
+.group-section-header { padding:10px 14px; background:linear-gradient(135deg,#2D1B69,#4C1D95); border-radius:10px; display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.group-section-title { font-size:14px; font-weight:700; color:#E9D5FF; }
+.group-count { font-size:12px; padding:2px 10px; border-radius:20px; background:rgba(139,92,246,.3); color:#E9D5FF; font-weight:600; }
+
+/* Bottom bar */
+.bottom-bar { position:sticky; bottom:0; z-index:200; background:var(--mr-nav-bg); border-top:2px solid var(--mr-bdr); padding:12px 24px; display:flex; align-items:center; gap:16px; }
+.bottom-summary { font-size:13px; color:var(--mr-text-s); }
+.bottom-summary strong { color:var(--mr-text-h); font-size:15px; }
+.bottom-summary strong.green  { color:#34D399; }
+.bottom-summary strong.amber  { color:#FCD34D; }
+.bottom-summary strong.purple { color:#C084FC; }
+
+/* Empty state */
+.empty-state { text-align:center; padding:80px 24px; }
+.empty-state svg { margin-bottom:16px; opacity:.3; color:var(--mr-text-m); }
+.empty-state h3 { font-size:18px; color:var(--mr-text-m); margin-bottom:8px; }
+.empty-state p  { font-size:14px; color:var(--mr-text-m); opacity:.7; }
+
+/* Toast */
+.toast-wrap { position:fixed; bottom:80px; right:24px; display:flex; flex-direction:column; gap:8px; z-index:999; }
+.toast { padding:10px 16px; border-radius:10px; font-size:13px; font-weight:600; box-shadow:0 4px 20px rgba(0,0,0,.4); animation:toastIn .2s ease-out; display:flex; align-items:center; gap:8px; }
+.toast-green  { background:#064E3B; color:#34D399; border:1px solid #065F46; }
+.toast-red    { background:#450A0A; color:#FC8181; border:1px solid #7F1D1D; }
+.toast-amber  { background:#451A03; color:#FCD34D; border:1px solid #78350F; }
+@keyframes toastIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+.pill { font-size:10px; padding:2px 7px; border-radius:7px; font-weight:600; }
+.p-blue { background:var(--mr-paste-bg); color:var(--mr-accent); }
+::-webkit-scrollbar{width:6px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:var(--mr-bdr);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- ══ NAV ══ -->
+<div class="nav">
+  <a href="/" class="nav-logo">My<span>Contacts</span></a>
+  <a href="/" class="btn btn-ghost btn-sm" style="gap:5px;text-decoration:none">← หน้าหลัก</a>
+  <div class="nav-sep"></div>
+  <div class="nav-crumb">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <strong>Meeting Room</strong> — ตรวจสอบรายชื่อผู้เข้าร่วม
+  </div>
+  <div class="nav-actions">
+    <button class="btn btn-amber" id="addSelectedBtn" onclick="doAddSelected()" disabled>➕ เพิ่มที่เลือก (0)</button>
+  </div>
+</div>
+
+<!-- ══ PASTE SECTION ══ -->
+<div class="paste-section open" id="pasteSection">
+  <div class="paste-header" onclick="togglePaste()">
+    <svg class="paste-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+    <span class="paste-title">📋 Outlook Calendar Invite</span>
+    <span class="paste-preview" id="pastePreview">วาง Outlook invite ด้านล่าง แล้วกด Parse</span>
+    <div class="parse-stats" id="parseStats" style="display:none">
+      <span class="ps ps-total" id="statTotal"></span>
+      <span class="ps ps-found" id="statFound"></span>
+      <span class="ps ps-new"   id="statNew"></span>
+      <span class="ps ps-group" id="statGroup"></span>
+    </div>
+  </div>
+  <div class="paste-body">
+    <textarea class="paste-area" id="pasteArea" rows="10" placeholder="Subject: [QAD]Internal Digital channel Sync up...
+Datetime: Thu 30 Apr 26 10:00 - 11:00
+Attendees:
+ Achara Sanguansatjapong (Bank of Ayudhya PCL.)
+ Suchawadee.Sritiparch@krungsri.com
+ BAY_QA_Architect"></textarea>
+    <div class="paste-sidebar">
+      <button class="btn btn-indigo" style="justify-content:center" onclick="doParse()">🔍 Parse</button>
+      <button class="btn btn-ghost"  style="justify-content:center" onclick="clearAll()">ล้าง</button>
+      <div class="parse-hint">รองรับ:<br>• Name (Org)<br>• Email@domain<br>• GRP_Name<br><br>Entity = KS<br>Email = auto-derived</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MEETING META (hidden until parse) ══ -->
+<div class="meeting-meta" id="meetingMeta" style="display:none">
+  <div class="meeting-icon">📅</div>
+  <div class="meeting-info">
+    <div class="meeting-subject" id="metaSubject"></div>
+    <div class="meeting-datetime" id="metaDatetime"></div>
+    <div class="meeting-tags" id="metaTags"></div>
+  </div>
+</div>
+
+<!-- ══ SEARCH BAR (hidden until parse) ══ -->
+<div class="search-bar" id="searchBar" style="display:none">
+  <div class="search-icon-wrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+  </div>
+  <input class="search-input" id="searchInput" type="text" placeholder="ค้นหาชื่อ เพื่อวิ่งไปที่การ์ด..." oninput="onSearch(this.value)">
+  <span class="search-count" id="searchCount" style="color:var(--mr-inp-ph)"></span>
+  <div class="search-nav">
+    <button class="search-nav-btn" onclick="navSearch(-1)">▲</button>
+    <button class="search-nav-btn" onclick="navSearch(+1)">▼</button>
+  </div>
+  <button class="search-clear" onclick="clearSearch()">✕</button>
+</div>
+
+<!-- ══ KANBAN ══ -->
+<div class="kanban-wrap">
+  <!-- Empty state -->
+  <div id="emptyState" class="empty-state">
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    <h3>ยังไม่มีข้อมูล</h3>
+    <p>วาง Outlook Calendar Invite ด้านบน แล้วกด Parse</p>
+  </div>
+
+  <!-- Kanban grid (populated after parse) -->
+  <div class="kanban-grid" id="kanbanGrid" style="display:none">
+    <div class="col-wrap" id="foundCol"></div>
+    <div class="col-wrap" id="newCol"></div>
+  </div>
+
+  <!-- Group section (populated after parse) -->
+  <div id="groupSection" style="display:none"></div>
+</div>
+
+<!-- ══ BOTTOM BAR ══ -->
+<div class="bottom-bar" id="bottomBar" style="display:none">
+  <div class="bottom-summary" id="bottomSummary"></div>
+  <div style="margin-left:auto;display:flex;gap:8px">
+    <button class="btn btn-amber" id="addSelectedBtnBot" onclick="doAddSelected()" disabled>➕ เพิ่มที่เลือก (0)</button>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* ──────────────────────────────────────────────────────────────
+   State
+────────────────────────────────────────────────────────────── */
+let meetingData  = null;   // { meeting, found, new, groups }
+let newCardData  = {};     // idx → { name, email, entity, ... editable fields }
+let searchMatches = [];
+let searchIdx     = 0;
+let saveTimers    = {};    // cid → debounce timer
+
+/* ──────────────────────────────────────────────────────────────
+   Paste section toggle
+────────────────────────────────────────────────────────────── */
+function togglePaste() {
+  document.getElementById('pasteSection').classList.toggle('open');
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Parse
+────────────────────────────────────────────────────────────── */
+async function doParse() {
+  const text = document.getElementById('pasteArea').value.trim();
+  if (!text) { showToast('วาง Outlook invite ก่อนแล้วกด Parse', 'amber'); return; }
+
+  const parseBtn = document.querySelector('.paste-sidebar .btn-indigo');
+  parseBtn.textContent = '⏳ กำลัง Parse…';
+  parseBtn.disabled = true;
+
+  try {
+    const res  = await fetch('/api/meeting/parse', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ text })
+    });
+    const data = await res.json();
+    meetingData = data;
+    newCardData = {};
+    // Pre-populate newCardData from parsed new contacts
+    (data.new || []).forEach((a, i) => {
+      newCardData[i] = { ...a };
+    });
+    renderAll(data);
+  } catch(e) {
+    showToast('Parse ล้มเหลว: ' + e.message, 'red');
+  } finally {
+    parseBtn.textContent = '🔍 Parse';
+    parseBtn.disabled = false;
+  }
+}
+
+function clearAll() {
+  document.getElementById('pasteArea').value = '';
+  document.getElementById('pastePreview').textContent = 'วาง Outlook invite ด้านล่าง แล้วกด Parse';
+  document.getElementById('parseStats').style.display = 'none';
+  document.getElementById('meetingMeta').style.display = 'none';
+  document.getElementById('searchBar').style.display = 'none';
+  document.getElementById('kanbanGrid').style.display = 'none';
+  document.getElementById('groupSection').style.display = 'none';
+  document.getElementById('bottomBar').style.display = 'none';
+  document.getElementById('emptyState').style.display = 'block';
+  document.getElementById('foundCol').innerHTML = '';
+  document.getElementById('newCol').innerHTML = '';
+  document.getElementById('groupSection').innerHTML = '';
+  meetingData = null; newCardData = {};
+  updateCount();
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Render all sections
+────────────────────────────────────────────────────────────── */
+function renderAll(data) {
+  const { meeting, found, new: newList, groups } = data;
+  const total = (found||[]).length + (newList||[]).length + (groups||[]).length;
+
+  // Update paste header
+  document.getElementById('parseStats').style.display = 'flex';
+  document.getElementById('statTotal').textContent = `${total} คน`;
+  document.getElementById('statFound').textContent = `✅ ${(found||[]).length} พบ`;
+  document.getElementById('statNew').textContent   = `➕ ${(newList||[]).length} ใหม่`;
+  document.getElementById('statGroup').textContent = `👥 ${(groups||[]).length} Group`;
+  document.getElementById('pastePreview').textContent =
+    `Subject: ${meeting.subject} | ${meeting.date_label} | ${total} คน`;
+
+  // Meeting meta
+  const meta = document.getElementById('meetingMeta');
+  document.getElementById('metaSubject').textContent  = meeting.subject || '(ไม่มี Subject)';
+  document.getElementById('metaDatetime').textContent = meeting.date_label ? `📅 ${meeting.date_label}` : '';
+  document.getElementById('metaTags').innerHTML =
+    `<span class="mtag mtag-total">👥 ${total} คน</span>
+     <span class="mtag mtag-found">✅ ${(found||[]).length} พบในระบบ</span>
+     <span class="mtag mtag-new">➕ ${(newList||[]).length} ยังไม่มีในระบบ</span>` +
+    ((groups||[]).length ? `<span class="mtag mtag-group">👥 ${groups.length} Group Mail</span>` : '');
+  meta.style.display = 'flex';
+
+  // Close paste section
+  document.getElementById('pasteSection').classList.remove('open');
+
+  // Search bar
+  document.getElementById('searchBar').style.display = 'flex';
+  document.getElementById('searchCount').textContent = `— / ${total}`;
+
+  // Found column
+  const foundCol = document.getElementById('foundCol');
+  foundCol.innerHTML = `
+    <div class="col-header col-found">
+      <span style="font-size:20px">✅</span>
+      <span class="col-title">พบในระบบแล้ว</span>
+      <span class="col-count">${(found||[]).length} คน</span>
+    </div>`;
+  (found||[]).forEach(c => {
+    const div = document.createElement('div');
+    div.innerHTML = buildFoundCardHTML(c);
+    foundCol.appendChild(div.firstElementChild);
+  });
+
+  // New column
+  const newCol = document.getElementById('newCol');
+  newCol.innerHTML = `
+    <div class="col-header col-new">
+      <span style="font-size:20px">➕</span>
+      <span class="col-title">ยังไม่มีในระบบ</span>
+      <span class="col-count">${(newList||[]).length} คน</span>
+      <div class="col-bulk">
+        <div class="select-all-wrap">
+          <input type="checkbox" id="selectAll" checked onchange="toggleSelectAll(this.checked)">
+          <label for="selectAll">ทั้งหมด</label>
+        </div>
+        <button class="btn btn-amber btn-sm" id="addSelectedBtnCol" onclick="doAddSelected()" disabled>➕ เพิ่มที่เลือก (0)</button>
+      </div>
+    </div>`;
+  (newList||[]).forEach((a, i) => {
+    const div = document.createElement('div');
+    div.innerHTML = buildNewCardHTML(a, i);
+    newCol.appendChild(div.firstElementChild);
+  });
+
+  // Groups
+  const groupSec = document.getElementById('groupSection');
+  if ((groups||[]).length) {
+    groupSec.innerHTML = `
+      <div class="group-section">
+        <div class="group-section-header">
+          <span style="font-size:20px">👥</span>
+          <span class="group-section-title">Group Mail</span>
+          <span class="group-count">${groups.length} กลุ่ม</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          ${groups.map((g,i) => buildGroupCardHTML(g,i)).join('')}
+        </div>
+      </div>`;
+    groupSec.style.display = 'block';
+  } else {
+    groupSec.style.display = 'none';
+  }
+
+  // Show kanban + bottom bar
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('kanbanGrid').style.display = 'grid';
+  document.getElementById('bottomBar').style.display  = 'flex';
+
+  updateCount();
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Card builders
+────────────────────────────────────────────────────────────── */
+function initials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  return parts.length >= 2 ? (parts[0][0] + parts[1][0]).toUpperCase() : name[0].toUpperCase();
+}
+
+function esc(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function buildFoundCardHTML(c) {
+  const cid  = c.id;
+  const name = c.name_en || c.name_th || '';
+  const team = c.team || '';
+  const email = c.email1 || c.derived_email || '';
+  const entity = c.entity ? c.entity.entity_type : '';
+  const roles  = (c.roles||[]).join(', ');
+  const systems = (c.systems||[]).join(', ');
+  const atm    = esc(c.associated_to_meeting || '');
+
+  return `
+<div class="card found-card" id="card-found-${cid}" data-person="${esc(name)}" data-cid="${cid}" data-type="found">
+  <div class="card-compact-view">
+    <div class="card-compact" onclick="toggleCard('found-${cid}')">
+      <div class="c-avatar av-found">${initials(name)}</div>
+      <div class="c-info">
+        <div class="c-name">${esc(name)}</div>
+        <div class="c-sub">${esc(email)}${team?' · '+esc(team):''}</div>
+      </div>
+      <div class="c-right">
+        <span class="badge badge-found">✓ พบ</span>
+        ${c.id ? `<span class="pill p-blue">${c.id}</span>` : ''}
+        <button class="expand-btn">▼ ขยาย</button>
+      </div>
+    </div>
+  </div>
+  <div class="card-detail-view">
+    <div class="card-expanded-header" onclick="toggleCard('found-${cid}')">
+      <div class="ceh-avatar av-found">${initials(name)}</div>
+      <div class="ceh-info">
+        <div class="ceh-name">${esc(name)}</div>
+        <div class="ceh-email">${esc(email)}${entity?' · '+esc(entity):''}${cid?' · <span class="pill p-blue">'+cid+'</span>':''}${team?' · '+esc(team):''}</div>
+      </div>
+      <div class="ceh-right">
+        <span class="badge badge-found">✓ พบในระบบ</span>
+        <button class="collapse-btn">▲ ย่อ</button>
+      </div>
+    </div>
+    <div class="field-grid">
+      <div class="field-row field-row-3">
+        <div class="fld"><label>ชื่อเล่น</label>
+          <input class="f-input" value="${esc(c.nickname||'')}" placeholder="—" onchange="queueSave('${cid}','nickname',this.value)"></div>
+        <div class="fld"><label>ชื่อจริง (TH)</label>
+          <input class="f-input" value="${esc(c.name_th||'')}" placeholder="—" onchange="queueSave('${cid}','name_th',this.value)"></div>
+        <div class="fld"><label>ชื่อจริง (EN)</label>
+          <input class="f-input" value="${esc(c.name_en||'')}" placeholder="—" onchange="queueSave('${cid}','name_en',this.value)"></div>
+      </div>
+      <div class="field-row field-row-3">
+        <div class="fld"><label>Entity</label>
+          <input class="f-input" value="${esc(entity)}" placeholder="—" onchange="queueSave('${cid}','_entity',this.value)"></div>
+        <div class="fld"><label>Team</label>
+          <input class="f-input" value="${esc(team)}" placeholder="—" onchange="queueSave('${cid}','team',this.value)"></div>
+        <div class="fld"><label>Sub-Team</label>
+          <input class="f-input" value="${esc(c.sub_team||'')}" placeholder="—" onchange="queueSave('${cid}','sub_team',this.value)"></div>
+      </div>
+      <div class="field-row field-row-2">
+        <div class="fld"><label>Email</label>
+          <div class="f-derived-wrap">
+            <input class="f-input" value="${esc(email)}" placeholder="—" onchange="queueSave('${cid}','email1',this.value)">
+            ${c.email_derived ? '<span class="derived-tag">🔧 auto-derived</span>' : ''}
+          </div>
+        </div>
+        <div class="fld"><label>Main Role</label>
+          <input class="f-input" value="${esc(roles)}" placeholder="—" readonly title="แก้ใน main app"></div>
+      </div>
+      <div class="field-sep"></div>
+      <div class="field-row field-row-1">
+        <div class="fld"><label>หมายเหตุสั้น</label>
+          <input class="f-input" value="${esc(c.note_short||'')}" placeholder="—" onchange="queueSave('${cid}','note_short',this.value)"></div>
+      </div>
+      <div class="field-row field-row-2">
+        <div class="fld"><label>บันทึกส่วนตัว</label>
+          <textarea class="f-input f-textarea short" placeholder="—" onchange="queueSave('${cid}','general_note',this.value)">${esc(c.general_note||'')}</textarea></div>
+        <div class="fld"><label>Work Notes</label>
+          <textarea class="f-input f-textarea short" placeholder="—" onchange="queueSave('${cid}','work_note',this.value)">${esc(c.work_note||'')}</textarea></div>
+      </div>
+      <div class="field-row field-row-1">
+        <div class="fld"><label>Quick Notes about Team</label>
+          <input class="f-input" value="${esc(c.quick_note_team||'')}" placeholder="—" onchange="queueSave('${cid}','quick_note_team',this.value)"></div>
+      </div>
+      <div class="field-sep"></div>
+      <div class="fld">
+        <div class="atm-label-row">
+          <label>Associated to Meeting</label>
+        </div>
+        <textarea class="atm-textarea" id="atm-found-${cid}" onchange="queueSave('${cid}','associated_to_meeting',this.value)">${atm}</textarea>
+      </div>
+    </div>
+    <div class="card-actions-row">
+      <span class="save-indicator" id="si-${cid}"></span>
+      <button class="btn btn-green btn-sm" onclick="appendATM('${cid}')">📌 บันทึก ATM</button>
+      <button class="btn btn-indigo btn-sm" onclick="flushSave('${cid}')">💾 บันทึก</button>
+    </div>
+  </div>
+</div>`;
+}
+
+function buildNewCardHTML(a, idx) {
+  const name  = a.name  || '';
+  const email = a.email || '';
+  return `
+<div class="card new-card" id="card-new-${idx}" data-person="${esc(name)}" data-idx="${idx}" data-type="new">
+  <div class="card-compact-view">
+    <div class="card-compact" onclick="toggleCard('new-${idx}')">
+      <input type="checkbox" class="c-checkbox new-checkbox" checked onclick="event.stopPropagation();updateCount()" data-idx="${idx}">
+      <div class="c-avatar av-new">+</div>
+      <div class="c-info">
+        <div class="c-name">${esc(name)}</div>
+        <div class="c-sub">${esc(email)}${a.entity?' · '+esc(a.entity):''}</div>
+      </div>
+      <div class="c-right">
+        <span class="badge badge-new">ใหม่</span>
+        <button class="expand-btn">▼ ขยาย</button>
+      </div>
+    </div>
+  </div>
+  <div class="card-detail-view">
+    <div class="card-expanded-header" onclick="toggleCard('new-${idx}')">
+      <input type="checkbox" class="c-checkbox new-checkbox" checked onclick="event.stopPropagation();updateCount()" data-idx="${idx}" style="width:16px;height:16px;accent-color:#F59E0B;flex-shrink:0">
+      <div class="ceh-avatar av-new">+</div>
+      <div class="ceh-info">
+        <div class="ceh-name">${esc(name)}</div>
+        <div class="ceh-email">${esc(email)}${a.entity?' · '+esc(a.entity):''}</div>
+      </div>
+      <div class="ceh-right">
+        <span class="badge badge-new">ใหม่</span>
+        <button class="collapse-btn">▲ ย่อ</button>
+      </div>
+    </div>
+    <div class="field-grid">
+      <div class="field-row field-row-3">
+        <div class="fld"><label>ชื่อเล่น</label>
+          <input class="f-input" placeholder="—" oninput="setNew(${idx},'nickname',this.value)"></div>
+        <div class="fld"><label>ชื่อจริง (TH)</label>
+          <input class="f-input" value="${esc(name)}" placeholder="—" oninput="setNew(${idx},'name_th',this.value)"></div>
+        <div class="fld"><label>ชื่อจริง (EN)</label>
+          <input class="f-input" value="${esc(name)}" placeholder="—" oninput="setNew(${idx},'name_en',this.value)"></div>
+      </div>
+      <div class="field-row field-row-3">
+        <div class="fld"><label>Entity</label>
+          <input class="f-input" value="${esc(a.entity||'KS')}" placeholder="KS" oninput="setNew(${idx},'entity',this.value)"></div>
+        <div class="fld"><label>Team</label>
+          <input class="f-input" placeholder="—" oninput="setNew(${idx},'team',this.value)"></div>
+        <div class="fld"><label>Sub-Team</label>
+          <input class="f-input" placeholder="—" oninput="setNew(${idx},'sub_team',this.value)"></div>
+      </div>
+      <div class="field-row field-row-2">
+        <div class="fld"><label>Email</label>
+          <div class="f-derived-wrap">
+            <input class="f-input" value="${esc(email)}" placeholder="—" oninput="setNew(${idx},'email',this.value)">
+            ${a.email_derived ? '<span class="derived-tag">🔧 auto-derived</span>' : ''}
+          </div>
+        </div>
+        <div class="fld"><label>org_role / ตำแหน่ง</label>
+          <input class="f-input" placeholder="—" oninput="setNew(${idx},'org_role',this.value)"></div>
+      </div>
+      <div class="field-sep"></div>
+      <div class="field-row field-row-1">
+        <div class="fld"><label>หมายเหตุสั้น</label>
+          <input class="f-input" placeholder="—" oninput="setNew(${idx},'note_short',this.value)"></div>
+      </div>
+      <div class="field-row field-row-2">
+        <div class="fld"><label>บันทึกส่วนตัว</label>
+          <textarea class="f-input f-textarea short" placeholder="—" oninput="setNew(${idx},'general_note',this.value)"></textarea></div>
+        <div class="fld"><label>Work Notes</label>
+          <textarea class="f-input f-textarea short" placeholder="—" oninput="setNew(${idx},'work_note',this.value)"></textarea></div>
+      </div>
+      <div class="field-sep"></div>
+      <div class="fld">
+        <div class="atm-label-row">
+          <label>Associated to Meeting</label>
+          <span class="atm-new-badge">จะถูกเพิ่มอัตโนมัติ</span>
+        </div>
+        <textarea class="atm-textarea atm-new-line" readonly>${meetingData ? esc(meetingData.meeting.atm_prefix) : ''}</textarea>
+      </div>
+    </div>
+  </div>
+</div>`;
+}
+
+function buildGroupCardHTML(g, idx) {
+  return `
+<div class="card group-card" id="card-group-${idx}" data-person="${esc(g.name)}" data-type="group">
+  <div class="card-compact-view">
+    <div class="card-compact">
+      <div class="c-avatar av-group">@</div>
+      <div class="c-info">
+        <div class="c-name">${esc(g.name)}</div>
+        <div class="c-sub">${esc(g.email)}</div>
+      </div>
+      <div class="c-right">
+        <span class="badge badge-group">Group Mail</span>
+      </div>
+    </div>
+  </div>
+</div>`;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Expand / Collapse
+────────────────────────────────────────────────────────────── */
+function toggleCard(id) {
+  const card        = document.getElementById('card-' + id);
+  if (!card) return;
+  const compact     = card.querySelector('.card-compact-view');
+  const detail      = card.querySelector('.card-detail-view');
+  const isExpanded  = card.classList.contains('expanded');
+  if (isExpanded) {
+    detail.style.display  = 'none';
+    compact.style.display = 'flex';
+    card.classList.remove('expanded');
+  } else {
+    detail.style.display  = 'block';
+    compact.style.display = 'none';
+    card.classList.add('expanded');
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────
+   New card data helpers
+────────────────────────────────────────────────────────────── */
+function setNew(idx, field, value) {
+  if (!newCardData[idx]) newCardData[idx] = {};
+  newCardData[idx][field] = value;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Checkbox / count
+────────────────────────────────────────────────────────────── */
+function toggleSelectAll(checked) {
+  document.querySelectorAll('.new-checkbox').forEach(cb => {
+    cb.checked = checked;
+    const card = cb.closest('.card');
+    if (card) card.classList.toggle('skipped', !checked);
+  });
+  updateCount();
+}
+
+function updateCount() {
+  const count = document.querySelectorAll('.new-checkbox:checked').length;
+  const label = `➕ เพิ่มที่เลือก (${count})`;
+  ['addSelectedBtn','addSelectedBtnCol','addSelectedBtnBot'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = label; el.disabled = (count === 0); }
+  });
+  const total = document.querySelectorAll('.new-checkbox').length;
+  const allCb = document.getElementById('selectAll');
+  if (allCb) {
+    allCb.indeterminate = count > 0 && count < total;
+    allCb.checked = total > 0 && count === total;
+  }
+  // Update bottom summary
+  const summaryEl = document.getElementById('bottomSummary');
+  if (summaryEl && meetingData) {
+    const { found, new: nl, groups } = meetingData;
+    summaryEl.innerHTML =
+      `พบ <strong class="green">${(found||[]).length}</strong> · ` +
+      `ใหม่ <strong class="amber">${(nl||[]).length}</strong> · ` +
+      `เลือกไว้ <strong class="amber">${count}</strong> คน`;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Add selected (batch create)
+────────────────────────────────────────────────────────────── */
+async function doAddSelected() {
+  const checkedBoxes = [...document.querySelectorAll('.new-checkbox:checked')];
+  if (!checkedBoxes.length) return;
+
+  const atm_line = meetingData?.meeting?.atm_prefix || '';
+  const contacts = checkedBoxes.map(cb => {
+    const idx = parseInt(cb.dataset.idx);
+    const base = (meetingData?.new || [])[idx] || {};
+    const edits = newCardData[idx] || {};
+    return {
+      name:       edits.name_en  || edits.name_th || edits.name  || base.name,
+      name_th:    edits.name_th  || base.name,
+      name_en:    edits.name_en  || base.name,
+      nickname:   edits.nickname || '',
+      team:       edits.team     || '',
+      sub_team:   edits.sub_team || '',
+      org_role:   edits.org_role || '',
+      email:      edits.email    || base.email,
+      entity:     edits.entity   || base.entity || 'KS',
+      note_short: edits.note_short   || '',
+      general_note: edits.general_note || '',
+      work_note:  edits.work_note || '',
+    };
+  });
+
+  const btn = document.getElementById('addSelectedBtn');
+  btn.textContent = '⏳ กำลังเพิ่ม…';
+  btn.disabled = true;
+
+  try {
+    const res  = await fetch('/api/meeting/add', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ contacts, atm_line })
+    });
+    const data = await res.json();
+    if (data.created?.length) {
+      showToast(`✅ เพิ่ม ${data.created.length} คนสำเร็จ: ${data.created.join(', ')}`, 'green');
+      // Mark added cards as done
+      checkedBoxes.forEach(cb => {
+        const card = cb.closest('.card');
+        if (card) { card.style.opacity = '.4'; card.style.pointerEvents = 'none'; }
+      });
+      updateCount();
+    }
+    if (data.errors?.length) {
+      showToast(`⚠️ เพิ่มไม่สำเร็จ: ${data.errors.map(e=>e.name).join(', ')}`, 'red');
+    }
+  } catch(e) {
+    showToast('เกิดข้อผิดพลาด: ' + e.message, 'red');
+  } finally {
+    updateCount();
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Save found contact fields (debounced)
+────────────────────────────────────────────────────────────── */
+let pendingSaves = {};  // cid → { field: value }
+
+function queueSave(cid, field, value) {
+  if (!pendingSaves[cid]) pendingSaves[cid] = {};
+  pendingSaves[cid][field] = value;
+  clearTimeout(saveTimers[cid]);
+  const si = document.getElementById('si-' + cid);
+  if (si) { si.textContent = '● unsaved'; si.className = 'save-indicator saving'; }
+}
+
+async function flushSave(cid) {
+  const changes = pendingSaves[cid] || {};
+  if (!Object.keys(changes).length) {
+    showToast('ไม่มีการเปลี่ยนแปลง', 'amber'); return;
+  }
+  const si = document.getElementById('si-' + cid);
+  if (si) { si.textContent = '⏳ กำลังบันทึก…'; si.className = 'save-indicator saving'; }
+
+  // Build payload from current contact + changes
+  const found = meetingData?.found?.find(c => c.id === cid) || {};
+  const payload = { ...found };
+
+  // Merge text fields
+  const textFields = ['name_th','name_en','nickname','team','sub_team','org_role',
+    'email1','note_short','general_note','work_note','quick_note_team','associated_to_meeting'];
+  textFields.forEach(f => { if (changes[f] !== undefined) payload[f] = changes[f]; });
+
+  // Special: entity
+  if (changes['_entity'] !== undefined) {
+    payload.entity = { entity_type: changes['_entity'], entity_value: '' };
+  }
+
+  try {
+    const res = await fetch(`/api/contacts/${cid}`, {
+      method: 'PUT', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    delete pendingSaves[cid];
+    if (si) { si.textContent = '✓ บันทึกแล้ว'; si.className = 'save-indicator saved'; }
+    setTimeout(() => { if (si) { si.textContent = ''; si.className = 'save-indicator'; } }, 2500);
+  } catch(e) {
+    if (si) { si.textContent = '✗ บันทึกไม่สำเร็จ'; si.className = 'save-indicator error'; }
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Append ATM line to found contact
+────────────────────────────────────────────────────────────── */
+async function appendATM(cid) {
+  const atm_prefix = meetingData?.meeting?.atm_prefix || '';
+  if (!atm_prefix) { showToast('ไม่มีข้อมูล meeting', 'amber'); return; }
+
+  try {
+    const res = await fetch(`/api/contacts/${cid}/atm`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ line: atm_prefix })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      const el = document.getElementById(`atm-found-${cid}`);
+      if (el) el.value = data.associated_to_meeting;
+      showToast('📌 บันทึก ATM สำเร็จ', 'green');
+    } else {
+      showToast('บันทึก ATM ไม่สำเร็จ', 'red');
+    }
+  } catch(e) {
+    showToast('เกิดข้อผิดพลาด: ' + e.message, 'red');
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Search
+────────────────────────────────────────────────────────────── */
+function onSearch(q) {
+  const query = q.trim().toLowerCase();
+  document.querySelectorAll('.card.search-highlight').forEach(c => c.classList.remove('search-highlight'));
+  searchMatches = [];
+  const countEl = document.getElementById('searchCount');
+  const total   = document.querySelectorAll('.card[data-person]').length;
+  if (!query) { countEl.textContent = `— / ${total}`; countEl.style.color = 'var(--mr-inp-ph)'; return; }
+
+  document.querySelectorAll('.card[data-person]').forEach(card => {
+    if (card.dataset.person.toLowerCase().includes(query)) {
+      searchMatches.push(card);
+      card.classList.add('search-highlight');
+    }
+  });
+
+  if (!searchMatches.length) {
+    countEl.textContent = 'ไม่พบ'; countEl.style.color = '#FC8181'; return;
+  }
+  countEl.style.color = '#34D399';
+  searchIdx = 0;
+  scrollToMatch(0);
+  countEl.textContent = `1 / ${searchMatches.length}`;
+}
+
+function scrollToMatch(idx) {
+  if (!searchMatches.length) return;
+  const card = searchMatches[idx];
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  card.classList.remove('search-highlight');
+  void card.offsetWidth;
+  card.classList.add('search-highlight');
+}
+
+function navSearch(dir) {
+  if (!searchMatches.length) return;
+  searchIdx = (searchIdx + dir + searchMatches.length) % searchMatches.length;
+  scrollToMatch(searchIdx);
+  document.getElementById('searchCount').textContent = `${searchIdx+1} / ${searchMatches.length}`;
+}
+
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  document.querySelectorAll('.card.search-highlight').forEach(c => c.classList.remove('search-highlight'));
+  searchMatches = [];
+  const total = document.querySelectorAll('.card[data-person]').length;
+  const el = document.getElementById('searchCount');
+  el.textContent = `— / ${total}`; el.style.color = 'var(--mr-inp-ph)';
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Toast
+────────────────────────────────────────────────────────────── */
+function showToast(msg, type='green', duration=3500) {
+  const wrap = document.getElementById('toastWrap');
+  const div  = document.createElement('div');
+  div.className = `toast toast-${type}`;
+  div.textContent = msg;
+  wrap.appendChild(div);
+  setTimeout(() => div.remove(), duration);
+}
+
+/* ── Apply theme from main app (reads mcMRConfig saved by applyTheme()) ── */
+(function applyMRTheme() {
+  try {
+    const cfg = JSON.parse(localStorage.getItem('mcMRConfig') || 'null');
+    if (!cfg) return;
+    const r = document.documentElement;
+    const s = (k, v) => r.style.setProperty(k, v);
+    const isLight = cfg.mode === 'Light';
+
+    /* always: nav + accent */
+    s('--mr-nav-bg',      cfg.navBg);
+    s('--mr-nav-bdr',     cfg.navBorder);
+    s('--mr-accent',      cfg.accent);
+    s('--mr-accent-d',    cfg.accentDark);
+    s('--mr-accent-soft', cfg.accentSoft);
+    s('--mr-inp-fbg',     cfg.accentSoft);
+    s('--mr-inp-fbdr',    cfg.accent);
+
+    if (isLight) {
+      s('--mr-page-bg',     cfg.pageBg);
+      s('--mr-card-bg',     '#FFFFFF');
+      s('--mr-card-deep',   cfg.cardDeep);
+      s('--mr-card-act-bg', cfg.cardDeep);
+      s('--mr-bdr',         cfg.borderC);
+      s('--mr-bdr-soft',    cfg.borderC);
+      s('--mr-paste-bg',    cfg.navBg);
+      s('--mr-paste-bdr',   cfg.navBorder);
+      s('--mr-text-h',      cfg.textHead);
+      s('--mr-text-b',      cfg.textBody);
+      s('--mr-text-m',      cfg.textMuted);
+      s('--mr-text-s',      cfg.textMuted);
+      s('--mr-text-bright', cfg.textHead);
+      s('--mr-inp-c',       cfg.textHead);
+      s('--mr-inp-ph',      cfg.textMuted);
+      s('--mr-inp-hbg',     'rgba(0,0,0,.04)');
+      s('--mr-inp-hbdr',    cfg.textMuted);
+      s('--mr-atm-bg',      cfg.pageBg);
+      s('--mr-atm-bdr',     cfg.borderC);
+      s('--mr-atm-c',       cfg.textBody);
+      s('--mr-snav-bg',     cfg.borderC);
+      s('--mr-card-hover',  'rgba(0,0,0,.025)');
+    }
+  } catch(e) {}
+})();
+</script>
+</body>
+</html>

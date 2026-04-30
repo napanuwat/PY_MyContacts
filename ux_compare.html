@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<!-- UX Compare: Edit Mode Approaches — v1.0 -->
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UX Compare — Edit Modes</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --cobra:#3B82F6;--nexus:#F59E0B;
+      --t-core:#6366F1;
+      --border:#E2E8F0;--surface:#F8FAFC;--muted:#94A3B8;--text:#1E293B;
+    }
+    body{font-family:'Inter','Sarabun',sans-serif;background:#F1F5F9;min-height:100vh;padding:32px 24px;color:var(--text)}
+
+    /* Page header */
+    .pg-title{font-size:22px;font-weight:800;color:#0F172A;margin-bottom:4px;letter-spacing:-0.3px}
+    .pg-sub{font-size:13px;color:#64748B;font-family:'Sarabun',sans-serif;margin-bottom:28px}
+
+    /* Comparison layout */
+    .compare{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:1100px;margin:0 auto}
+    .col-label{font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+    .col-label::after{content:'';flex:1;height:1px;background:#E2E8F0}
+
+    /* Panel shell */
+    .panel{background:white;border-radius:14px;border:1px solid var(--border);overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+    .panel.active{border-color:#6366F1;box-shadow:0 0 0 3px rgba(99,102,241,0.1),0 4px 16px rgba(0,0,0,0.08)}
+
+    /* ── EDIT BANNER (orange — mode C) ── */
+    .banner-c{
+      padding:11px 20px;background:#FFF7ED;border-bottom:2px solid #FED7AA;
+      display:flex;align-items:center;gap:10px;
+    }
+    .banner-c .bdg{background:#F97316;color:white;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:20px;flex-shrink:0}
+    .banner-c .hint{font-size:11.5px;color:#9A3412;font-family:'Sarabun',sans-serif;flex:1}
+    .banner-c .bacts{display:flex;gap:6px}
+    .banner-c .bcnl{padding:5px 11px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;border:1.5px solid #FED7AA;background:white;color:#9A3412}
+    .banner-c .bsave{padding:5px 13px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;border:none;background:#F97316;color:white}
+
+    /* ── NOTE AUTOSAVE BANNER (amber — approach A) ── */
+    .banner-note{
+      padding:7px 20px;background:#FFFBEB;border-bottom:1px solid #FDE68A;
+      display:flex;align-items:center;gap:8px;
+    }
+    .banner-note .note-lbl{font-size:11px;font-weight:600;color:#92400E;flex:1}
+    .banner-note .note-saved{font-size:10px;color:#B45309;display:flex;align-items:center;gap:4px}
+
+    /* ── Person header ── */
+    .dp-hero{padding:18px 20px 14px;border-bottom:1px solid var(--surface);display:flex;align-items:flex-start;gap:13px}
+    .dp-av{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:white;flex-shrink:0;background:var(--t-core)}
+    .dp-nm{font-size:19px;font-weight:700;color:var(--text);font-family:'Sarabun',sans-serif;margin-bottom:2px}
+    .dp-en{font-size:11px;color:var(--muted);margin-bottom:6px;font-style:italic}
+    .dp-pills{display:flex;gap:5px;flex-wrap:wrap}
+    .pill{font-size:11px;padding:3px 8px;border-radius:6px;font-weight:500}
+    .pill-team{color:white;background:var(--t-core)}
+    .pill-role{color:#6366F1;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2)}
+    .dp-acts{display:flex;gap:5px;flex-shrink:0}
+    .actb{padding:5px 11px;border-radius:7px;font-size:11px;font-weight:500;border:1.5px solid var(--border);background:white;color:#64748B;cursor:pointer}
+    .actb.p{background:#4F46E5;color:white;border-color:#4F46E5}
+
+    /* ── Tabs ── */
+    .tabs{display:flex;padding:0 20px;border-bottom:1px solid var(--border)}
+    .tab{padding:9px 13px;font-size:11.5px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;font-family:'Sarabun',sans-serif;transition:all 0.12s}
+    .tab.on{color:#6366F1;border-bottom-color:#6366F1;font-weight:600}
+    .tbadge{font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:4px;background:#EFF6FF;color:#3B82F6}
+    .tbadge.red{background:#FEF2F2;color:#EF4444}
+
+    /* ── Info fields ── */
+    .body{padding:18px 20px}
+    .sh{font-size:10px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+    .sh::after{content:'';flex:1;height:1px;background:var(--surface)}
+    .igrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+    .ii label{font-size:9.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.8px;display:block;margin-bottom:3px}
+
+    /* View mode value */
+    .iv{font-size:12.5px;color:var(--text);font-family:'Sarabun',sans-serif;padding:5px 7px;border-radius:6px;cursor:pointer;transition:all 0.12s;border:1.5px solid transparent}
+    .iv:hover{background:#F8FAFC;border-color:#E2E8F0}
+    .iv a{color:#4F46E5;text-decoration:none}
+
+    /* Edit mode value — approach C fields */
+    .iv-edit{font-size:12.5px;font-family:'Sarabun',sans-serif;padding:5px 7px;border-radius:6px;border:1.5px solid #FED7AA;background:#FFF7ED;color:#431407;width:100%;outline:none}
+    .iv-edit:focus{border-color:#F97316;background:#FFFBEB;box-shadow:0 0 0 2px rgba(249,115,22,0.15)}
+    .iv-edit.changed{border-color:#F59E0B;background:#FEF3C7}
+
+    /* Notes textarea */
+    .gn-box{background:#FFFBEB;border:1.5px solid #FDE68A;border-radius:10px;overflow:hidden;margin-bottom:16px}
+    .gn-hd{padding:8px 12px;display:flex;align-items:center;gap:6px;border-bottom:1px solid #FDE68A;background:rgba(245,158,11,0.05)}
+    .gn-lbl{font-size:11px;font-weight:600;color:#92400E}
+    .gn-save{margin-left:auto;font-size:10px;color:#B45309}
+    .gn-ta{width:100%;border:none;background:transparent;padding:10px 12px;font-size:12px;font-family:'Sarabun',sans-serif;color:var(--text);outline:none;resize:none;min-height:72px;line-height:1.65}
+
+    /* note card mini */
+    .ncard{border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:border-color 0.12s}
+    .ncard:hover{border-color:#CBD5E1}
+    .nc-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+    .nc-title{font-size:12px;font-weight:600;color:var(--text);font-family:'Sarabun',sans-serif;flex:1}
+    .nc-badge{font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(239,68,68,0.1);color:#EF4444}
+    .nc-date{font-size:10px;color:var(--muted)}
+
+    /* Annotation boxes */
+    .annot-row{display:flex;gap:20px;max-width:1100px;margin:0 auto 0;margin-top:20px}
+    .annot-box{flex:1;background:#1E293B;border-radius:12px;padding:14px 18px}
+    .ab-tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+    .ab-tag .dot{width:8px;height:8px;border-radius:50%}
+    .ab-item{font-size:11.5px;color:#64748B;font-family:'Sarabun',sans-serif;margin-bottom:5px;display:flex;gap:7px;line-height:1.5}
+    .ab-item::before{content:'·';color:#334155;flex-shrink:0}
+
+    /* click-hint tooltip */
+    .click-hint{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#94A3B8;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:5px;padding:2px 6px;margin-left:6px;vertical-align:middle}
+  </style>
+</head>
+<body>
+
+<div style="max-width:1100px;margin:0 auto">
+  <div class="pg-title">UX Compare — แนวทางการ Edit Contact</div>
+  <div class="pg-sub">เปรียบเทียบ 2 แนวทาง: <strong>แนวทาง C</strong> (click field → auto edit mode + banner) vs <strong>แนวทาง A+C</strong> (Notes autosave ไม่มี banner / Info tab = click-to-edit)</div>
+</div>
+
+<div class="compare">
+
+  <!-- ════ COLUMN 1: Approach C (pure) ════ -->
+  <div>
+    <div class="col-label" style="color:#F97316">แนวทาง C — Auto Edit Mode (pure)</div>
+
+    <!-- State 1: View mode -->
+    <div class="col-label" style="color:#94A3B8;font-size:9px;margin-bottom:8px">1A · View mode — ยังไม่ได้คลิก field ใด</div>
+    <div class="panel" style="margin-bottom:16px">
+      <div class="dp-hero">
+        <div class="dp-av">ช</div>
+        <div style="flex:1">
+          <div class="dp-nm">สมชาย มีสุข</div>
+          <div class="dp-en">Somchai Meesuk · ชื่อเล่น: ชาย</div>
+          <div class="dp-pills">
+            <span class="pill pill-team">Core Banking IT</span>
+            <span class="pill pill-role">QA Lead</span>
+          </div>
+        </div>
+        <div class="dp-acts">
+          <button class="actb">⭐</button>
+          <button class="actb" style="color:#EF4444">🗑</button>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab on">📋 ข้อมูล</div>
+        <div class="tab">📝 Notes<span class="tbadge">3</span></div>
+        <div class="tab">☐ Todo<span class="tbadge red">1</span></div>
+      </div>
+      <div class="body">
+        <div class="sh">ข้อมูลติดต่อ</div>
+        <div class="igrid">
+          <div class="ii"><label>📧 Email</label>
+            <div class="iv"><a href="#">somchai.m@company.co.th</a> <span class="click-hint">👆 คลิกเพื่อแก้</span></div>
+          </div>
+          <div class="ii"><label>📱 โทรศัพท์</label><div class="iv">081-234-5678</div></div>
+          <div class="ii"><label>💬 Line ID</label><div class="iv">@cha_somchai</div></div>
+          <div class="ii"><label>🏢 ทีม</label><div class="iv">Core Banking IT</div></div>
+          <div class="ii"><label>👤 Direct Report</label><div class="iv">นาย กฤษณ์ สมบูรณ์</div></div>
+          <div class="ii"><label>📌 ตำแหน่ง</label><div class="iv">QA Lead / Sr. QA Engineer</div></div>
+        </div>
+        <div class="sh">โปรเจค (2)</div>
+        <div class="ncard"><div class="nc-dot" style="background:var(--cobra)"></div><div class="nc-title">COBRA — Core Banking Migration</div><span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:12px;background:rgba(239,68,68,0.08);color:#DC2626">Main Impact</span></div>
+        <div class="ncard"><div class="nc-dot" style="background:var(--nexus)"></div><div class="nc-title">NEXUS — Settlement System</div><span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:12px;background:var(--surface);color:#64748B;border:1px solid var(--border)">Supporter</span></div>
+      </div>
+    </div>
+
+    <!-- State 2: Edit mode triggered -->
+    <div class="col-label" style="color:#F97316;font-size:9px;margin-bottom:8px">1B · หลังคลิก Email field → Edit Mode เปิดเอง ทุก field แก้ได้</div>
+    <div class="panel active">
+      <!-- BANNER -->
+      <div class="banner-c">
+        <span class="bdg">✏️ Edit Mode</span>
+        <span class="hint">คลิก field ใดก็แก้ได้ · Tab ไป field ถัดไป · ESC ยกเลิก</span>
+        <div class="bacts">
+          <button class="bcnl">ยกเลิก</button>
+          <button class="bsave">💾 บันทึก</button>
+        </div>
+      </div>
+      <div class="dp-hero">
+        <div class="dp-av">ช</div>
+        <div style="flex:1">
+          <div class="dp-nm">สมชาย มีสุข</div>
+          <div class="dp-en">Somchai Meesuk · ชื่อเล่น: ชาย</div>
+          <div class="dp-pills">
+            <span class="pill pill-team">Core Banking IT</span>
+            <span class="pill pill-role">QA Lead</span>
+          </div>
+        </div>
+        <div class="dp-acts">
+          <button class="actb">⭐</button>
+          <button class="actb" style="color:#EF4444">🗑</button>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab on">📋 ข้อมูล</div>
+        <div class="tab">📝 Notes<span class="tbadge">3</span></div>
+        <div class="tab">☐ Todo<span class="tbadge red">1</span></div>
+      </div>
+      <div class="body">
+        <div class="sh">ข้อมูลติดต่อ</div>
+        <div class="igrid">
+          <div class="ii"><label>📧 Email</label>
+            <input class="iv-edit changed" value="somchai.m@company.co.th" autofocus>
+          </div>
+          <div class="ii"><label>📱 โทรศัพท์</label><input class="iv-edit" value="081-234-5678"></div>
+          <div class="ii"><label>💬 Line ID</label><input class="iv-edit" value="@cha_somchai"></div>
+          <div class="ii"><label>🏢 ทีม</label>
+            <select class="iv-edit" style="cursor:pointer">
+              <option selected>Core Banking IT</option>
+              <option>Digital Banking IT</option>
+              <option>Settlement IT</option>
+            </select>
+          </div>
+          <div class="ii"><label>👤 Direct Report</label><input class="iv-edit" value="นาย กฤษณ์ สมบูรณ์"></div>
+          <div class="ii"><label>📌 ตำแหน่ง</label><input class="iv-edit" value="QA Lead / Sr. QA Engineer"></div>
+        </div>
+        <div class="sh">โปรเจค (2)</div>
+        <div class="ncard" style="border-color:#FED7AA;background:#FFF7ED">
+          <div class="nc-dot" style="background:var(--cobra)"></div>
+          <div class="nc-title">COBRA — Core Banking Migration</div>
+          <select style="border:1px solid #FED7AA;border-radius:6px;padding:3px 7px;font-size:11px;background:white;outline:none;color:#64748B"><option>Main Impact</option><option>Supporter</option></select>
+          <button style="width:20px;height:20px;border:none;background:none;color:#FCA5A5;cursor:pointer;font-size:13px;border-radius:4px">×</button>
+        </div>
+        <div class="ncard" style="border-color:#FED7AA;background:#FFF7ED">
+          <div class="nc-dot" style="background:var(--nexus)"></div>
+          <div class="nc-title">NEXUS — Settlement System</div>
+          <select style="border:1px solid #FED7AA;border-radius:6px;padding:3px 7px;font-size:11px;background:white;outline:none;color:#64748B"><option>Main Impact</option><option selected>Supporter</option></select>
+          <button style="width:20px;height:20px;border:none;background:none;color:#FCA5A5;cursor:pointer;font-size:13px;border-radius:4px">×</button>
+        </div>
+        <div style="font-size:11px;color:#94A3B8;cursor:pointer;padding:5px 0">＋ เพิ่มโปรเจค</div>
+      </div>
+    </div>
+
+    <!-- Notes tab state C -->
+    <div class="col-label" style="color:#F97316;font-size:9px;margin-bottom:8px;margin-top:16px">1C · คลิก Notes tab → Edit Mode โผล่ที่ notes ด้วย (ข้อเสีย C)</div>
+    <div class="panel active">
+      <div class="banner-c">
+        <span class="bdg">✏️ Edit Mode</span>
+        <span class="hint">แก้ note ได้เลย · บันทึกเมื่อพร้อม</span>
+        <div class="bacts">
+          <button class="bcnl">ยกเลิก</button>
+          <button class="bsave">💾 บันทึก</button>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab">📋 ข้อมูล</div>
+        <div class="tab on">📝 Notes<span class="tbadge">3</span></div>
+        <div class="tab">☐ Todo<span class="tbadge red">1</span></div>
+      </div>
+      <div class="body">
+        <div class="sh">📌 General Note</div>
+        <div class="gn-box" style="border-color:#FED7AA;background:#FFF7ED">
+          <div class="gn-hd" style="border-color:#FED7AA"><span style="font-size:13px">📝</span><span class="gn-lbl">บันทึกทั่วไป</span><span class="gn-save" style="color:#F97316">● กำลังแก้ไข</span></div>
+          <textarea class="gn-ta" style="background:#FFF7ED">เชี่ยวชาญ UAT Banking เป็นพิเศษ — ถามก่อนทุกครั้ง
+ตอบ Line เร็วมาก</textarea>
+        </div>
+        <div style="font-size:11px;color:#9A3412;background:#FEF3C7;border:1px solid #FDE68A;border-radius:7px;padding:7px 12px;margin-bottom:10px">⚠ ใน approach C — การพิมพ์ note ก็ต้องมี banner นี้ทุกครั้ง ซึ่งอาจรู้สึก noisy</div>
+        <div class="ncard"><div class="nc-dot" style="background:var(--cobra)"></div><div class="nc-title">COBRA · Sprint 12 Review</div><span class="nc-badge">1 overdue</span><span class="nc-date" style="margin-left:auto">22 เม.ย.</span></div>
+        <div class="ncard"><div class="nc-dot" style="background:var(--nexus)"></div><div class="nc-title">NEXUS · Integration Test</div><span style="font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(245,158,11,0.1);color:#D97706">1 pending</span><span class="nc-date" style="margin-left:auto">18 เม.ย.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ COLUMN 2: Approach A+C (recommended) ════ -->
+  <div>
+    <div class="col-label" style="color:#6366F1">แนวทาง A+C — ผสม (แนะนำ)</div>
+
+    <!-- Info tab — view mode -->
+    <div class="col-label" style="color:#94A3B8;font-size:9px;margin-bottom:8px">2A · Info tab — View mode (ก่อนคลิก)</div>
+    <div class="panel" style="margin-bottom:16px">
+      <div class="dp-hero">
+        <div class="dp-av">ช</div>
+        <div style="flex:1">
+          <div class="dp-nm">สมชาย มีสุข</div>
+          <div class="dp-en">Somchai Meesuk · ชื่อเล่น: ชาย</div>
+          <div class="dp-pills">
+            <span class="pill pill-team">Core Banking IT</span>
+            <span class="pill pill-role">QA Lead</span>
+          </div>
+        </div>
+        <div class="dp-acts">
+          <button class="actb">⭐</button>
+          <button class="actb" style="color:#EF4444">🗑</button>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab on">📋 ข้อมูล</div>
+        <div class="tab">📝 Notes<span class="tbadge">3</span></div>
+        <div class="tab">☐ Todo<span class="tbadge red">1</span></div>
+      </div>
+      <div class="body">
+        <div class="sh">ข้อมูลติดต่อ</div>
+        <div class="igrid">
+          <div class="ii"><label>📧 Email</label><div class="iv"><a href="#">somchai.m@company.co.th</a> <span class="click-hint">👆 คลิกเพื่อแก้</span></div></div>
+          <div class="ii"><label>📱 โทรศัพท์</label><div class="iv">081-234-5678</div></div>
+          <div class="ii"><label>💬 Line ID</label><div class="iv">@cha_somchai</div></div>
+          <div class="ii"><label>🏢 ทีม</label><div class="iv">Core Banking IT</div></div>
+          <div class="ii"><label>👤 Direct Report</label><div class="iv">นาย กฤษณ์ สมบูรณ์</div></div>
+          <div class="ii"><label>📌 ตำแหน่ง</label><div class="iv">QA Lead / Sr. QA Engineer</div></div>
+        </div>
+        <div class="sh">โปรเจค (2)</div>
+        <div class="ncard"><div class="nc-dot" style="background:var(--cobra)"></div><div class="nc-title">COBRA — Core Banking Migration</div><span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:12px;background:rgba(239,68,68,0.08);color:#DC2626">Main Impact</span></div>
+        <div class="ncard"><div class="nc-dot" style="background:var(--nexus)"></div><div class="nc-title">NEXUS — Settlement System</div><span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:12px;background:var(--surface);color:#64748B;border:1px solid var(--border)">Supporter</span></div>
+      </div>
+    </div>
+
+    <!-- Info tab — edit mode triggered -->
+    <div class="col-label" style="color:#6366F1;font-size:9px;margin-bottom:8px">2B · คลิก Email → banner โผล่ เฉพาะ Info tab (เหมือน C แต่จำกัดที่ info)</div>
+    <div class="panel active" style="border-color:#6366F1;box-shadow:0 0 0 3px rgba(99,102,241,0.1),0 4px 16px rgba(0,0,0,0.08);margin-bottom:16px">
+      <div class="banner-c" style="background:#EFF6FF;border-color:#BFDBFE">
+        <span class="bdg" style="background:#6366F1">✏️ Edit Info</span>
+        <span class="hint" style="color:#1E3A8A">คลิก field ใดก็แก้ได้ · Tab ไป field ถัดไป</span>
+        <div class="bacts">
+          <button class="bcnl" style="border-color:#BFDBFE;color:#1E3A8A">ยกเลิก</button>
+          <button class="bsave" style="background:#6366F1">💾 บันทึก</button>
+        </div>
+      </div>
+      <div class="dp-hero">
+        <div class="dp-av">ช</div>
+        <div style="flex:1">
+          <div class="dp-nm">สมชาย มีสุข</div>
+          <div class="dp-en">Somchai Meesuk · ชื่อเล่น: ชาย</div>
+          <div class="dp-pills">
+            <span class="pill pill-team">Core Banking IT</span>
+            <span class="pill pill-role">QA Lead</span>
+          </div>
+        </div>
+        <div class="dp-acts">
+          <button class="actb">⭐</button>
+          <button class="actb" style="color:#EF4444">🗑</button>
+        </div>
+      </div>
+      <div class="tabs">
+        <div class="tab on">📋 ข้อมูล</div>
+        <div class="tab">📝 Notes<span class="tbadge">3</span></div>
+        <div class="tab">☐ Todo<span class="tbadge red">1</span></div>
+      </div>
+      <div class="body">
+        <div class="sh">ข้อมูลติดต่อ</div>
+        <div class="igrid">
+          <div class="ii"><label>📧 Email</label><input class="iv-edit changed" style="border-color:#6366F1;background:#EFF6FF;color:#1E293B" value="somchai.m@company.co.th" autofocus></div>
+          <div class="ii"><label>📱 โทรศัพท์</label><input class="iv-edit" style="background:#EFF6FF;border-color:#BFDBFE" value="081-234-5678"></div>
+          <div class="ii"><label>💬 Line ID</label><input class="iv-edit" style="background:#EFF6FF;border-color:#BFDBFE" value="@cha_somchai"></div>
+          <div class="ii"><label>🏢 ทีม</label>
+            <select class="iv-edit" style="background:#EFF6FF;border-color:#BFDBFE;cursor:pointer">
+              <option selected>Core Banking IT</option><option>Digital Banking IT</option>
+            </select>
+          </div>
+          <div class="ii"><label>👤 Direct Report</label><input class="iv-edit" style="background:#EFF6FF;border-color:#BFDBFE" value="นาย กฤษณ์ สมบูรณ์"></div>
+          <div class="ii"><label>📌 ตำแหน่ง</label><input class="iv-edit" style="background:#EFF6FF;border-color:#BFDBFE" value="QA Lead / Sr. QA Engineer"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes tab — ALWAYS editable (no banner, autosave) -->
+    <div class="col-label" style="color:#10B981;font-size:9px;margin-bottom:8px">2C · Notes tab — พิมพ์ได้ทันที ไม่มี banner ไม่ต้องกด Edit (ข้อดีของ A+C)</div>
+    <div class="panel" style="border-color:#10B981;box-shadow:0 0 0 3px rgba(16,185,129,0.1)">
+      <!-- No banner — note autosave indicator only -->
+      <div class="banner-note">
+        <span style="font-size:13px">📝</span>
+        <span class="note-lbl">Notes — แก้ไขได้ตลอด</span>
+        <span class="note-saved">✓ Autosaved 14:38</span>
+      </div>
+      <div class="tabs">
+        <div class="tab">📋 ข้อมูล</div>
+        <div class="tab on">📝 Notes<span class="tbadge">3</span></div>
+        <div class="tab">☐ Todo<span class="tbadge red">1</span></div>
+      </div>
+      <div class="body">
+        <div class="sh">📌 General Note</div>
+        <div class="gn-box">
+          <div class="gn-hd">
+            <span style="font-size:13px">📝</span>
+            <span class="gn-lbl">บันทึกทั่วไป — แก้ได้ตลอด</span>
+            <span class="gn-save">✓ Autosaved 14:38</span>
+          </div>
+          <textarea class="gn-ta" style="background:#FFFBEB">เชี่ยวชาญ UAT Banking เป็นพิเศษ — ถามก่อนทุกครั้ง
+ตอบ Line เร็วมาก ติดตามผ่าน Line ได้ดีกว่า Email ✓
+มีประสบการณ์ Migration 5+ ปี</textarea>
+        </div>
+        <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:7px;padding:7px 12px;margin-bottom:10px;font-size:11px;color:#166534">✅ ใน approach A+C — Notes tab ไม่มี banner ไม่มี "mode" — พิมพ์ได้เลย บันทึกอัตโนมัติ</div>
+        <div class="sh">🗂️ Project Notes</div>
+        <div class="ncard"><div class="nc-dot" style="background:var(--cobra)"></div><div class="nc-title">COBRA · Sprint 12 Review</div><span class="nc-badge">1 overdue</span><span class="nc-date" style="margin-left:auto">22 เม.ย.</span></div>
+        <div class="ncard"><div class="nc-dot" style="background:var(--nexus)"></div><div class="nc-title">NEXUS · Integration Test Planning</div><span style="font-size:9.5px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(245,158,11,0.1);color:#D97706">1 pending</span><span class="nc-date" style="margin-left:auto">18 เม.ย.</span></div>
+        <div style="display:flex;align-items:center;gap:7px;padding:9px 14px;border:1.5px dashed var(--border);border-radius:10px;font-size:12px;color:var(--muted);cursor:pointer;transition:all 0.15s;font-family:'Sarabun',sans-serif;margin-top:4px">＋ เพิ่ม Project Note Card ใหม่</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Annotation row -->
+<div class="annot-row">
+  <div class="annot-box">
+    <div class="ab-tag"><div class="dot" style="background:#F97316"></div><span style="color:#F97316;font-size:10px;font-weight:700;letter-spacing:1px">แนวทาง C — ข้อสรุป</span></div>
+    <div class="ab-item">ทุก field (ทั้ง Info และ Notes) trigger edit mode เมื่อคลิก</div>
+    <div class="ab-item">Banner ส้มโผล่ทุกครั้งที่เริ่มแก้ — รู้ตัวชัดว่าอยู่ใน edit mode</div>
+    <div class="ab-item">Notes tab ก็มี banner → อาจรู้สึก noisy เวลาพิมพ์ note บ่อยๆ</div>
+    <div class="ab-item">เหมาะถ้า info และ notes สำคัญเท่ากัน ต้องการ guard ชัดเจน</div>
+  </div>
+  <div class="annot-box">
+    <div class="ab-tag"><div class="dot" style="background:#6366F1"></div><span style="color:#818CF8;font-size:10px;font-weight:700;letter-spacing:1px">แนวทาง A+C — ข้อสรุป (แนะนำ)</span></div>
+    <div class="ab-item">Info tab = click-to-edit แบบ C (banner โผล่เมื่อคลิก info field)</div>
+    <div class="ab-item">Notes tab = always editable, autosave เงียบๆ — ไม่มี banner เลย</div>
+    <div class="ab-item">ตรงกับ use case หลัก: "เปิดมาบันทึก note → ปิด" ทำได้ทันที</div>
+    <div class="ab-item">เหมาะสำหรับ Test Manager ที่ update note บ่อยกว่าแก้ info contact</div>
+  </div>
+</div>
+
+<div style="max-width:1100px;margin:16px auto 0;padding:12px 18px;background:white;border-radius:10px;border:1px solid #E2E8F0;font-size:12px;color:#64748B;font-family:'Sarabun',sans-serif">
+  💡 <strong>สังเกต:</strong> ใน column ขวา (A+C) — เมื่อเปิด Notes tab จะพิมพ์ได้ทันทีโดยไม่ต้องทำอะไร แต่ถ้าต้องการแก้ Email ต้องคลิกที่ email field ก่อน (banner จะโผล่เฉพาะ Info tab)
+</div>
+
+</body>
+</html>

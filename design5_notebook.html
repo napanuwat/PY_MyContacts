@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design 5: People Notebook — MyContacts</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&family=Lora:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --cobra: #3B82F6; --atlas: #10B981; --nexus: #F59E0B; --phoenix: #EF4444;
+      --t-core: #6366F1; --t-digital: #0EA5E9; --t-settlement: #14B8A6;
+      --t-bizops: #8B5CF6; --t-pmo: #F97316; --t-senior: #BE185D; --t-vendor: #6B7280;
+      --paper: #FFFEF7; --paper-dark: #FAF9F0; --ink: #1A1A18; --ink-light: #5C5C52; --ink-faint: #A8A898;
+    }
+    body { font-family: 'Inter', 'Sarabun', sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: var(--paper); }
+
+    /* Top Bar */
+    .topbar {
+      display: flex; align-items: center; height: 52px;
+      background: var(--paper-dark); padding: 0 20px; gap: 16px; flex-shrink: 0;
+      border-bottom: 1px solid #E8E6D9;
+    }
+    .logo { font-size: 15px; font-weight: 700; color: var(--ink); font-family: 'Lora', serif; }
+    .topbar-label { font-size: 11px; background: rgba(180,150,80,0.12); border: 1px solid rgba(180,150,80,0.3); color: #8B6914; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .btn { padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; display: flex; align-items: center; gap: 6px; }
+    .btn-primary { background: #1A1A18; color: var(--paper); }
+    .btn-ghost { background: transparent; color: var(--ink-light); border: 1px solid #D8D5C8; }
+    .back-link { color: var(--ink-faint); font-size: 12px; text-decoration: none; }
+
+    /* Main Layout */
+    .main { display: flex; flex: 1; overflow: hidden; }
+
+    /* Left Tree Nav */
+    .tree-nav {
+      width: 240px; background: var(--paper-dark); border-right: 1px solid #E8E6D9;
+      display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;
+    }
+    .tree-search {
+      display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+      background: white; border-bottom: 1px solid #E8E6D9; margin: 12px 12px 0;
+      border-radius: 8px; border: 1px solid #E8E6D9;
+    }
+    .tree-search input { border: none; background: none; font-size: 12px; color: var(--ink); outline: none; font-family: 'Sarabun', sans-serif; flex: 1; }
+    .tree-search input::placeholder { color: var(--ink-faint); }
+    .tree-body { flex: 1; overflow-y: auto; padding: 12px; }
+
+    /* Tree Node */
+    .tree-group { margin-bottom: 4px; }
+    .tree-group-header {
+      display: flex; align-items: center; gap: 6px; padding: 5px 6px; border-radius: 6px;
+      font-size: 11px; font-weight: 700; color: var(--ink-faint); text-transform: uppercase;
+      letter-spacing: 1px; cursor: pointer; user-select: none;
+    }
+    .tree-group-header:hover { background: rgba(0,0,0,0.04); }
+    .tree-arrow { font-size: 9px; color: var(--ink-faint); transition: transform 0.2s; }
+    .tree-arrow.open { transform: rotate(90deg); }
+    .tree-group-dot { width: 8px; height: 8px; border-radius: 2px; }
+    .tree-children { padding-left: 16px; }
+    .tree-person {
+      display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 7px;
+      font-size: 13px; color: var(--ink-light); cursor: pointer; font-family: 'Sarabun', sans-serif;
+      transition: all 0.1s; margin-bottom: 1px;
+    }
+    .tree-person:hover { background: rgba(0,0,0,0.05); color: var(--ink); }
+    .tree-person.active { background: rgba(26,26,24,0.08); color: var(--ink); font-weight: 600; }
+    .tree-person-avatar { width: 20px; height: 20px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: white; flex-shrink: 0; }
+    .tree-nick { font-size: 10px; color: var(--ink-faint); margin-left: auto; }
+
+    /* Add buttons */
+    .tree-add {
+      display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 6px;
+      font-size: 12px; color: var(--ink-faint); cursor: pointer; font-family: 'Sarabun', sans-serif;
+    }
+    .tree-add:hover { background: rgba(0,0,0,0.04); color: var(--ink-light); }
+
+    /* Bottom actions */
+    .tree-footer { padding: 12px; border-top: 1px solid #E8E6D9; }
+    .view-toggle { display: flex; background: rgba(0,0,0,0.05); border-radius: 8px; padding: 3px; }
+    .view-btn { flex: 1; padding: 4px; border-radius: 6px; font-size: 11px; color: var(--ink-faint); cursor: pointer; border: none; background: none; text-align: center; }
+    .view-btn.active { background: white; color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+    /* Main Document Area */
+    .doc-area {
+      flex: 1; overflow-y: auto; display: flex; flex-direction: column; align-items: center;
+      padding: 40px 60px 80px; background: var(--paper);
+    }
+    .doc { max-width: 680px; width: 100%; }
+
+    /* Document Header */
+    .doc-header { display: flex; align-items: flex-start; gap: 24px; margin-bottom: 32px; padding-bottom: 28px; border-bottom: 1px solid #E8E6D9; }
+    .doc-avatar { width: 72px; height: 72px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; color: white; flex-shrink: 0; }
+    .doc-name-block { flex: 1; }
+    .doc-fullname { font-size: 28px; font-weight: 700; color: var(--ink); font-family: 'Lora', serif; margin-bottom: 4px; letter-spacing: -0.5px; }
+    .doc-eng-name { font-size: 15px; color: var(--ink-faint); margin-bottom: 8px; font-style: italic; }
+    .doc-nick { display: inline-block; font-size: 13px; color: var(--ink-light); background: rgba(0,0,0,0.05); padding: 3px 10px; border-radius: 20px; margin-bottom: 12px; }
+    .doc-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .doc-team-tag { font-size: 12px; padding: 4px 12px; border-radius: 20px; font-weight: 500; color: white; }
+    .doc-role-tag { font-size: 12px; padding: 4px 12px; border-radius: 20px; font-weight: 500; background: rgba(0,0,0,0.06); color: var(--ink-light); }
+    .doc-actions { display: flex; flex-direction: column; gap: 6px; }
+    .doc-action-btn { padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 500; border: 1px solid #D8D5C8; background: white; color: var(--ink-light); cursor: pointer; white-space: nowrap; }
+    .doc-action-btn:hover { background: var(--paper-dark); }
+
+    /* Sections */
+    .doc-section { margin-bottom: 32px; }
+    .section-title {
+      font-size: 11px; font-weight: 700; color: var(--ink-faint); text-transform: uppercase;
+      letter-spacing: 1.5px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+    }
+    .section-title::after { content: ''; flex: 1; height: 1px; background: #E8E6D9; }
+
+    /* Info Grid */
+    .info-grid { display: grid; grid-template-columns: 140px 1fr; gap: 0; }
+    .info-row { display: contents; }
+    .info-row:hover > * { background: rgba(0,0,0,0.025); }
+    .info-label { font-size: 13px; color: var(--ink-faint); padding: 7px 12px 7px 0; border-bottom: 1px solid #F0EEE4; font-family: 'Sarabun', sans-serif; display: flex; align-items: center; gap: 6px; }
+    .info-val { font-size: 13px; color: var(--ink); padding: 7px 0; border-bottom: 1px solid #F0EEE4; font-family: 'Sarabun', sans-serif; }
+    .info-val a { color: #2563EB; text-decoration: none; }
+    .info-val a:hover { text-decoration: underline; }
+    .info-val .inline-edit { display: none; border: 1px solid #E8E6D9; border-radius: 6px; padding: 3px 8px; font-size: 13px; font-family: 'Sarabun', sans-serif; outline: none; }
+    .info-val:hover .inline-edit { display: inline-block; }
+    .info-val:hover .info-text { display: none; }
+    .info-val .info-text { cursor: text; }
+
+    /* Email chips (multiple) */
+    .email-list { display: flex; flex-direction: column; gap: 3px; }
+    .email-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #2563EB; font-family: 'Sarabun', sans-serif; }
+    .email-tag { font-size: 10px; background: #F1F5F9; color: var(--ink-faint); padding: 1px 6px; border-radius: 4px; font-weight: 500; }
+
+    /* Project Cards */
+    .project-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--paper-dark); border: 1px solid #E8E6D9; border-radius: 10px; margin-bottom: 8px; }
+    .project-row:hover { border-color: #C8C4B0; }
+    .proj-indicator { width: 4px; height: 36px; border-radius: 2px; flex-shrink: 0; }
+    .proj-detail { flex: 1; }
+    .proj-name { font-size: 13px; font-weight: 600; color: var(--ink); font-family: 'Sarabun', sans-serif; margin-bottom: 3px; }
+    .proj-sub { font-size: 11px; color: var(--ink-faint); font-family: 'Sarabun', sans-serif; }
+    .proj-role-badge { font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+    .role-main { background: rgba(220,38,38,0.08); color: #B91C1C; border: 1px solid rgba(220,38,38,0.15); }
+    .role-support { background: rgba(100,116,139,0.08); color: #475569; border: 1px solid #E2E8F0; }
+
+    /* Notes Timeline */
+    .timeline { position: relative; }
+    .timeline::before { content: ''; position: absolute; left: 14px; top: 0; bottom: 0; width: 2px; background: #E8E6D9; }
+    .timeline-item { display: flex; gap: 14px; margin-bottom: 16px; position: relative; }
+    .timeline-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #F59E0B; background: white; flex-shrink: 0; margin-top: 5px; z-index: 1; }
+    .timeline-dot.blue { border-color: #3B82F6; }
+    .timeline-dot.green { border-color: #10B981; }
+    .timeline-content { flex: 1; padding-top: 0; }
+    .timeline-date { font-size: 11px; color: var(--ink-faint); margin-bottom: 4px; }
+    .timeline-note { font-size: 14px; color: var(--ink); line-height: 1.7; font-family: 'Sarabun', sans-serif; }
+    .timeline-note strong { color: var(--ink); }
+
+    /* Note input */
+    .note-compose {
+      display: flex; gap: 14px; margin-top: 16px; padding-top: 16px; border-top: 1px dashed #E8E6D9;
+    }
+    .note-compose-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #D8D5C8; background: var(--paper); flex-shrink: 0; margin-top: 5px; }
+    .note-textarea {
+      flex: 1; border: 1px solid #E8E6D9; border-radius: 10px; padding: 10px 14px;
+      font-size: 13px; font-family: 'Sarabun', sans-serif; color: var(--ink); outline: none;
+      resize: none; background: white; min-height: 64px;
+    }
+    .note-textarea:focus { border-color: #C8C4B0; box-shadow: 0 0 0 3px rgba(0,0,0,0.04); }
+    .note-textarea::placeholder { color: var(--ink-faint); }
+
+    /* Breadcrumb */
+    .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-faint); margin-bottom: 20px; }
+    .breadcrumb a { color: var(--ink-faint); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--ink-light); }
+    .bc-sep { color: #D8D5C8; }
+
+    /* Right mini toolbar */
+    .doc-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; justify-content: flex-end; }
+    .tool-btn { padding: 5px 10px; border-radius: 6px; font-size: 12px; color: var(--ink-faint); border: 1px solid transparent; cursor: pointer; background: none; }
+    .tool-btn:hover { background: rgba(0,0,0,0.04); border-color: #E8E6D9; color: var(--ink-light); }
+
+    /* Annotation */
+    .annotation {
+      position: fixed; bottom: 24px; right: 24px; background: #1A1A0F; border: 1px solid #3A3A28;
+      border-radius: 12px; padding: 12px 16px; max-width: 280px; z-index: 100;
+    }
+    .annotation-title { font-size: 11px; font-weight: 700; color: #F59E0B; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; font-family: 'Lora', serif; }
+    .annotation-text { font-size: 12px; color: #8B8B72; line-height: 1.5; font-family: 'Sarabun', sans-serif; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <a href="index.html" class="back-link">← กลับ</a>
+    <div class="logo">MyContacts Notebook</div>
+    <span class="topbar-label">Design 5 · People Notebook</span>
+    <div class="topbar-right">
+      <button class="btn btn-ghost">⬇ Export Excel</button>
+      <button class="btn btn-primary">+ เพิ่ม Contact</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- Left Tree Navigation -->
+    <div class="tree-nav">
+      <div style="padding:12px 12px 6px">
+        <div class="tree-search">
+          <span style="color:var(--ink-faint);font-size:13px">🔍</span>
+          <input type="text" placeholder="ค้นหาชื่อ...">
+        </div>
+      </div>
+
+      <div class="tree-body">
+        <!-- View Toggle -->
+        <div style="margin-bottom:12px">
+          <div class="view-toggle">
+            <button class="view-btn active">ทีม</button>
+            <button class="view-btn">โปรเจค</button>
+            <button class="view-btn">ทั้งหมด</button>
+          </div>
+        </div>
+
+        <!-- By Team -->
+        <div class="tree-group">
+          <div class="tree-group-header">
+            <span class="tree-arrow open">▶</span>
+            <div class="tree-group-dot" style="background:var(--t-core)"></div>
+            Core Banking IT
+          </div>
+          <div class="tree-children">
+            <div class="tree-person active">
+              <div class="tree-person-avatar" style="background:var(--t-core)">ช</div>
+              สมชาย มีสุข
+              <span class="tree-nick">ชาย</span>
+            </div>
+            <div class="tree-person">
+              <div class="tree-person-avatar" style="background:var(--t-core)">ป้</div>
+              ประภาส รักดี
+              <span class="tree-nick">ป้อม</span>
+            </div>
+            <div class="tree-add">+ เพิ่มในทีมนี้</div>
+          </div>
+        </div>
+
+        <div class="tree-group">
+          <div class="tree-group-header">
+            <span class="tree-arrow open">▶</span>
+            <div class="tree-group-dot" style="background:var(--t-digital)"></div>
+            Digital Banking IT
+          </div>
+          <div class="tree-children">
+            <div class="tree-person">
+              <div class="tree-person-avatar" style="background:var(--t-digital)">แน</div>
+              นภาพร วงศ์ดี
+              <span class="tree-nick">แนน</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tree-group">
+          <div class="tree-group-header">
+            <span class="tree-arrow">▶</span>
+            <div class="tree-group-dot" style="background:var(--t-settlement)"></div>
+            Settlement IT
+          </div>
+        </div>
+
+        <div class="tree-group">
+          <div class="tree-group-header">
+            <span class="tree-arrow open">▶</span>
+            <div class="tree-group-dot" style="background:var(--t-bizops)"></div>
+            Business Operations
+          </div>
+          <div class="tree-children">
+            <div class="tree-person">
+              <div class="tree-person-avatar" style="background:var(--t-bizops)">หนิ</div>
+              วรรณา ทองคำ
+              <span class="tree-nick">หนิง</span>
+            </div>
+            <div class="tree-person">
+              <div class="tree-person-avatar" style="background:var(--t-bizops)">อ้</div>
+              จิราภา ณ นคร
+              <span class="tree-nick">อ้อม</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tree-group">
+          <div class="tree-group-header">
+            <span class="tree-arrow open">▶</span>
+            <div class="tree-group-dot" style="background:var(--t-pmo)"></div>
+            PMO
+          </div>
+          <div class="tree-children">
+            <div class="tree-person">
+              <div class="tree-person-avatar" style="background:var(--t-pmo)">อั้</div>
+              อนันต์ ใจดี
+              <span class="tree-nick">อั้น</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tree-group">
+          <div class="tree-group-header">
+            <span class="tree-arrow open">▶</span>
+            <div class="tree-group-dot" style="background:var(--t-senior)"></div>
+            Senior Management
+          </div>
+          <div class="tree-children">
+            <div class="tree-person">
+              <div class="tree-person-avatar" style="background:var(--t-senior)">กิ๊</div>
+              กิตติ ศิริโชค
+              <span class="tree-nick">กิ๊ต</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tree-group">
+          <div class="tree-group-header">
+            <span class="tree-arrow open">▶</span>
+            <div class="tree-group-dot" style="background:var(--t-vendor)"></div>
+            Vendor
+          </div>
+          <div class="tree-children">
+            <div class="tree-person">
+              <div class="tree-person-avatar" style="background:var(--t-vendor)">SC</div>
+              Sarah Chen
+              <span class="tree-nick">ABC</span>
+            </div>
+            <div class="tree-person">
+              <div class="tree-person-avatar" style="background:var(--t-vendor)">MR</div>
+              Marina Rodriguez
+              <span class="tree-nick">XYZ</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tree-footer">
+        <div style="font-size:11px;color:var(--ink-faint);text-align:center">10 contacts · 4 projects</div>
+      </div>
+    </div>
+
+    <!-- Main Document -->
+    <div class="doc-area">
+      <div class="doc">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+          <a href="#">MyContacts</a>
+          <span class="bc-sep">›</span>
+          <a href="#">Core Banking IT</a>
+          <span class="bc-sep">›</span>
+          <span style="color:var(--ink-light)">สมชาย มีสุข</span>
+        </div>
+
+        <!-- Document Toolbar -->
+        <div class="doc-toolbar">
+          <button class="tool-btn">⭐ สำคัญ</button>
+          <button class="tool-btn">⬆ Export</button>
+          <button class="tool-btn">🗑 ลบ</button>
+          <button class="btn btn-primary" style="font-size:12px;padding:7px 14px">✏️ แก้ไข</button>
+        </div>
+
+        <!-- Document Header -->
+        <div class="doc-header">
+          <div class="doc-avatar" style="background:var(--t-core)">ช</div>
+          <div class="doc-name-block">
+            <div class="doc-fullname">สมชาย มีสุข</div>
+            <div class="doc-eng-name">Somchai Meesuk</div>
+            <div class="doc-nick">ชื่อเล่น: ชาย</div>
+            <div class="doc-tags">
+              <span class="doc-team-tag" style="background:var(--t-core)">Core Banking IT</span>
+              <span class="doc-role-tag">QA Lead</span>
+              <span class="doc-role-tag">Senior QA Engineer</span>
+            </div>
+          </div>
+          <div class="doc-actions">
+            <button class="doc-action-btn">📧 ส่งอีเมล</button>
+            <button class="doc-action-btn">💬 Line</button>
+          </div>
+        </div>
+
+        <!-- Contact Info Section -->
+        <div class="doc-section">
+          <div class="section-title">ข้อมูลติดต่อ</div>
+          <div class="info-grid">
+            <div class="info-row">
+              <div class="info-label"><span>📧</span> Email</div>
+              <div class="info-val">
+                <a href="#" class="info-text">somchai.m@company.co.th</a>
+                <input type="text" class="inline-edit" value="somchai.m@company.co.th">
+              </div>
+            </div>
+            <div class="info-row">
+              <div class="info-label"><span>📱</span> โทรศัพท์</div>
+              <div class="info-val"><span class="info-text">081-234-5678</span></div>
+            </div>
+            <div class="info-row">
+              <div class="info-label"><span>💬</span> Line ID</div>
+              <div class="info-val"><span class="info-text">@cha_somchai</span></div>
+            </div>
+            <div class="info-row">
+              <div class="info-label"><span>🏢</span> ทีม</div>
+              <div class="info-val"><span class="info-text">Core Banking IT</span></div>
+            </div>
+            <div class="info-row">
+              <div class="info-label"><span>👤</span> Direct Report</div>
+              <div class="info-val"><span class="info-text">นาย กฤษณ์ สมบูรณ์ (ผจก. ฝ่าย IT)</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Projects Section -->
+        <div class="doc-section">
+          <div class="section-title">โปรเจคที่เกี่ยวข้อง</div>
+          <div class="project-row">
+            <div class="proj-indicator" style="background:var(--cobra)"></div>
+            <div class="proj-detail">
+              <div class="proj-name">🔵 COBRA — Core Banking Migration</div>
+              <div class="proj-sub">รับผิดชอบหลัก · ดูแล Test Strategy และ Execution Plan ทั้งหมด</div>
+            </div>
+            <span class="proj-role-badge role-main">Main Impact</span>
+          </div>
+          <div class="project-row">
+            <div class="proj-indicator" style="background:var(--nexus)"></div>
+            <div class="proj-detail">
+              <div class="proj-name">🟡 NEXUS — Settlement System</div>
+              <div class="proj-sub">ช่วยสนับสนุนการทดสอบ Integration ระหว่างระบบ COBRA-NEXUS</div>
+            </div>
+            <span class="proj-role-badge role-support">Supporter</span>
+          </div>
+          <button class="btn btn-ghost" style="margin-top:8px;font-size:12px">+ เพิ่มโปรเจค</button>
+        </div>
+
+        <!-- Notes Timeline -->
+        <div class="doc-section">
+          <div class="section-title">บันทึก / Timeline</div>
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-content">
+                <div class="timeline-date">14 เม.ย. 2026 · หลังประชุม Weekly QA Review</div>
+                <div class="timeline-note">
+                  คุยเรื่อง <strong>Regression Test Plan สำหรับ Sprint 12</strong> — ขอให้เตรียม Smoke Test ก่อน 20 เม.ย. ชายเชี่ยวชาญเรื่อง UAT Banking เป็นพิเศษ ถามเขาก่อนเลย
+                </div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot blue"></div>
+              <div class="timeline-content">
+                <div class="timeline-date">2 เม.ย. 2026 · ประชุม COBRA Sprint Kickoff</div>
+                <div class="timeline-note">
+                  ชายรับปาก QA Plan ภายใน 5 วันทำการ ติดตามผ่าน Line ได้เลย ตอบเร็วมาก อย่าลืมถามเรื่อง Environment Setup ด้วย
+                </div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot green"></div>
+              <div class="timeline-content">
+                <div class="timeline-date">15 มี.ค. 2026 · แนะนำตัวครั้งแรกใน COBRA Kickoff</div>
+                <div class="timeline-note">
+                  เพิ่งรู้จักกัน ชายเป็น QA Lead ที่ดูแลด้าน Core Banking มา 5 ปี มีประสบการณ์ด้าน Migration เยอะ น่าจะเป็นคนสำคัญมากตลอดโปรเจค
+                </div>
+              </div>
+            </div>
+
+            <!-- Note Compose -->
+            <div class="note-compose">
+              <div class="note-compose-dot"></div>
+              <div style="flex:1">
+                <textarea class="note-textarea" placeholder="เพิ่มบันทึกใหม่... เช่น คุยเรื่องอะไร, สิ่งที่ต้องติดตาม, จุดสังเกต"></textarea>
+                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+                  <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px">ยกเลิก</button>
+                  <button class="btn btn-primary" style="font-size:12px;padding:6px 14px">📝 บันทึก</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Annotation -->
+  <div class="annotation">
+    <div class="annotation-title">Design 5 · People Notebook</div>
+    <div class="annotation-text">
+      <strong style="color:#D4B483">Mental Model:</strong> "แต่ละคนมีหน้าของตัวเอง เหมือน Notion/Confluence — ฉันเก็บ Context ของแต่ละคนไว้ที่นี่"<br><br>
+      คลิกที่ข้อความเพื่อแก้ไข Inline · Timeline เรียงตาม Date<br><br>
+      <strong style="color:#D4B483">Tree ซ้าย:</strong> Switch ระหว่าง "จัดตามทีม" / "จัดตามโปรเจค"
+    </div>
+  </div>
+
+</body>
+</html>

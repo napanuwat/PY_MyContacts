@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Form 5: Command Palette — MyContacts</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sarabun:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter','Sarabun',sans-serif;background:#0A0E1A;height:100vh;display:flex;flex-direction:column;overflow:hidden;color:#E2E8F0}
+    .topbar{display:flex;align-items:center;height:48px;background:#0F172A;padding:0 20px;gap:12px;border-bottom:1px solid #1E293B;flex-shrink:0}
+    .back-link{color:#475569;font-size:12px;text-decoration:none}.logo{font-size:14px;font-weight:700;color:#60A5FA}
+    .label-tag{font-size:11px;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#A5B4FC;padding:2px 9px;border-radius:12px;font-weight:500}
+    .nav-links{margin-left:auto;display:flex;gap:8px}
+    .nav-link{color:#60A5FA;font-size:12px;text-decoration:none;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);padding:4px 10px;border-radius:6px}
+
+    /* Background — simulated app behind */
+    .bg-layer{flex:1;position:relative;display:flex;align-items:flex-start;justify-content:center;overflow:hidden}
+    .bg-app{position:absolute;inset:0;display:flex;opacity:0.15;pointer-events:none}
+    .bg-sidebar{width:180px;background:#1E293B;height:100%}
+    .bg-list{width:300px;background:#1a2234;height:100%;border-right:1px solid #1E293B;padding:14px}
+    .bg-item{height:36px;background:#1E293B;border-radius:7px;margin-bottom:6px}
+    .bg-detail{flex:1;background:#111827;padding:20px}
+    .bg-line{height:8px;background:#1E293B;border-radius:3px;margin-bottom:8px}
+
+    /* Dim overlay */
+    .dim{position:absolute;inset:0;background:rgba(5,8,20,0.75);backdrop-filter:blur(3px);z-index:10}
+
+    /* Command Palette */
+    .palette{position:absolute;top:80px;left:50%;transform:translateX(-50%);width:680px;background:#161B2E;border:1px solid #2D3748;border-radius:16px;box-shadow:0 32px 80px rgba(0,0,0,0.7),0 0 0 1px rgba(99,102,241,0.15);z-index:20;display:flex;flex-direction:column;overflow:hidden}
+
+    /* Progress trail — answered fields shown as pills */
+    .trail{padding:14px 20px 10px;border-bottom:1px solid #1E293B;display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:52px}
+    .trail-label{font-size:10px;color:#4B5563;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;margin-right:4px;white-space:nowrap}
+    .trail-pill{display:inline-flex;align-items:center;gap:5px;background:#1E293B;border:1px solid #2D3748;border-radius:20px;padding:4px 10px;font-size:12px;color:#94A3B8;font-family:'Sarabun',sans-serif}
+    .trail-pill .pill-key{font-size:9px;color:#4B5563;font-weight:700;text-transform:uppercase;margin-right:2px;font-family:'Inter',sans-serif}
+    .trail-pill .pill-val{color:#E2E8F0}
+    .trail-pill .pill-dot{width:7px;height:7px;border-radius:2px;flex-shrink:0}
+    .trail-empty{font-size:11px;color:#374151;font-family:'Sarabun',sans-serif;font-style:italic}
+
+    /* Current question */
+    .question-area{padding:20px 20px 0}
+    .q-step{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+    .q-step-num{font-size:11px;font-weight:700;color:#6366F1;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.2);border-radius:20px;padding:2px 9px;font-family:'Inter',sans-serif}
+    .q-step-bar{flex:1;height:3px;background:#1E293B;border-radius:2px;overflow:hidden}
+    .q-step-fill{height:100%;background:linear-gradient(90deg,#6366F1,#3B82F6);border-radius:2px;width:42%}
+    .q-step-text{font-size:11px;color:#4B5563;white-space:nowrap}
+
+    .q-prompt{font-size:18px;font-weight:700;color:#E2E8F0;margin-bottom:4px;letter-spacing:-0.2px;font-family:'Inter',sans-serif}
+    .q-hint{font-size:12px;color:#4B5563;font-family:'Sarabun',sans-serif;margin-bottom:14px}
+
+    /* Command input */
+    .cmd-input-wrap{display:flex;align-items:center;gap:10px;background:#0F172A;border:1.5px solid #6366F1;border-radius:10px;padding:0 14px;margin-bottom:0;box-shadow:0 0 0 3px rgba(99,102,241,0.12)}
+    .cmd-prefix{font-size:16px;color:#6366F1;font-family:'JetBrains Mono',monospace;flex-shrink:0;font-weight:500}
+    .cmd-input{flex:1;background:transparent;border:none;outline:none;font-size:17px;color:#F1F5F9;padding:13px 0;font-family:'Sarabun','Inter',sans-serif;caret-color:#6366F1}
+    .cmd-input::placeholder{color:#374151}
+    .cmd-cursor{width:2px;height:20px;background:#6366F1;border-radius:1px;animation:blink 1s infinite;flex-shrink:0}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+    /* Suggestions */
+    .suggestions{border-top:1px solid #1E293B;max-height:200px;overflow-y:auto}
+    .sug-group-label{font-size:9px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:1px;padding:8px 16px 4px;font-family:'Inter',sans-serif}
+    .sug-item{display:flex;align-items:center;gap:10px;padding:8px 16px;cursor:pointer;transition:background 0.1s}
+    .sug-item:hover,.sug-item.active{background:#1E293B}
+    .sug-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;background:#1E293B}
+    .sug-item.active .sug-icon{background:#2D3748}
+    .sug-main{flex:1}
+    .sug-name{font-size:13px;color:#E2E8F0;font-family:'Sarabun',sans-serif;font-weight:500}
+    .sug-sub{font-size:11px;color:#4B5563;font-family:'Sarabun',sans-serif}
+    .sug-badge{font-size:10px;background:rgba(99,102,241,0.2);color:#A5B4FC;padding:2px 7px;border-radius:8px;font-weight:600;flex-shrink:0}
+    .sug-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+
+    /* Keyboard shortcuts footer */
+    .kbd-bar{display:flex;align-items:center;gap:16px;padding:10px 16px;border-top:1px solid #1E293B;background:#0F172A;flex-shrink:0}
+    .kbd-group{display:flex;align-items:center;gap:5px}
+    .kbd{display:inline-flex;align-items:center;justify-content:center;background:#1E293B;border:1px solid #2D3748;border-radius:5px;padding:2px 7px;font-size:11px;font-family:'JetBrains Mono',monospace;color:#64748B;font-weight:500;min-width:24px}
+    .kbd-label{font-size:11px;color:#374151;font-family:'Inter',sans-serif}
+    .kbd-sep{width:1px;height:14px;background:#1E293B;flex-shrink:0}
+
+    /* Skip / Cancel links */
+    .palette-meta{display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:6px 20px 14px}
+    .meta-link{font-size:11px;color:#374151;cursor:pointer;font-family:'Sarabun',sans-serif;display:flex;align-items:center;gap:4px}
+    .meta-link:hover{color:#94A3B8}
+    .meta-kbd{font-size:10px;background:#1E293B;border:1px solid #2D3748;border-radius:4px;padding:1px 5px;font-family:'JetBrains Mono',monospace;color:#4B5563}
+
+    /* Annotation */
+    .annot{position:fixed;bottom:16px;left:16px;background:#161B2E;border:1px solid #2D3748;border-radius:10px;padding:10px 14px;max-width:260px;z-index:30}
+    .annot-title{font-size:10px;font-weight:700;color:#60A5FA;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+    .annot-text{font-size:11px;color:#64748B;line-height:1.5;font-family:'Sarabun',sans-serif}
+
+    /* Completed state overlay (shown after all fields done) */
+    .done-overlay{position:absolute;top:80px;left:50%;transform:translateX(-50%);width:480px;background:#161B2E;border:1px solid #2D3748;border-radius:16px;box-shadow:0 32px 80px rgba(0,0,0,0.7);z-index:20;padding:36px 32px;text-align:center;display:none}
+    .done-icon{font-size:44px;margin-bottom:14px;display:block}
+    .done-title{font-size:22px;font-weight:800;color:#E2E8F0;margin-bottom:6px;letter-spacing:-0.3px}
+    .done-sub{font-size:13px;color:#4B5563;font-family:'Sarabun',sans-serif;margin-bottom:24px}
+    .done-summary{background:#0F172A;border:1px solid #1E293B;border-radius:10px;padding:14px 16px;margin-bottom:20px;text-align:left}
+    .done-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #1E293B;font-size:12px}
+    .done-row:last-child{border-bottom:none}
+    .done-key{color:#4B5563;font-family:'Inter',sans-serif;font-weight:600;width:110px;flex-shrink:0;font-size:10px;text-transform:uppercase;letter-spacing:0.5px}
+    .done-val{color:#E2E8F0;font-family:'Sarabun',sans-serif;flex:1}
+    .done-actions{display:flex;gap:10px;justify-content:center}
+    .btn{padding:9px 20px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all 0.15s}
+    .btn-ghost{background:#1E293B;color:#94A3B8;border:1px solid #2D3748}
+    .btn-ghost:hover{background:#2D3748;color:#E2E8F0}
+    .btn-primary{background:linear-gradient(135deg,#6366F1,#4F46E5);color:white;box-shadow:0 4px 12px rgba(99,102,241,0.3)}
+    .btn-primary:hover{background:linear-gradient(135deg,#818CF8,#6366F1)}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="input_index.html" class="back-link">← กลับ</a>
+    <div class="logo">MyContacts</div>
+    <span class="label-tag">Form 5 · Command Palette</span>
+    <div class="nav-links">
+      <a href="input4_inline.html" class="nav-link">← Inline</a>
+      <a href="input_index.html" class="nav-link">↩ Index</a>
+    </div>
+  </div>
+
+  <div class="bg-layer">
+    <!-- Simulated background app -->
+    <div class="bg-app">
+      <div class="bg-sidebar"></div>
+      <div class="bg-list">
+        <div class="bg-item"></div><div class="bg-item" style="opacity:0.7"></div>
+        <div class="bg-item" style="opacity:0.5"></div><div class="bg-item" style="opacity:0.3"></div>
+      </div>
+      <div class="bg-detail">
+        <div class="bg-line" style="width:40%;height:16px;margin-bottom:12px"></div>
+        <div class="bg-line" style="width:60%"></div><div class="bg-line" style="width:45%"></div>
+        <div class="bg-line" style="width:70%;margin-top:14px"></div>
+      </div>
+    </div>
+
+    <div class="dim"></div>
+
+    <!-- Command Palette -->
+    <div class="palette">
+
+      <!-- Answered fields trail -->
+      <div class="trail">
+        <span class="trail-label">✓</span>
+        <div class="trail-pill">
+          <span class="pill-key">ชื่อ</span>
+          <span class="pill-val">สมชาย มีสุข</span>
+        </div>
+        <div class="trail-pill">
+          <span class="pill-key">ชื่อเล่น</span>
+          <span class="pill-val">ชาย</span>
+        </div>
+        <div class="trail-pill">
+          <span class="pill-key">Eng</span>
+          <span class="pill-val">Somchai Meesuk</span>
+        </div>
+        <div class="trail-pill">
+          <span class="pill-dot" style="background:#6366F1"></span>
+          <span class="pill-key">ทีม</span>
+          <span class="pill-val">Core Banking IT</span>
+        </div>
+        <div class="trail-pill">
+          <span class="pill-key">ตำแหน่ง</span>
+          <span class="pill-val">QA Lead</span>
+        </div>
+      </div>
+
+      <!-- Current question: step 6 -->
+      <div class="question-area">
+        <div class="q-step">
+          <div class="q-step-num">ขั้น 6 / 9</div>
+          <div class="q-step-bar"><div class="q-step-fill"></div></div>
+          <div class="q-step-text">6 fields เหลือ · 3 จำเป็น</div>
+        </div>
+        <div class="q-prompt">📧 Email หลักของ สมชาย คืออะไร?</div>
+        <div class="q-hint">Email ขององค์กร — ถ้าเป็น Vendor อาจมีหลายอัน กด Enter เพื่อยืนยัน</div>
+
+        <!-- Input -->
+        <div class="cmd-input-wrap">
+          <span class="cmd-prefix">@</span>
+          <input class="cmd-input" type="email" value="somchai.m@" placeholder="email@company.co.th" autofocus>
+          <div class="cmd-cursor"></div>
+        </div>
+      </div>
+
+      <div class="palette-meta">
+        <div class="meta-link"><span class="meta-kbd">Tab</span> ข้ามไปก่อน</div>
+        <div class="meta-link"><span class="meta-kbd">ESC</span> ยกเลิก</div>
+      </div>
+
+      <!-- Suggestions -->
+      <div class="suggestions">
+        <div class="sug-group-label">ประวัติที่เคยใช้ / อัตโนมัติ</div>
+        <div class="sug-item active">
+          <div class="sug-icon">🏢</div>
+          <div class="sug-main">
+            <div class="sug-name">somchai.m@company.co.th</div>
+            <div class="sug-sub">Email องค์กร — ใช้บ่อยที่สุด</div>
+          </div>
+          <div class="sug-badge">องค์กร</div>
+        </div>
+        <div class="sug-item">
+          <div class="sug-icon">🏢</div>
+          <div class="sug-main">
+            <div class="sug-name">somchai.meesuk@newdomain.co.th</div>
+            <div class="sug-sub">Domain ใหม่ 2025</div>
+          </div>
+          <div class="sug-badge">องค์กร</div>
+        </div>
+        <div class="sug-group-label">คนในทีมเดียวกัน (Core Banking IT)</div>
+        <div class="sug-item">
+          <div class="sug-icon" style="background:#1E293B;font-size:11px;color:#6366F1;font-weight:700">CB</div>
+          <div class="sug-main">
+            <div class="sug-name">somchai.m@corebank.co.th</div>
+            <div class="sug-sub">Pattern เดียวกับคนในทีม (กฤษณ์, วิภา)</div>
+          </div>
+          <div class="sug-badge">แนะนำ</div>
+        </div>
+      </div>
+
+      <!-- Keyboard shortcuts bar -->
+      <div class="kbd-bar">
+        <div class="kbd-group"><span class="kbd">↵</span><span class="kbd-label">ยืนยัน</span></div>
+        <div class="kbd-sep"></div>
+        <div class="kbd-group"><span class="kbd">↑</span><span class="kbd">↓</span><span class="kbd-label">เลือก</span></div>
+        <div class="kbd-sep"></div>
+        <div class="kbd-group"><span class="kbd">Tab</span><span class="kbd-label">ข้าม</span></div>
+        <div class="kbd-sep"></div>
+        <div class="kbd-group"><span class="kbd">⌘</span><span class="kbd">Z</span><span class="kbd-label">ย้อน field</span></div>
+        <div class="kbd-sep"></div>
+        <div class="kbd-group"><span class="kbd">ESC</span><span class="kbd-label">ยกเลิก</span></div>
+      </div>
+    </div>
+
+    <!-- Done state (hidden — for reference) -->
+    <div class="done-overlay">
+      <span class="done-icon">✅</span>
+      <div class="done-title">บันทึก Contact สำเร็จ!</div>
+      <div class="done-sub">สมชาย มีสุข ถูกเพิ่มลงใน MyContacts แล้ว</div>
+      <div class="done-summary">
+        <div class="done-row"><span class="done-key">ชื่อ</span><span class="done-val">สมชาย มีสุข (ชาย)</span></div>
+        <div class="done-row"><span class="done-key">ทีม</span><span class="done-val">Core Banking IT · QA Lead</span></div>
+        <div class="done-row"><span class="done-key">Email</span><span class="done-val">somchai.m@company.co.th</span></div>
+        <div class="done-row"><span class="done-key">โทรศัพท์</span><span class="done-val">081-234-5678</span></div>
+        <div class="done-row"><span class="done-key">โปรเจค</span><span class="done-val">COBRA (Main Impact), NEXUS (Supporter)</span></div>
+      </div>
+      <div class="done-actions">
+        <button class="btn btn-ghost">+ เพิ่ม Contact อื่น</button>
+        <button class="btn btn-primary">ดูโปรไฟล์ →</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="annot">
+    <div class="annot-title">Form 5 · Command Palette</div>
+    <div class="annot-text">กรอกทีละ field ผ่าน Command Palette สไตล์ Raycast/Linear Field ที่ตอบแล้วกลายเป็น pill ด้านบน กด Tab=ข้าม · ⌘Z=ย้อน · ↑↓=เลือก suggestion</div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<!-- v1.0 | Meeting Attendee Check — Design Comparison Index -->
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ตรวจสอบรายชื่อประชุม — เปรียบเทียบ 5 แบบ</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Sarabun', 'Inter', sans-serif; background: #0F172A; color: #E2E8F0; font-size: 14px; min-height: 100vh; }
+
+.page { max-width: 1200px; margin: 0 auto; padding: 40px 24px 60px; }
+
+/* Header */
+.header { text-align: center; margin-bottom: 48px; }
+.header-logo { font-size: 13px; font-weight: 600; color: #6366F1; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+.header-title { font-size: 32px; font-weight: 800; color: #F8FAFC; line-height: 1.2; margin-bottom: 12px; }
+.header-title span { color: #6366F1; }
+.header-sub { font-size: 15px; color: #64748B; max-width: 560px; margin: 0 auto 24px; line-height: 1.6; }
+.header-meta { display: flex; align-items: center; justify-content: center; gap: 20px; font-size: 13px; color: #475569; }
+.meta-item { display: flex; align-items: center; gap: 6px; }
+.meta-dot { width: 8px; height: 8px; border-radius: 50%; background: #6366F1; }
+.meta-dot.g { background: #10B981; }
+.meta-dot.a { background: #F59E0B; }
+
+/* Use case box */
+.use-case-box { background: #1E293B; border-radius: 14px; border: 1px solid #334155; padding: 20px 24px; margin-bottom: 40px; display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
+.uc-section { flex: 1; min-width: 220px; }
+.uc-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #6366F1; margin-bottom: 10px; }
+.uc-item { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; font-size: 13px; color: #94A3B8; line-height: 1.5; }
+.uc-icon { flex-shrink: 0; margin-top: 1px; }
+
+/* Extra features box */
+.extra-box { background: #162032; border: 1px solid #1E3A5F; border-radius: 12px; padding: 16px 20px; margin-bottom: 40px; }
+.extra-title { font-size: 12px; font-weight: 700; color: #60A5FA; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.extra-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.extra-item { background: #1E293B; border-radius: 8px; padding: 12px; border: 1px solid #1E3A5F; }
+.extra-item-title { font-size: 13px; font-weight: 600; color: #E2E8F0; margin-bottom: 4px; }
+.extra-item-desc { font-size: 12px; color: #64748B; line-height: 1.5; }
+
+/* Cards grid */
+.cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+.cards-grid.last-row { grid-template-columns: 1fr; }
+
+/* Design card */
+.design-card { background: #1E293B; border-radius: 14px; border: 2px solid #334155; overflow: hidden; transition: all 0.2s; cursor: pointer; text-decoration: none; display: block; }
+.design-card:hover { border-color: #6366F1; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(99,102,241,0.2); }
+.design-card.featured { border-color: #6366F1; }
+
+/* Card top: preview area */
+.card-preview { height: 180px; position: relative; overflow: hidden; }
+.preview-d1 { background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); display: flex; }
+.preview-sidebar { width: 80px; background: #0F172A; height: 100%; border-right: 1px solid #1E293B; padding: 10px; }
+.preview-bar { height: 8px; background: #1E293B; border-radius: 4px; margin-bottom: 6px; }
+.preview-bar.active { background: #312E81; }
+.preview-content { flex: 1; padding: 10px; }
+.preview-split { display: flex; gap: 8px; height: 100%; }
+.p-left { width: 45%; background: #162032; border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+.p-right { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.p-line { height: 6px; background: #1E293B; border-radius: 3px; }
+.p-line.green { background: #064E3B; }
+.p-line.amber { background: #451A03; }
+.p-line.full { width: 100%; }
+.p-line.short { width: 60%; }
+.p-line.med { width: 80%; }
+.p-row { display: flex; align-items: center; gap: 4px; padding: 5px 6px; background: #1E3A5F; border-radius: 4px; }
+.p-avatar { width: 14px; height: 14px; border-radius: 50%; background: #3730A3; flex-shrink: 0; }
+.p-badge-g { width: 30px; height: 6px; background: #064E3B; border-radius: 3px; }
+.p-badge-a { width: 20px; height: 6px; background: #451A03; border-radius: 3px; }
+/* Wizard preview */
+.preview-wizard { background: #EEF2FF; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.pw-steps { display: flex; gap: 6px; align-items: center; }
+.pw-step { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; }
+.pw-step.done { background: #10B981; color: #fff; }
+.pw-step.active { background: #6366F1; color: #fff; box-shadow: 0 0 0 3px rgba(99,102,241,0.3); }
+.pw-step.pending { background: #E2E8F0; color: #94A3B8; }
+.pw-line { flex: 1; height: 2px; background: #E2E8F0; }
+.pw-line.done { background: #10B981; }
+.pw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; flex: 1; }
+.pw-panel { border-radius: 6px; padding: 6px; display: flex; flex-direction: column; gap: 3px; }
+.pw-panel.found { background: #F0FDF4; border: 1px solid #BBF7D0; }
+.pw-panel.new { background: #FFFBEB; border: 1px solid #FDE68A; }
+.pw-item { display: flex; gap: 4px; align-items: center; }
+.pw-chk { width: 9px; height: 9px; border-radius: 2px; background: #6366F1; flex-shrink: 0; }
+.pw-name { height: 6px; background: #1E293B; border-radius: 3px; flex: 1; opacity: 0.3; }
+/* Command palette preview */
+.preview-cmd { background: #0F172A; position: relative; }
+.cmd-bg { position: absolute; inset: 0; opacity: 0.4; display: flex; }
+.cmd-bg-s { width: 40px; background: #0F172A; }
+.cmd-bg-c { flex: 1; background: #1E293B; }
+.cmd-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; }
+.cmd-palette { width: 80%; background: #1E293B; border-radius: 8px; border: 1px solid #334155; overflow: hidden; }
+.cmd-input { padding: 8px 10px; border-bottom: 1px solid #334155; display: flex; gap: 6px; }
+.cmd-input-bar { flex: 1; height: 20px; background: #334155; border-radius: 3px; }
+.cmd-results { padding: 4px 0; }
+.cmd-row { padding: 5px 10px; display: flex; gap: 6px; align-items: center; }
+.cmd-row.active { background: #312E81; }
+.cmd-dot-g { width: 8px; height: 8px; border-radius: 50%; background: #10B981; flex-shrink: 0; }
+.cmd-dot-a { width: 8px; height: 8px; border-radius: 50%; background: #F59E0B; flex-shrink: 0; }
+.cmd-text { height: 6px; background: #475569; border-radius: 3px; flex: 1; }
+/* Cards preview */
+.preview-cards { background: #0F172A; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+.pcard-header { display: flex; gap: 6px; }
+.pcard-col { flex: 1; }
+.pcard-col-hdr { height: 22px; border-radius: 6px; display: flex; align-items: center; padding: 0 8px; }
+.pcard-col-hdr.found-hdr { background: #064E3B; }
+.pcard-col-hdr.new-hdr { background: #451A03; }
+.pcard-col-hdr span { height: 6px; flex: 1; border-radius: 3px; }
+.found-hdr span { background: #10B981; opacity: 0.6; }
+.new-hdr span { background: #F59E0B; opacity: 0.6; }
+.pcard-cards { display: grid; gap: 4px; }
+.pcard { background: #1E293B; border-radius: 5px; padding: 5px 7px; display: flex; gap: 5px; align-items: center; }
+.pcard.found { border-left: 2px solid #10B981; }
+.pcard.new { border-left: 2px solid #F59E0B; border-style: dashed; }
+.pcard-av { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+.pcard-av.i { background: #312E81; }
+.pcard-av.g { background: #064E3B; }
+.pcard-av.a { background: #451A03; }
+.pcard-lines { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.pcard-line { height: 4px; background: #334155; border-radius: 2px; }
+/* Table preview */
+.preview-table { background: #F8FAFC; overflow: hidden; }
+.pt-header { background: #F1F5F9; padding: 6px 10px; display: flex; gap: 8px; border-bottom: 2px solid #E2E8F0; }
+.pt-th { height: 6px; background: #CBD5E1; border-radius: 3px; flex: 1; }
+.pt-th.sm { flex: 0.5; }
+.pt-rows { padding: 4px; display: flex; flex-direction: column; gap: 2px; }
+.pt-row { display: flex; gap: 4px; align-items: center; padding: 4px 6px; border-radius: 4px; }
+.pt-row.found { background: #F0FDF4; }
+.pt-row.new { background: #FFFBEB; }
+.pt-av { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+.pt-av.i { background: #EEF2FF; }
+.pt-av.g { background: #D1FAE5; }
+.pt-av.a { background: #FEF3C7; }
+.pt-av.n { background: #F1F5F9; border: 1px dashed #CBD5E1; }
+.pt-badge { width: 32px; height: 8px; border-radius: 4px; flex-shrink: 0; }
+.pt-badge.found { background: #BBF7D0; }
+.pt-badge.new { background: #FDE68A; }
+.pt-line { height: 5px; background: #E2E8F0; border-radius: 3px; flex: 1; }
+
+/* Card body */
+.card-body { padding: 20px 22px; }
+.card-num { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+.card-title { font-size: 17px; font-weight: 800; color: #F1F5F9; margin-bottom: 6px; }
+.card-subtitle { font-size: 12px; color: #64748B; margin-bottom: 14px; font-style: italic; }
+.card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.tag { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
+.tag-workflow { background: #162032; color: #60A5FA; border: 1px solid #1E3A5F; }
+.tag-speed { background: #162032; color: #34D399; border: 1px solid #064E3B; }
+.tag-power { background: #162032; color: #A5B4FC; border: 1px solid #312E81; }
+.tag-visual { background: #162032; color: #FCD34D; border: 1px solid #451A03; }
+.tag-casual { background: #162032; color: #FDA4AF; border: 1px solid #450A0A; }
+/* Pros/cons */
+.pc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.pc-section { }
+.pc-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.pros .pc-title { color: #34D399; }
+.cons .pc-title { color: #FC8181; }
+.pc-item { font-size: 12px; color: #94A3B8; padding: 3px 0; display: flex; gap: 5px; }
+.pc-item::before { font-size: 10px; margin-top: 1px; flex-shrink: 0; }
+.pros .pc-item::before { content: '✓'; color: #34D399; }
+.cons .pc-item::before { content: '✕'; color: #FC8181; }
+/* Best for */
+.best-for { background: #162032; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 12px; color: #64748B; line-height: 1.5; border-left: 3px solid #6366F1; }
+.best-for strong { color: #A5B4FC; }
+/* CTA */
+.card-cta { display: flex; gap: 8px; }
+.cta-btn { flex: 1; padding: 9px; border-radius: 8px; border: none; cursor: pointer; font-size: 13px; font-family: inherit; font-weight: 600; text-align: center; text-decoration: none; display: block; transition: all 0.15s; }
+.cta-primary { background: #6366F1; color: #fff; }
+.cta-primary:hover { background: #4F46E5; }
+.cta-ghost { background: transparent; border: 1px solid #334155; color: #64748B; }
+.cta-ghost:hover { border-color: #6366F1; color: #A5B4FC; }
+/* Featured badge */
+.featured-badge { position: absolute; top: 12px; right: 12px; background: #6366F1; color: #fff; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Comparison table */
+.compare-table { background: #1E293B; border-radius: 14px; border: 1px solid #334155; overflow: hidden; margin-top: 40px; margin-bottom: 40px; }
+.ct-header { padding: 16px 24px; border-bottom: 1px solid #334155; }
+.ct-title { font-size: 15px; font-weight: 700; color: #F1F5F9; }
+.ct-sub { font-size: 12px; color: #64748B; margin-top: 2px; }
+.ct-table { width: 100%; border-collapse: collapse; }
+.ct-table th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.6px; background: #162032; border-bottom: 1px solid #334155; }
+.ct-table td { padding: 10px 16px; font-size: 13px; color: #94A3B8; border-bottom: 1px solid #1E293B; vertical-align: middle; }
+.ct-table tr:last-child td { border-bottom: none; }
+.ct-table td:first-child { color: #E2E8F0; font-weight: 600; }
+.ct-yes { color: #34D399; font-weight: 600; }
+.ct-no { color: #FC8181; }
+.ct-part { color: #FCD34D; }
+
+/* Score stars */
+.stars { display: flex; gap: 2px; }
+.star { font-size: 12px; }
+.star.on { color: #FCD34D; }
+.star.off { color: #334155; }
+
+/* Decision helper */
+.decision-box { background: #162032; border-radius: 14px; border: 1px solid #1E3A5F; padding: 24px; margin-bottom: 40px; }
+.db-title { font-size: 15px; font-weight: 700; color: #60A5FA; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.db-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.db-item { background: #1E293B; border-radius: 10px; padding: 14px; border: 1px solid #1E3A5F; }
+.db-cond { font-size: 12px; color: #64748B; margin-bottom: 8px; font-style: italic; }
+.db-rec { font-size: 13px; font-weight: 700; color: #A5B4FC; }
+.db-rec-num { display: inline-block; width: 22px; height: 22px; background: #312E81; border-radius: 50%; text-align: center; line-height: 22px; font-size: 11px; margin-right: 6px; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-logo">MyContacts · Feature Design</div>
+    <div class="header-title">ตรวจสอบรายชื่อ<span>ผู้เข้าประชุม</span></div>
+    <div class="header-sub">เปรียบเทียบ 5 แนวทาง UX/UI ที่แตกต่างกันทั้ง Layout, Workflow, และ Interaction Model — เลือกให้เหมาะกับ use case และ style ที่ถนัด</div>
+    <div class="header-meta">
+      <div class="meta-item"><div class="meta-dot"></div> Mock data: 7 คน ตัวอย่าง</div>
+      <div class="meta-item"><div class="meta-dot g"></div> พบในระบบ 4 คน</div>
+      <div class="meta-item"><div class="meta-dot a"></div> ยังไม่มีในระบบ 3 คน</div>
+    </div>
+  </div>
+
+  <!-- Use case + features -->
+  <div class="use-case-box">
+    <div class="uc-section">
+      <div class="uc-title">Use Case หลัก</div>
+      <div class="uc-item"><span class="uc-icon">📋</span> เพิ่งได้รับ list ผู้เข้าประชุมจาก Email/Chat</div>
+      <div class="uc-item"><span class="uc-icon">🔍</span> ต้องการดูว่าใครมีในระบบ Contact บ้าง</div>
+      <div class="uc-item"><span class="uc-icon">📝</span> อยากบันทึก Note / อัพเดตข้อมูลคนที่มีอยู่</div>
+      <div class="uc-item"><span class="uc-icon">➕</span> อยากเพิ่มคนใหม่ที่ยังไม่มีในระบบ</div>
+    </div>
+    <div class="uc-section">
+      <div class="uc-title">Features ที่ทุก Design มี</div>
+      <div class="uc-item"><span class="uc-icon">✅</span> Paste list → ค้นหา match อัตโนมัติ</div>
+      <div class="uc-item"><span class="uc-icon">✅</span> แสดง status: พบ / ไม่พบ</div>
+      <div class="uc-item"><span class="uc-icon">✅</span> ดูข้อมูล contact ที่พบ + แก้ไข</div>
+      <div class="uc-item"><span class="uc-icon">✅</span> เพิ่ม contact ใหม่จากรายชื่อที่ไม่พบ</div>
+      <div class="uc-item"><span class="uc-icon">✅</span> บันทึก Note ประชุมให้ทุกคน</div>
+    </div>
+    <div class="uc-section">
+      <div class="uc-title">Features เพิ่มเติมที่แนะนำ</div>
+      <div class="uc-item"><span class="uc-icon">🎯</span> <strong style="color:#E2E8F0">Fuzzy match</strong> — แนะนำ "คล้ายกัน" เช่น ชื่อสะกดต่าง</div>
+      <div class="uc-item"><span class="uc-icon">📎</span> <strong style="color:#E2E8F0">Meeting context</strong> — ชื่อประชุม, วันที่, project</div>
+      <div class="uc-item"><span class="uc-icon">📊</span> <strong style="color:#E2E8F0">ประวัติการค้นหา</strong> — เปิด list เก่าได้</div>
+      <div class="uc-item"><span class="uc-icon">🔗</span> <strong style="color:#E2E8F0">Auto-tag project</strong> — tag project ให้คนใหม่</div>
+    </div>
+  </div>
+
+  <!-- Design cards grid -->
+  <div class="cards-grid">
+
+    <!-- Design 1 -->
+    <div class="design-card">
+      <div class="card-preview preview-d1" style="position:relative">
+        <div class="preview-sidebar">
+          <div class="preview-bar" style="width:50%; height:4px; background:#1E293B; margin-bottom:10px"></div>
+          <div class="preview-bar active" style="width:80%; margin-bottom:5px"></div>
+          <div class="preview-bar" style="width:70%; margin-bottom:5px"></div>
+          <div class="preview-bar" style="width:60%;"></div>
+        </div>
+        <div class="preview-content">
+          <div class="preview-split">
+            <div class="p-left">
+              <div class="p-line full" style="height:8px; background:#1E293B; margin-bottom:4px"></div>
+              <div style="flex:1; background:#162032; border-radius:4px; padding:6px; display:flex; flex-direction:column; gap:3px;">
+                <div class="p-line full"></div>
+                <div class="p-line full"></div>
+                <div class="p-line full"></div>
+                <div class="p-line full"></div>
+                <div class="p-line short"></div>
+                <div class="p-line full"></div>
+                <div class="p-line med"></div>
+              </div>
+              <div style="display:flex; gap:4px; margin-top:6px">
+                <div style="flex:1; height:20px; background:#10B981; border-radius:4px; opacity:0.7"></div>
+                <div style="flex:1; height:20px; background:#F59E0B; border-radius:4px; opacity:0.7"></div>
+              </div>
+            </div>
+            <div class="p-right">
+              <div style="background:#064E3B; border-radius:4px; padding:5px 7px; margin-bottom:4px; display:flex; align-items:center; gap:4px">
+                <div style="width:6px; height:6px; background:#10B981; border-radius:50%"></div>
+                <div style="height:5px; flex:1; background:#064E3B; opacity:0; display:none"></div>
+                <div style="font-size:8px; color:#A7F3D0; font-weight:700">พบในระบบ (4)</div>
+              </div>
+              <div class="p-row" style="margin-bottom:3px">
+                <div class="p-avatar"></div>
+                <div class="p-line full" style="background:#334155; height:5px"></div>
+                <div class="p-badge-g"></div>
+              </div>
+              <div class="p-row" style="margin-bottom:3px; background:#1E293B">
+                <div class="p-avatar" style="background:#064E3B"></div>
+                <div class="p-line full" style="background:#334155; height:5px"></div>
+                <div class="p-badge-g"></div>
+              </div>
+              <div style="background:#451A03; border-radius:4px; padding:5px 7px; margin: 4px 0; display:flex; align-items:center; gap:4px">
+                <div style="width:6px; height:6px; background:#F59E0B; border-radius:50%"></div>
+                <div style="font-size:8px; color:#FDE68A; font-weight:700">ยังไม่มีในระบบ (3)</div>
+              </div>
+              <div class="p-row" style="background:#3B2A1A; margin-bottom:3px">
+                <div class="p-avatar" style="background:#451A03"></div>
+                <div class="p-line full" style="background:#334155; height:5px"></div>
+                <div class="p-badge-a"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-num">Design 1</div>
+        <div class="card-title">Quick Scan</div>
+        <div class="card-subtitle">Split Panel — ดูทุกอย่างพร้อมกันในหน้าเดียว</div>
+        <div class="card-tags">
+          <span class="tag tag-speed">⚡ เร็ว</span>
+          <span class="tag tag-workflow">📋 ครบในหน้าเดียว</span>
+        </div>
+        <div class="pc-grid">
+          <div class="pc-section pros">
+            <div class="pc-title">ข้อดี</div>
+            <div class="pc-item">เห็น input และ output พร้อมกัน</div>
+            <div class="pc-item">ไม่ต้องสลับหน้า เร็วมาก</div>
+            <div class="pc-item">expandable detail ในที่เดียว</div>
+          </div>
+          <div class="pc-section cons">
+            <div class="pc-title">ข้อเสีย</div>
+            <div class="pc-item">พื้นที่แน่น ถ้า list ยาว</div>
+            <div class="pc-item">ไม่มี guided flow</div>
+          </div>
+        </div>
+        <div class="best-for"><strong>เหมาะสำหรับ:</strong> ใช้บ่อย, ต้องการความเร็ว, list ไม่ยาวมาก, ชอบดูข้อมูลครบในที</div>
+        <div class="card-cta">
+          <a href="meeting1_quickscan.html" target="_blank" class="cta-btn cta-primary">เปิด Design นี้ →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Design 2 -->
+    <div class="design-card">
+      <div class="card-preview preview-wizard">
+        <div class="pw-steps">
+          <div class="pw-step done">✓</div>
+          <div class="pw-line done"></div>
+          <div class="pw-step active">2</div>
+          <div class="pw-line"></div>
+          <div class="pw-step pending">3</div>
+        </div>
+        <div class="pw-grid" style="flex:1">
+          <div class="pw-panel found">
+            <div style="font-size:8px; color:#065F46; font-weight:700; margin-bottom:4px">✅ พบแล้ว (4)</div>
+            <div class="pw-item"><div class="pw-chk"></div><div class="pw-name" style="background:#065F46; opacity:0.5"></div></div>
+            <div class="pw-item"><div class="pw-chk"></div><div class="pw-name" style="background:#065F46; opacity:0.5"></div></div>
+            <div class="pw-item"><div class="pw-chk"></div><div class="pw-name" style="background:#065F46; opacity:0.5"></div></div>
+            <div class="pw-item"><div class="pw-chk"></div><div class="pw-name" style="background:#065F46; opacity:0.5"></div></div>
+          </div>
+          <div class="pw-panel new">
+            <div style="font-size:8px; color:#92400E; font-weight:700; margin-bottom:4px">➕ ใหม่ (3)</div>
+            <div class="pw-item"><div class="pw-chk" style="background:#F59E0B"></div><div class="pw-name" style="background:#92400E; opacity:0.5"></div></div>
+            <div class="pw-item"><div class="pw-chk" style="background:#F59E0B"></div><div class="pw-name" style="background:#92400E; opacity:0.5"></div></div>
+            <div class="pw-item"><div class="pw-chk" style="background:#E2E8F0"></div><div class="pw-name" style="background:#92400E; opacity:0.3"></div></div>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding-top:6px; border-top:1px solid #E2E8F0">
+          <div style="height:20px; width:60px; background:#E2E8F0; border-radius:5px"></div>
+          <div style="height:20px; width:70px; background:#6366F1; border-radius:5px"></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-num">Design 2</div>
+        <div class="card-title">Wizard / Stepper</div>
+        <div class="card-subtitle">3-Step Guided Flow — วาง → ตรวจสอบ → ยืนยัน</div>
+        <div class="card-tags">
+          <span class="tag tag-workflow">🧭 Guided</span>
+          <span class="tag tag-power">✅ Confirm ก่อนทำ</span>
+        </div>
+        <div class="pc-grid">
+          <div class="pc-section pros">
+            <div class="pc-title">ข้อดี</div>
+            <div class="pc-item">ทำทีละขั้น ไม่สับสน</div>
+            <div class="pc-item">ยืนยันก่อนดำเนินการ</div>
+            <div class="pc-item">เหมาะกับ list ยาว</div>
+          </div>
+          <div class="pc-section cons">
+            <div class="pc-title">ข้อเสีย</div>
+            <div class="pc-item">ช้ากว่า (หลาย click)</div>
+            <div class="pc-item">ต้อง navigate ไปมา</div>
+          </div>
+        </div>
+        <div class="best-for"><strong>เหมาะสำหรับ:</strong> list ยาวหลายสิบคน, ต้องการ review ก่อน, ทำงานร่วมกับคนอื่น, สำคัญต้อง accurate</div>
+        <div class="card-cta">
+          <a href="meeting2_wizard.html" target="_blank" class="cta-btn cta-primary">เปิด Design นี้ →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Design 3 -->
+    <div class="design-card">
+      <div class="card-preview preview-cmd">
+        <div class="cmd-bg">
+          <div class="cmd-bg-s"></div>
+          <div class="cmd-bg-c"></div>
+        </div>
+        <div class="cmd-overlay">
+          <div class="cmd-palette">
+            <div class="cmd-input">
+              <div style="font-size:8px; color:#475569; margin-top:4px">👤</div>
+              <div class="cmd-input-bar" style="display:flex; align-items:center; padding:0 6px">
+                <div style="font-size:8px; color:#64748B;">สมชาย วงษ์ศิลป์&#10;วรรณา...</div>
+              </div>
+              <div style="width:30px; height:16px; background:#6366F1; border-radius:4px; margin-top:2px"></div>
+            </div>
+            <div style="padding:3px 8px; background:#162032; display:flex; gap:8px; border-bottom:1px solid #334155;">
+              <div style="font-size:7px; color:#34D399; font-weight:600">7 คน</div>
+              <div style="font-size:7px; color:#34D399;">✅ 4 พบ</div>
+              <div style="font-size:7px; color:#FCD34D;">➕ 3 ใหม่</div>
+            </div>
+            <div class="cmd-results">
+              <div class="cmd-row active">
+                <div class="cmd-dot-g"></div>
+                <div class="cmd-text" style="width:60%"></div>
+                <div style="width:20px; height:8px; background:#064E3B; border-radius:4px;"></div>
+              </div>
+              <div class="cmd-row">
+                <div class="cmd-dot-g"></div>
+                <div class="cmd-text" style="width:55%"></div>
+                <div style="width:20px; height:8px; background:#064E3B; border-radius:4px;"></div>
+              </div>
+              <div class="cmd-row" style="opacity:0.5; font-size:7px; color:#475569; padding-top:3px; padding-bottom:1px">
+                ➕ ยังไม่มีในระบบ
+              </div>
+              <div class="cmd-row">
+                <div class="cmd-dot-a"></div>
+                <div class="cmd-text" style="width:50%"></div>
+                <div style="width:20px; height:8px; background:#451A03; border-radius:4px;"></div>
+              </div>
+            </div>
+            <div style="padding:5px 8px; background:#162032; display:flex; gap:6px; border-top:1px solid #334155;">
+              <div style="font-size:6px; color:#334155; background:#1E293B; padding:1px 4px; border-radius:2px; border:1px solid #334155;">ESC</div>
+              <div style="font-size:6px; color:#334155; background:#1E293B; padding:1px 4px; border-radius:2px; border:1px solid #334155;">↑↓</div>
+              <div style="font-size:6px; color:#334155; background:#1E293B; padding:1px 4px; border-radius:2px; border:1px solid #334155;">Enter</div>
+              <div style="margin-left:auto; display:flex; gap:4px;">
+                <div style="width:28px; height:12px; background:#334155; border-radius:3px;"></div>
+                <div style="width:32px; height:12px; background:#6366F1; border-radius:3px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-num">Design 3</div>
+        <div class="card-title">Command Palette</div>
+        <div class="card-subtitle">Floating Overlay — กด Ctrl+M เปิดได้จากทุกหน้า</div>
+        <div class="card-tags">
+          <span class="tag tag-speed">⚡ เร็วสุด</span>
+          <span class="tag" style="background:#162032; color:#C084FC; border:1px solid #6B21A8">⌨️ Keyboard</span>
+        </div>
+        <div class="pc-grid">
+          <div class="pc-section pros">
+            <div class="pc-title">ข้อดี</div>
+            <div class="pc-item">ไม่ออกจากหน้าปัจจุบัน</div>
+            <div class="pc-item">เปิดได้ทุกที่ด้วย hotkey</div>
+            <div class="pc-item">compact ไม่กินหน้าจอ</div>
+          </div>
+          <div class="pc-section cons">
+            <div class="pc-title">ข้อเสีย</div>
+            <div class="pc-item">พื้นที่น้อย detail จำกัด</div>
+            <div class="pc-item">ต้องใช้ keyboard เก่ง</div>
+          </div>
+        </div>
+        <div class="best-for"><strong>เหมาะสำหรับ:</strong> lookup เร็วๆ ระหว่างทำงาน, list ไม่ยาว, ชอบ keyboard shortcut, ไม่ต้องการ form เพิ่ม</div>
+        <div class="card-cta">
+          <a href="meeting3_command.html" target="_blank" class="cta-btn cta-primary">เปิด Design นี้ →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Design 4 -->
+    <div class="design-card">
+      <div class="card-preview preview-cards">
+        <div class="pcard-header">
+          <div class="pcard-col">
+            <div class="pcard-col-hdr found-hdr"><span></span><div style="font-size:7px; color:#A7F3D0; margin-left:4px">พบแล้ว (4)</div></div>
+            <div class="pcard-cards" style="margin-top:4px">
+              <div class="pcard found"><div class="pcard-av i"></div><div class="pcard-lines"><div class="pcard-line" style="width:70%"></div><div class="pcard-line" style="width:50%"></div></div></div>
+              <div class="pcard found" style="background:#162032; border-left:2px solid #10B981; border-radius:5px; padding:8px 7px; display:flex; gap:5px; flex-direction:column;">
+                <div style="display:flex; gap:5px; align-items:center"><div class="pcard-av g"></div><div class="pcard-lines" style="flex:1"><div class="pcard-line" style="width:80%"></div><div class="pcard-line" style="width:55%"></div></div></div>
+                <div style="background:#064E3B; border-radius:3px; padding:3px 6px; display:grid; grid-template-columns:1fr 1fr; gap:3px;">
+                  <div style="height:4px; background:#10B981; opacity:0.4; border-radius:2px"></div>
+                  <div style="height:4px; background:#10B981; opacity:0.4; border-radius:2px"></div>
+                  <div style="height:4px; background:#10B981; opacity:0.4; border-radius:2px"></div>
+                  <div style="height:4px; background:#10B981; opacity:0.4; border-radius:2px"></div>
+                </div>
+              </div>
+              <div class="pcard found"><div class="pcard-av i"></div><div class="pcard-lines"><div class="pcard-line" style="width:65%"></div><div class="pcard-line" style="width:45%"></div></div></div>
+            </div>
+          </div>
+          <div class="pcard-col">
+            <div class="pcard-col-hdr new-hdr"><span></span><div style="font-size:7px; color:#FDE68A; margin-left:4px">ใหม่ (3)</div></div>
+            <div class="pcard-cards" style="margin-top:4px">
+              <div class="pcard new" style="border-style:solid; background:#3B2A1A;">
+                <div class="pcard-av" style="background:#451A03; border-radius:50%; width:14px; height:14px; display:flex; align-items:center; justify-content:center; font-size:7px; color:#F59E0B">?</div>
+                <div class="pcard-lines">
+                  <div class="pcard-line" style="width:70%; background:#78350F; opacity:0.8"></div>
+                  <div class="pcard-line" style="width:40%; background:#78350F; opacity:0.5"></div>
+                </div>
+              </div>
+              <div class="pcard new" style="border-style:solid; background:#3B2A1A; flex-direction:column; gap:4px; padding:6px 7px; border-radius:5px; display:block;">
+                <div style="display:flex; gap:4px; align-items:center; margin-bottom:4px">
+                  <div class="pcard-av a"></div>
+                  <div class="pcard-lines" style="flex:1"><div class="pcard-line" style="width:75%; background:#78350F; opacity:0.8"></div></div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:2px">
+                  <div style="height:8px; background:#451A03; border-radius:3px;"></div>
+                  <div style="height:8px; background:#451A03; border-radius:3px;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-num">Design 4</div>
+        <div class="card-title">Meeting Room Cards</div>
+        <div class="card-subtitle">Card Grid / Kanban — "ห้องประชุม" แบบ visual</div>
+        <div class="card-tags">
+          <span class="tag tag-visual">🃏 Visual</span>
+          <span class="tag tag-casual">🤝 People-centric</span>
+        </div>
+        <div class="pc-grid">
+          <div class="pc-section pros">
+            <div class="pc-title">ข้อดี</div>
+            <div class="pc-item">สวย visual น่าใช้</div>
+            <div class="pc-item">พลิกดูข้อมูลได้ทันที</div>
+            <div class="pc-item">รู้สึกเหมือน "มองคน"</div>
+          </div>
+          <div class="pc-section cons">
+            <div class="pc-title">ข้อเสีย</div>
+            <div class="pc-item">กินพื้นที่มาก</div>
+            <div class="pc-item">list ยาว scroll เยอะ</div>
+          </div>
+        </div>
+        <div class="best-for"><strong>เหมาะสำหรับ:</strong> meeting สำคัญ, อยากดูหน้าตาคน, ชอบ visual layout, list ไม่เกิน 15 คน</div>
+        <div class="card-cta">
+          <a href="meeting4_cards.html" target="_blank" class="cta-btn cta-primary">เปิด Design นี้ →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Design 5 — full width -->
+  <div class="cards-grid last-row">
+    <div class="design-card featured" style="display:grid; grid-template-columns:240px 1fr; overflow:hidden;">
+      <div class="card-preview preview-table" style="height:auto; min-height:200px">
+        <div class="pt-header">
+          <div class="pt-th sm"></div>
+          <div class="pt-th"></div>
+          <div class="pt-th sm" style="background:#6366F1; opacity:0.5"></div>
+          <div class="pt-th"></div>
+          <div class="pt-th"></div>
+          <div class="pt-th sm"></div>
+        </div>
+        <div class="pt-rows">
+          <div class="pt-row found"><div class="pt-av i"></div><div class="pt-line" style="flex:1.5"></div><div class="pt-badge found"></div><div class="pt-line"></div><div class="pt-line" style="flex:0.7"></div></div>
+          <div class="pt-row found" style="background:#EEF2FF"><div class="pt-av g"></div><div class="pt-line" style="flex:1.5"></div><div class="pt-badge found"></div><div class="pt-line"></div><div class="pt-line" style="flex:0.7"></div></div>
+          <div class="pt-row found"><div class="pt-av i"></div><div class="pt-line" style="flex:1.5"></div><div class="pt-badge found"></div><div class="pt-line"></div><div class="pt-line" style="flex:0.7"></div></div>
+          <div class="pt-row found"><div class="pt-av a"></div><div class="pt-line" style="flex:1.5"></div><div class="pt-badge found"></div><div class="pt-line"></div><div class="pt-line" style="flex:0.7"></div></div>
+          <div class="pt-row new"><div class="pt-av n"></div><div class="pt-line" style="flex:1.5; background:#FDE68A; opacity:0.6"></div><div class="pt-badge new"></div><div style="flex:1; height:14px; background:#FEF3C7; border-radius:3px;"></div><div style="flex:1; height:14px; background:#FEF3C7; border-radius:3px;"></div></div>
+          <div class="pt-row new"><div class="pt-av n"></div><div class="pt-line" style="flex:1.5; background:#FDE68A; opacity:0.6"></div><div class="pt-badge new"></div><div style="flex:1; height:14px; background:#FEF3C7; border-radius:3px;"></div><div style="flex:1; height:14px; background:#FEF3C7; border-radius:3px;"></div></div>
+          <div class="pt-row new"><div class="pt-av n"></div><div class="pt-line" style="flex:1.5; background:#FDE68A; opacity:0.6"></div><div class="pt-badge new"></div><div style="flex:1; height:14px; background:#FEF3C7; border-radius:3px;"></div><div style="flex:1; height:14px; background:#FEF3C7; border-radius:3px;"></div></div>
+        </div>
+        <div style="padding:6px 10px; background:#F8FAFC; border-top:2px solid #E2E8F0; display:flex; gap:8px; align-items:center">
+          <div style="font-size:8px; color:#6366F1; font-weight:600">7 คน · 4 พบ · 3 ใหม่</div>
+          <div style="margin-left:auto; width:60px; height:14px; background:#6366F1; border-radius:4px; opacity:0.7"></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div style="position:relative">
+          <span class="featured-badge" style="position:static; display:inline-block; margin-bottom:8px">Power User</span>
+        </div>
+        <div class="card-num">Design 5</div>
+        <div class="card-title">Data Table</div>
+        <div class="card-subtitle">Spreadsheet Style — Inline editing, filter/sort, bulk action</div>
+        <div class="card-tags">
+          <span class="tag tag-power">📊 Data Dense</span>
+          <span class="tag tag-speed">✏️ Inline Edit</span>
+          <span class="tag" style="background:#162032; color:#34D399; border:1px solid #064E3B">⚡ Bulk Action</span>
+        </div>
+        <div class="pc-grid">
+          <div class="pc-section pros">
+            <div class="pc-title">ข้อดี</div>
+            <div class="pc-item">เห็นข้อมูลหลายคนพร้อมกัน</div>
+            <div class="pc-item">inline edit ได้เลยไม่ต้อง modal</div>
+            <div class="pc-item">filter/sort ได้</div>
+            <div class="pc-item">bulk action เลือกหลายคน</div>
+          </div>
+          <div class="pc-section cons">
+            <div class="pc-title">ข้อเสีย</div>
+            <div class="pc-item">ดูแห้ง ไม่ visual</div>
+            <div class="pc-item">mobile ใช้ยาก</div>
+          </div>
+        </div>
+        <div class="best-for"><strong>เหมาะสำหรับ:</strong> คนที่ชอบ spreadsheet/Excel, list ยาวมาก, ต้องการ filter หลายแบบ, power user</div>
+        <div class="card-cta">
+          <a href="meeting5_table.html" target="_blank" class="cta-btn cta-primary">เปิด Design นี้ →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Decision helper -->
+  <div class="decision-box">
+    <div class="db-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      ช่วยตัดสินใจ — เลือก Design ไหนดี?
+    </div>
+    <div class="db-grid">
+      <div class="db-item">
+        <div class="db-cond">"ผมต้องการใช้บ่อยๆ ทุกสัปดาห์ ต้องการความเร็ว"</div>
+        <div class="db-rec"><span class="db-rec-num">1</span> Quick Scan หรือ <span class="db-rec-num">3</span> Command Palette</div>
+      </div>
+      <div class="db-item">
+        <div class="db-cond">"List ยาวมาก 20-50 คน ต้องการ review ก่อน"</div>
+        <div class="db-rec"><span class="db-rec-num">2</span> Wizard หรือ <span class="db-rec-num">5</span> Data Table</div>
+      </div>
+      <div class="db-item">
+        <div class="db-cond">"อยากได้ทั้งเร็วและเห็น detail เยอะ"</div>
+        <div class="db-rec"><span class="db-rec-num">1</span> Quick Scan เป็นหลัก</div>
+      </div>
+      <div class="db-item">
+        <div class="db-cond">"ประชุมสำคัญ ต้องการ visual น่าใช้"</div>
+        <div class="db-rec"><span class="db-rec-num">4</span> Meeting Room Cards</div>
+      </div>
+      <div class="db-item">
+        <div class="db-cond">"ชอบใช้ keyboard ต้องการรวดเร็ว"</div>
+        <div class="db-rec"><span class="db-rec-num">3</span> Command Palette</div>
+      </div>
+      <div class="db-item">
+        <div class="db-cond">"ชอบ Excel/spreadsheet style"</div>
+        <div class="db-rec"><span class="db-rec-num">5</span> Data Table</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center; font-size:12px; color:#334155; padding-bottom:20px;">
+    MyContacts · Meeting Attendee Check Feature · 5 Design Options · v1.0
+  </div>
+
+</div>
+</body>
+</html>
